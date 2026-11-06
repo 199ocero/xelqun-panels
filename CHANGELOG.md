@@ -2,7 +2,7 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
-## 0.1.0 - Unreleased
+## 0.1.0 - 2026-11-06
 
 The first release. It needs `xelqun/forms` 0.6 and `xelqun/tables` 0.4.
 
