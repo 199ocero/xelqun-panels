@@ -1,0 +1,71 @@
+<?php
+
+namespace Xelqun\Panels\Infolists;
+
+use Closure;
+use Illuminate\Database\Eloquent\Model;
+use LogicException;
+use Xelqun\Forms\Components\Component;
+use Xelqun\Tables\Columns\Column;
+
+/**
+ * One value of a record on a view page. It sits in forms' layouts, such as
+ * Section and Grid, and takes the table column's options, so a value reads the
+ * same in both places.
+ *
+ * @method static label(string|Closure|null $label)
+ * @method static state(?Closure $using)
+ * @method static formatStateUsing(?Closure $using)
+ * @method static color(string|Closure|null $color)
+ * @method static icon(string|Closure|null $icon)
+ * @method static url(string|Closure|null $url, bool $openInNewTab = false)
+ *
+ * @api
+ */
+abstract class Entry extends Component
+{
+    private Column $column;
+
+    final public function __construct(string $name)
+    {
+        $this->column = static::makeColumn($name);
+    }
+
+    public static function make(string $name): static
+    {
+        return (new static($name))->configure();
+    }
+
+    abstract protected static function makeColumn(string $name): Column;
+
+    public function getType(): string
+    {
+        return 'xelqun-panels/entry';
+    }
+
+    /**
+     * @param  string  $method
+     * @param  array<int, mixed>  $parameters
+     */
+    public function __call($method, $parameters): mixed
+    {
+        if (! method_exists($this->column, $method)) {
+            return parent::__call($method, $parameters);
+        }
+
+        $this->column->{$method}(...$parameters);
+
+        return $this;
+    }
+
+    protected function getProps(): array
+    {
+        $record = $this->getForm()->getRecord();
+
+        if (! $record instanceof Model) {
+            throw new LogicException('An entry shows a record, and this form has none.');
+        }
+
+        return ['column' => $this->column->toDefinition(), 'cell' => $this->column->toCell($record)];
+    }
+}

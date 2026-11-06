@@ -415,7 +415,7 @@ final class Panel
     public function getQuickCreateItems(): array
     {
         return collect($this->getResources())
-            ->filter(fn (string $resource): bool => $resource::can('create'))
+            ->filter(fn (string $resource): bool => $resource::hasPage('create') && $resource::can('create'))
             ->map(fn (string $resource): array => [
                 'label' => Str::ucfirst($resource::getModelLabel()),
                 'icon' => $resource::getNavigationIcon(),

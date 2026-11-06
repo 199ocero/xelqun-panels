@@ -105,7 +105,72 @@ class ProductResource extends Resource
 
 Override `filters()`, `recordActions()`, `bulkActions()`, `configureTable()` and the hooks `mutateBeforeSave()`, `beforeCreate()`, `afterCreate()`, `beforeSave()` and `afterSave()`. To change a page, extend `ListRecords`, `CreateRecord`, `EditRecord` or `ViewRecord` and return it from `getPages()`.
 
-The sidebar's New button lists every resource the user may `create`.
+The sidebar's New button lists every resource with a create page that the user may `create`.
+
+### Relation managers
+
+A table of a relationship, under a record's edit and view pages, with create, edit and delete in modals:
+
+```php
+class OrdersRelationManager extends RelationManager
+{
+    protected static string $relationship = 'orders';
+
+    public static function form(): array { return [TextInput::make('number')->required()]; }
+    public static function columns(): array { return [TextColumn::make('number')->searchable()]; }
+}
+```
+
+Return it from `getRelations()` on the resource, or run `php artisan make:xelqun-relation-manager Customer orders`. Set `$relatedResource` to reuse a resource's form, columns and filters instead.
+
+Access goes through the related model's policy and the parent's `view`. Changing anything also takes the parent's `update`, and the view page is read-only. It works for has-many, morph-many and many-to-many, where a new record is attached to the parent.
+
+### One-page resources
+
+For a model with a few fields, keep everything on the list page, with create and edit in modals. `make:xelqun-resource Tag --simple` sets this up:
+
+```php
+public static function getPages(): array
+{
+    return ['index' => ManageRecords::class];
+}
+```
+
+### List tabs
+
+```php
+public static function getTabs(): array
+{
+    return [
+        'all' => Tab::make(),
+        'active' => Tab::make('Live')
+            ->badge(fn () => Product::where('status', 'active')->count())
+            ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'active')),
+    ];
+}
+```
+
+The first tab is the default. A tab always stays inside `getEloquentQuery()`, even with an `orWhere`, and so does everything on that table.
+
+### Infolists
+
+Give the view page real values instead of a disabled form. Entries take the same options as table columns, and sit in any of forms' layouts:
+
+```php
+public static function infolist(): array
+{
+    return [
+        Section::make('Product')->columns(2)->schema([
+            TextEntry::make('name'),
+            TextEntry::make('category.name')->label('Category'),
+            TextEntry::make('status')->badge()->color('success'),
+            TextEntry::make('price')->money('USD'),
+            IconEntry::make('is_featured')->boolean(),
+            ImageEntry::make('image')->disk('public'),
+        ]),
+    ];
+}
+```
 
 ### Global search
 
@@ -168,7 +233,8 @@ Icons in PHP are names. The panels plugin adds common sidebar icons to the forms
 
 ## Current limits
 
-- Relation managers, tenancy and two-factor auth come next.
+- Tenancy and two-factor auth come next.
+- A relation manager can create a many-to-many record, but can't attach an existing one yet.
 - `%` and `_` in a search act as wildcards.
 - `discoverResources()` walks its folder on every request.
 - Signing out of one panel signs out of the others in that session.

@@ -5,6 +5,7 @@ import type { PanelContent, PanelPageData } from '../../resources/js/types';
 
 vi.mock('@inertiajs/vue3', () => ({
     Head: { template: '<i />' },
+    Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
     router: { on: vi.fn(() => vi.fn()) },
 }));
 
@@ -24,6 +25,7 @@ function render(page: Partial<PanelPageData>) {
                 subheading: null,
                 breadcrumbs: [],
                 hasWidgets: false,
+                tabs: [],
                 headerActions: null,
                 content: [],
                 ...page,
@@ -34,6 +36,29 @@ function render(page: Partial<PanelPageData>) {
 }
 
 describe('XqPanelPage', () => {
+    it('marks the open tab and shows its count', () => {
+        const tab = { icon: null, badge: null, url: '/posts', active: false };
+        const wrapper = render({
+            tabs: [
+                { ...tab, key: 'all', label: 'All', active: true },
+                { ...tab, key: 'live', label: 'Live', badge: '3', url: '/posts?tab=live' },
+            ],
+        });
+
+        expect(wrapper.find('[data-xq-tabs] [aria-current="page"]').text()).toBe('All');
+        expect(wrapper.find('[data-xq-tabs]').text()).toContain('3');
+    });
+
+    it('names a relation table with a heading', () => {
+        const wrapper = render({
+            content: [
+                { type: 'table', schema: { id: 'comments' }, heading: 'Comments' },
+            ] as unknown as PanelContent[],
+        });
+
+        expect(wrapper.find('h2').text()).toBe('Comments');
+    });
+
     it('renders a form with where it submits', () => {
         const content = [
             {

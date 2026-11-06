@@ -23,6 +23,7 @@ final class ProfileController extends AuthController
             'subheading' => null,
             'breadcrumbs' => [['label' => $title]],
             'hasWidgets' => false,
+            'tabs' => [],
             'headerActions' => null,
             'content' => [$form->toArray()],
         ]]);

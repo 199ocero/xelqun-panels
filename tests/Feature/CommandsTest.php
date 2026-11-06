@@ -118,11 +118,38 @@ describe('make:xelqun-resource', function () {
             ->toContain('protected static string $model = Product::class;');
     });
 
+    it('makes a one-page resource', function (): void {
+        $this->artisan('make:xelqun-resource', ['model' => 'Tag', '--simple' => true])->assertSuccessful();
+
+        expect(File::get("{$this->appPath}/app/Xelqun/Admin/Resources/TagResource.php"))
+            ->toContain("return ['index' => ManageRecords::class];");
+    });
+
     it('refuses a bad name, and keeps what is there unless told otherwise', function (): void {
         $this->artisan('make:xelqun-resource', ['model' => 'not-a-class'])->assertFailed();
 
         $this->artisan('make:xelqun-resource', ['model' => 'Product'])->assertSuccessful();
         $this->artisan('make:xelqun-resource', ['model' => 'Product'])->assertFailed();
         $this->artisan('make:xelqun-resource', ['model' => 'Product', '--force' => true])->assertSuccessful();
+    });
+});
+
+describe('make:xelqun-relation-manager', function () {
+    it('creates a manager beside its resource', function (): void {
+        $this->artisan('make:xelqun-relation-manager', ['model' => 'Category', 'relationship' => 'products'])
+            ->expectsOutputToContain('ProductsRelationManager::class')
+            ->assertSuccessful();
+
+        expect(File::get("{$this->appPath}/app/Xelqun/Admin/Resources/CategoryResource/ProductsRelationManager.php"))
+            ->toContain('namespace App\Xelqun\Admin\Resources\CategoryResource;')
+            ->toContain("protected static string \$relationship = 'products';");
+    });
+
+    it('refuses a bad name, and keeps what is there unless told otherwise', function (): void {
+        $this->artisan('make:xelqun-relation-manager', ['model' => 'Category', 'relationship' => 'Not-a-method'])->assertFailed();
+
+        $this->artisan('make:xelqun-relation-manager', ['model' => 'Category', 'relationship' => 'products'])->assertSuccessful();
+        $this->artisan('make:xelqun-relation-manager', ['model' => 'Category', 'relationship' => 'products'])->assertFailed();
+        $this->artisan('make:xelqun-relation-manager', ['model' => 'Category', 'relationship' => 'products', '--force' => true])->assertSuccessful();
     });
 });

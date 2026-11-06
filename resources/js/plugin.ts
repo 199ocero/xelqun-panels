@@ -14,6 +14,7 @@ import {
     Users,
     Zap,
 } from 'lucide-vue-next';
+import XqPanelEntry from './components/XqPanelEntry.vue';
 
 /**
  * Goes in the `plugins` of `createXelqunForms()`. The icons are the ones a
@@ -22,6 +23,7 @@ import {
 export function panelsPlugin(): XelqunPlugin {
     return {
         id: 'xelqun/panels',
+        components: { 'xelqun-panels/entry': XqPanelEntry },
         icons: {
             'chart-column': ChartColumn,
             'clipboard-list': ClipboardList,

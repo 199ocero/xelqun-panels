@@ -8,6 +8,7 @@ use Xelqun\Panels\Tests\Fixtures\Pages\Home;
 use Xelqun\Panels\Tests\Fixtures\Pages\PartlyDenied;
 use Xelqun\Panels\Tests\Fixtures\Pages\PostDashboard;
 use Xelqun\Panels\Tests\Fixtures\Pages\Reports;
+use Xelqun\Panels\Tests\Fixtures\Resources\NoteResource;
 use Xelqun\Panels\Tests\Fixtures\Resources\OtherPostResource;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostResource;
 use Xelqun\Panels\Tests\Fixtures\Resources\UnguardedResource;
@@ -22,6 +23,6 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel->id('admin')->path('admin')->brandName('Admin')->authGuard('admin')->login()->passwordReset()->registration()->profile()->pages([Home::class, PostDashboard::class, PartlyDenied::class, Reports::class])->resources([PostResource::class, OtherPostResource::class, UnguardedResource::class])->widgets([PostTiles::class, PendingPosts::class, PostStats::class, HiddenWidget::class, BrokenWidget::class, DeniedList::class]);
+        return $panel->id('admin')->path('admin')->brandName('Admin')->authGuard('admin')->login()->passwordReset()->registration()->profile()->pages([Home::class, PostDashboard::class, PartlyDenied::class, Reports::class])->resources([PostResource::class, OtherPostResource::class, UnguardedResource::class, NoteResource::class])->widgets([PostTiles::class, PendingPosts::class, PostStats::class, HiddenWidget::class, BrokenWidget::class, DeniedList::class]);
     }
 }

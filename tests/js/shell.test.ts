@@ -1,6 +1,8 @@
+import type { SchemaNode } from '@xelqun/forms';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, nextTick, ref } from 'vue';
+import XqPanelEntry from '../../resources/js/components/XqPanelEntry.vue';
 import XqPanelNewMenu from '../../resources/js/components/XqPanelNewMenu.vue';
 import XqPanelSearch from '../../resources/js/components/XqPanelSearch.vue';
 import XqPanelSidebar from '../../resources/js/components/XqPanelSidebar.vue';
@@ -99,6 +101,54 @@ describe('the new button', () => {
 
         expect(wrapper.find('[data-xq-new]').attributes('aria-label')).toBe('New');
         expect(wrapper.text()).toBe('');
+    });
+});
+
+describe('an infolist entry', () => {
+    const entry = (type: string, cell: object, props: object = {}) =>
+        mount(XqPanelEntry, {
+            props: {
+                node: {
+                    key: 'a',
+                    type: 'xelqun-panels/entry',
+                    hidden: false,
+                    props: { column: { label: 'Status', type, props }, cell },
+                    children: [],
+                } as unknown as SchemaNode,
+            },
+        });
+
+    it('shows the label and value', () => {
+        const text = entry('text-column', { state: 'Live' }).text();
+
+        expect(text).toContain('Status');
+        expect(text).toContain('Live');
+    });
+
+    it('joins a list', () => {
+        expect(entry('text-column', { state: ['Red', 'Blue'] }).text()).toContain('Red, Blue');
+    });
+
+    it('gives each value of a badge list its own pill', () => {
+        const wrapper = entry('text-column', { state: ['Red', 'Blue'] }, { badge: true });
+
+        expect(wrapper.findAll('span.rounded-full')).toHaveLength(2);
+    });
+
+    it('marks an empty value', () => {
+        expect(entry('text-column', { state: null }).text()).toContain('—');
+    });
+
+    it('links when the cell has a url', () => {
+        const wrapper = entry('text-column', { state: 'Live', url: '/live' });
+
+        expect(wrapper.find('a').attributes('href')).toBe('/live');
+    });
+
+    it('sizes an image from the column', () => {
+        const wrapper = entry('image-column', { state: '/a.png', alt: 'A' }, { size: 64 });
+
+        expect(wrapper.find('img').attributes('width')).toBe('64');
     });
 });
 

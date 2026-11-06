@@ -19,16 +19,17 @@ final class ResourceTable extends Table
     /**
      * @param  class-string<\Xelqun\Panels\Resources\Resource>  $resource
      */
-    public static function for(string $resource): self
+    public static function for(string $resource, ?string $tab = null): self
     {
-        return self::make(['resource' => $resource]);
+        return self::make(['resource' => $resource, 'tab' => $tab]);
     }
 
     protected function boot(): void
     {
         $resource = $this->getResource();
 
-        $this->id($resource::getSlug().'-table');
+        // Each tab has its own id, so changing tab starts a fresh table and not one that thinks it hasn't moved.
+        $this->id(implode('-', array_filter([$resource::getSlug(), $this->context['tab'] ?? null, 'table'])));
         $this->emptyState(__('xelqun-panels::resources.empty', ['label' => $resource::getPluralModelLabel()]));
 
         $resource::configureTable($this);
@@ -36,7 +37,10 @@ final class ResourceTable extends Table
 
     public function query(): Builder
     {
-        return $this->getResource()::getEloquentQuery();
+        $resource = $this->getResource();
+        $tab = $resource::getTabs()[$this->context['tab'] ?? ''] ?? null;
+
+        return $tab === null ? $resource::getEloquentQuery() : $tab->applyTo($resource::getEloquentQuery());
     }
 
     public function authorize(?Authenticatable $user): bool
@@ -69,13 +73,7 @@ final class ResourceTable extends Table
      */
     public function recordUrl(Model $record): ?string
     {
-        $resource = $this->getResource();
-
-        return match (true) {
-            $resource::can('update', $record) => $resource::getUrl('edit', ['record' => $record]),
-            $resource::can('view', $record) => $resource::getUrl('view', ['record' => $record]),
-            default => null,
-        };
+        return $this->getResource()::getRecordUrl($record);
     }
 
     /**

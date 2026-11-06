@@ -5,6 +5,7 @@ namespace Xelqun\Panels\Resources\Pages;
 use Illuminate\Database\Eloquent\Model;
 use Inertia\Response;
 use Xelqun\Panels\Pages\Page;
+use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\Resource;
 
 /**
@@ -68,6 +69,17 @@ abstract class ResourcePage extends Page
         $key = $route->parameter('record');
 
         $this->record = $key === null ? null : $this->resource::findRecord($key);
+    }
+
+    /**
+     * @return array<int, RelationTable>
+     */
+    protected function getRelationTables(bool $isReadOnly): array
+    {
+        return array_map(
+            fn (string $manager): RelationTable => RelationTable::for($this->resource, $manager, $this->record, $isReadOnly),
+            $this->resource::getRelations(),
+        );
     }
 
     protected function getAccessDeniedReason(): string

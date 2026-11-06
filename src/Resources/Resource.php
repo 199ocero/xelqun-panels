@@ -76,17 +76,55 @@ abstract class Resource
     }
 
     /**
+     * What the view page shows instead of a disabled form. Use TextEntry,
+     * IconEntry and ImageEntry, inside any of forms' layouts.
+     *
+     * @return array<int, Component>
+     */
+    public static function infolist(): array
+    {
+        return [];
+    }
+
+    /**
+     * Tabs above the list, as key => Tab. The first one is the default.
+     *
+     * @return array<string, Tab>
+     */
+    public static function getTabs(): array
+    {
+        return [];
+    }
+
+    /**
+     * Relationship tables for the edit and view pages.
+     *
+     * @return array<int, class-string<RelationManager>>
+     */
+    public static function getRelations(): array
+    {
+        return [];
+    }
+
+    /**
      * @return array<int, Action|ActionGroup>
      */
     public static function recordActions(): array
     {
+        $edit = Action::make('edit')
+            ->label(__('xelqun-panels::resources.edit_action'))
+            ->icon('pencil')
+            ->iconButton()
+            ->authorize('update');
+
         return [
-            Action::make('edit')
-                ->label(__('xelqun-panels::resources.edit_action'))
-                ->icon('pencil')
-                ->iconButton()
-                ->authorize('update')
-                ->url(fn (Model $record): string => static::getUrl('edit', ['record' => $record])),
+            static::hasPage('edit')
+                ? $edit->url(fn (Model $record): string => static::getUrl('edit', ['record' => $record]))
+                : $edit
+                    ->schema(fn (): array => static::form())
+                    ->modalSubmitActionLabel(__('xelqun-panels::resources.save'))
+                    ->successNotificationTitle(__('xelqun-panels::resources.saved', ['label' => Str::ucfirst(static::getModelLabel())]))
+                    ->action(fn (array $data, Model $record): Model => ResourceForm::for(static::class, ResourceForm::EDIT, $record)->persist($data)),
             Action::make('delete')
                 ->label(__('xelqun-panels::resources.delete'))
                 ->icon('trash')
@@ -132,9 +170,10 @@ abstract class Resource
     }
 
     /**
-     * Swap a page class here to customize that page.
+     * Swap a page class here to customize that page, or return only `index` with
+     * ManageRecords to do everything on one page.
      *
-     * @return array{index: class-string<ListRecords>, create: class-string<CreateRecord>, view: class-string<ViewRecord>, edit: class-string<EditRecord>}
+     * @return array{index: class-string<ListRecords>, create?: class-string<CreateRecord>, view?: class-string<ViewRecord>, edit?: class-string<EditRecord>}
      */
     public static function getPages(): array
     {
@@ -144,6 +183,23 @@ abstract class Resource
             'view' => ViewRecord::class,
             'edit' => EditRecord::class,
         ];
+    }
+
+    public static function hasPage(string $page): bool
+    {
+        return isset(static::getPages()[$page]);
+    }
+
+    /**
+     * Where a row of this resource leads: edit if the viewer can, or else view.
+     */
+    public static function getRecordUrl(Model $record): ?string
+    {
+        return match (true) {
+            static::hasPage('edit') && static::can('update', $record) => static::getUrl('edit', ['record' => $record]),
+            static::hasPage('view') && static::can('view', $record) => static::getUrl('view', ['record' => $record]),
+            default => null,
+        };
     }
 
     /**
@@ -267,7 +323,7 @@ abstract class Resource
             ->take(self::GLOBAL_SEARCH_LIMIT)
             ->map(fn (Model $record): array => [
                 'title' => static::getRecordTitle($record),
-                'url' => static::getUrl('view', ['record' => $record]),
+                'url' => static::hasPage('view') ? static::getUrl('view', ['record' => $record]) : static::getUrl(),
                 'details' => collect(static::getGlobalSearchResultDetails($record))
                     ->map(fn (?string $value, string $label): string => "{$label}: {$value}")
                     ->implode(' · '),

@@ -43,12 +43,15 @@ class EditRecord extends ResourcePage
 
     public function content(): array
     {
-        return [new FormContent(
-            ResourceForm::for($this->resource, ResourceForm::EDIT, $this->record),
-            $this->resource::getUrl('update', ['record' => $this->record]),
-            'put',
-            __('xelqun-panels::resources.save'),
-        )];
+        return [
+            new FormContent(
+                ResourceForm::for($this->resource, ResourceForm::EDIT, $this->record),
+                $this->resource::getUrl('update', ['record' => $this->record]),
+                'put',
+                __('xelqun-panels::resources.save'),
+            ),
+            ...$this->getRelationTables(isReadOnly: false),
+        ];
     }
 
     public function update(Request $request): RedirectResponse

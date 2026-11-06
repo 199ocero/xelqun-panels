@@ -5,7 +5,9 @@ namespace Xelqun\Panels\Resources;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use LogicException;
+use Xelqun\Forms\Eloquent\ModelPersister;
 use Xelqun\Forms\Form;
+use Xelqun\Forms\Uploads\UploadBatch;
 
 /**
  * Forms are classes, because a closure can't wait in the browser. This one
@@ -33,7 +35,20 @@ final class ResourceForm extends Form
 
     public function schema(): array
     {
-        return $this->getResource()::form();
+        $resource = $this->getResource();
+        $infolist = $this->getOperation() === self::VIEW ? $resource::infolist() : [];
+
+        return $infolist === [] ? $resource::form() : $infolist;
+    }
+
+    /**
+     * Save what a modal already validated, with this form's hooks and nested fields.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function persist(array $data): Model
+    {
+        return app(ModelPersister::class)->save($this, $data, app(UploadBatch::class));
     }
 
     public function model(): string

@@ -12,6 +12,7 @@ class MakeResourceCommand extends Command
     protected $signature = 'make:xelqun-resource
         {model : The model it manages, e.g. Product}
         {--panel=Admin : The panel it belongs to}
+        {--simple : Keep everything on one page, with create and edit in modals}
         {--force : Overwrite the file if it exists}';
 
     protected $description = 'Create a Xelqun resource and a policy for its model';
@@ -44,7 +45,7 @@ class MakeResourceCommand extends Command
         File::put($path, str_replace(
             ['{{ namespace }}', '{{ class }}', '{{ modelNamespace }}', '{{ model }}'],
             ["{$namespace}Xelqun\\{$panel}\\Resources", $class, "{$namespace}Models", $model],
-            File::get(__DIR__.'/../../stubs/resource.php.stub'),
+            File::get(__DIR__.'/../../stubs/'.($this->option('simple') ? 'resource-simple.php.stub' : 'resource.php.stub')),
         ));
 
         // Without a policy nobody can open the resource, so it comes with one that refuses until it's filled in.

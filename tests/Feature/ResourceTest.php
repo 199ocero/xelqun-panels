@@ -61,7 +61,7 @@ describe('the list page', function () {
     it('applies the resource\'s table settings, with an id of its own', function () {
         $table = pageProps($this->get('/admin/posts'))['content'][0]['schema'];
 
-        expect($table['id'])->toBe('posts-table')
+        expect($table['id'])->toBe('posts-all-table')
             ->and($table['sort'])->toBe('title')
             ->and($table['emptyState']['heading'])->toBe('No posts yet');
     });

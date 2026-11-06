@@ -96,7 +96,7 @@ export type PanelWidget = PanelWidgetBase &
     );
 
 export type PanelContent =
-    | { type: 'table'; schema: TableSchema }
+    | { type: 'table'; schema: TableSchema; heading: string | null }
     | { type: 'actions'; schema: FormSchema }
     | {
           type: 'form';
@@ -121,12 +121,22 @@ export interface PanelBreadcrumb {
     url?: string;
 }
 
+export interface PanelTab {
+    key: string;
+    label: string;
+    icon: string | null;
+    badge: string | null;
+    url: string;
+    active: boolean;
+}
+
 export interface PanelPageData {
     title: string;
     eyebrow: string | null;
     subheading: string | null;
     breadcrumbs: PanelBreadcrumb[];
     hasWidgets: boolean;
+    tabs: PanelTab[];
     headerActions: FormSchema | null;
     content: PanelContent[];
 }

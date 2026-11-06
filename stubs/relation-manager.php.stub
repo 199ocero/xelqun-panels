@@ -1,0 +1,26 @@
+<?php
+
+namespace {{ namespace }};
+
+use Xelqun\Forms\Components\TextInput;
+use Xelqun\Panels\Resources\RelationManager;
+use Xelqun\Tables\Columns\TextColumn;
+
+class {{ class }} extends RelationManager
+{
+    protected static string $relationship = '{{ relationship }}';
+
+    public static function form(): array
+    {
+        return [
+            TextInput::make('name')->required(),
+        ];
+    }
+
+    public static function columns(): array
+    {
+        return [
+            TextColumn::make('name')->searchable()->sortable(),
+        ];
+    }
+}

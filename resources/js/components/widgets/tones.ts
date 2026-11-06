@@ -7,3 +7,13 @@ export const toneClasses: Record<string, string> = {
     info: 'bg-xq-info/12 text-xq-info',
     gray: 'bg-xq-muted text-xq-muted-foreground',
 };
+
+/** The same names, for text with no background. */
+export const textToneClasses: Record<string, string> = {
+    primary: 'text-xq-primary',
+    success: 'text-xq-success',
+    warning: 'text-xq-warning',
+    danger: 'text-xq-destructive',
+    info: 'text-xq-info',
+    gray: 'text-xq-muted-foreground',
+};

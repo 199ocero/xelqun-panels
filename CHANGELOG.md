@@ -9,10 +9,15 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **Global search finds records.** ⌘K searches each resource through `getEloquentQuery()` and its policy. Choose the columns with `getGloballySearchableAttributes()` and what shows under a result with `getGlobalSearchResultDetails()`.
 - **A New button in the sidebar**, listing every resource the user may create.
 - **`discoverResources()`** adds every resource in a folder. `make:xelqun-panel` now includes it.
+- **Relation managers.** A table of a relationship under a record's edit and view pages, with modals, and `make:xelqun-relation-manager`.
+- **One-page resources.** `ManageRecords` and `make:xelqun-resource --simple` keep everything on the list page, in modals.
+- **List tabs.** `Resource::getTabs()` with `Tab::make()`.
+- **Infolists.** `Resource::infolist()` with `TextEntry`, `IconEntry` and `ImageEntry`, in place of a disabled form on the view page.
 
 ### Changed
 
 - A signed-out JSON request to a panel gets a 401 instead of a redirect to login.
+- With tabs, a resource's table id includes the tab, as in `posts-active-table`.
 
 ### Fixed
 

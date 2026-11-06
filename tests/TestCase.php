@@ -79,6 +79,30 @@ abstract class TestCase extends Orchestra
             $table->timestamps();
         });
 
+        Schema::create('comments', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('post_id');
+            $table->string('body');
+            $table->timestamps();
+        });
+
+        Schema::create('labels', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::create('label_post', function (Blueprint $table): void {
+            $table->foreignId('label_id');
+            $table->foreignId('post_id');
+        });
+
+        Schema::create('notes', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+
         Schema::create('password_reset_tokens', function (Blueprint $table): void {
             $table->string('email')->primary();
             $table->string('token');

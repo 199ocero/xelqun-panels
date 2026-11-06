@@ -309,6 +309,7 @@ describe('the profile page', function () {
 
     it('shows the user\'s details and never their password', function () {
         $this->get('/admin/profile')->assertInertia(fn (Assert $page) => $page
+            ->where('page.tabs', [])
             ->component('xelqun/Panel')
             ->where('page.content.0.type', 'form')
             ->where('page.content.0.schema.state.data.name', 'Ada')

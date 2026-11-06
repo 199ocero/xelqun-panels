@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Xelqun\Forms\Components\FileUpload;
 use Xelqun\Forms\Components\Repeater;
 use Xelqun\Forms\Components\TextInput;
+use Xelqun\Forms\Layouts\Section;
+use Xelqun\Panels\Infolists\IconEntry;
+use Xelqun\Panels\Infolists\TextEntry;
 use Xelqun\Panels\Resources\Resource;
+use Xelqun\Panels\Resources\Tab;
 use Xelqun\Panels\Tests\Fixtures\Post;
 use Xelqun\Tables\Columns\TextColumn;
 use Xelqun\Tables\Filters\SelectFilter;
@@ -25,6 +29,8 @@ class PostResource extends Resource
 
     /** @var array<int, string> */
     public static array $calls = [];
+
+    public static bool $usesInfolist = false;
 
     public static function form(): array
     {
@@ -56,6 +62,32 @@ class PostResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('team', 'red');
+    }
+
+    public static function getRelations(): array
+    {
+        return [CommentsRelationManager::class, LabelsRelationManager::class];
+    }
+
+    public static function getTabs(): array
+    {
+        return [
+            'all' => Tab::make(),
+            'live' => Tab::make('Published')->icon('zap')->badge(fn (): int => Post::where('status', 'live')->count())
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'live')->orWhere('status', 'scheduled')),
+        ];
+    }
+
+    public static function infolist(): array
+    {
+        return self::$usesInfolist ? [
+            Section::make('About')->schema([
+                TextEntry::make('title')->badge()->color('success'),
+                TextEntry::make('author.name')->label('Written by'),
+                TextEntry::make('created_at')->date(),
+                IconEntry::make('published')->boolean()->state(fn (Post $record): bool => $record->status === 'live'),
+            ]),
+        ] : [];
     }
 
     public static function getGloballySearchableAttributes(): array

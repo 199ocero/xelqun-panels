@@ -64,11 +64,20 @@ foreach (app(Panels::class)->all() as $panel) {
 
                     Route::prefix($slug)->name("resources.{$slug}.")->group(function () use ($pages, $resource): void {
                         Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
-                        Route::get('create', $pages['create'])->name('create')->defaults('resource', $resource);
-                        Route::post('', [ResourceRecordController::class, 'store'])->name('store')->defaults('resource', $resource);
-                        Route::get('{record}', $pages['view'])->name('view')->defaults('resource', $resource);
-                        Route::get('{record}/edit', $pages['edit'])->name('edit')->defaults('resource', $resource);
-                        Route::put('{record}', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
+
+                        if (isset($pages['create'])) {
+                            Route::get('create', $pages['create'])->name('create')->defaults('resource', $resource);
+                            Route::post('', [ResourceRecordController::class, 'store'])->name('store')->defaults('resource', $resource);
+                        }
+
+                        if (isset($pages['view'])) {
+                            Route::get('{record}', $pages['view'])->name('view')->defaults('resource', $resource);
+                        }
+
+                        if (isset($pages['edit'])) {
+                            Route::get('{record}/edit', $pages['edit'])->name('edit')->defaults('resource', $resource);
+                            Route::put('{record}', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
+                        }
                     });
                 }
             });

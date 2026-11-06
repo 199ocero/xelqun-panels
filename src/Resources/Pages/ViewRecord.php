@@ -25,7 +25,7 @@ class ViewRecord extends ResourcePage
 
     public function headerActions(): array
     {
-        return [
+        return ! $this->resource::hasPage('edit') ? [] : [
             Action::make('edit')
                 ->label(__('xelqun-panels::resources.edit_action'))
                 ->icon('pencil')
@@ -36,9 +36,12 @@ class ViewRecord extends ResourcePage
 
     public function content(): array
     {
-        return [new FormContent(
-            ResourceForm::for($this->resource, ResourceForm::VIEW, $this->record),
-            $this->resource::getUrl('view', ['record' => $this->record]),
-        )];
+        return [
+            new FormContent(
+                ResourceForm::for($this->resource, ResourceForm::VIEW, $this->record),
+                $this->resource::getUrl('view', ['record' => $this->record]),
+            ),
+            ...$this->getRelationTables(isReadOnly: true),
+        ];
     }
 }

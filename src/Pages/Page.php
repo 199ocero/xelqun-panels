@@ -11,6 +11,7 @@ use Xelqun\Actions\ActionSet;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
+use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Tables\Table;
 
 /**
@@ -163,6 +164,16 @@ abstract class Page
     }
 
     /**
+     * Links above the content, as for a resource's list.
+     *
+     * @return array<int, array{key: string, label: string, icon: string|null, badge: string|null, url: string, active: bool}>
+     */
+    public function getTabs(): array
+    {
+        return [];
+    }
+
+    /**
      * Props for a Vue page of the app. See getComponent().
      *
      * @return array<string, mixed>
@@ -203,9 +214,14 @@ abstract class Page
             'subheading' => $this->getSubheading(),
             'breadcrumbs' => $this->getBreadcrumbs(),
             'hasWidgets' => $this->hasWidgets(),
+            'tabs' => $this->getTabs(),
             'headerActions' => $this->headerActions() === [] ? null : PageActionSet::for($this)->toSchema(),
             'content' => array_map(fn (Table|ActionSet|FormContent $item): array => match (true) {
-                $item instanceof Table => ['type' => 'table', 'schema' => $item->toSchema()],
+                $item instanceof Table => [
+                    'type' => 'table',
+                    'schema' => $item->toSchema(),
+                    'heading' => $item instanceof RelationTable ? $item->getHeading() : null,
+                ],
                 $item instanceof ActionSet => ['type' => 'actions', 'schema' => $item->toSchema()],
                 $item instanceof FormContent => $item->toArray(),
             }, $this->getVisibleContent()),
