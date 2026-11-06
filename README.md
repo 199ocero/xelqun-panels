@@ -227,7 +227,31 @@ Set `$columnSpan` (out of 12), `$sort` and `$heading`, and override `canView()` 
 
 ## Theming
 
-`colors(['primary' => '#0071e3'])` sets the accent, and the dark theme derives its own from it. `font('DM Sans')` picks a family from Bunny Fonts, loaded after the page so a slow font host can't hold it back. Everything else is a `--xq-*` token, set under `:root[data-xq-panel]`.
+Set a panel's colors the way Filament does, with `Color` or a hex value:
+
+```php
+use Xelqun\Panels\Support\Colors\Color;
+
+$panel->colors([
+    'primary' => Color::Amber,
+    'danger' => Color::Rose,
+    'gray' => Color::Slate,
+]);
+```
+
+`Color` holds Tailwind's 26 palettes. Any color you leave out keeps its default: `danger` Red, `gray` Zinc, `info` Blue, `success` Green, `warning` Amber, and a blue `primary`. Those match Filament's, apart from the primary.
+
+Text stays readable whatever you choose. Labels on a filled color are black or white, whichever clears WCAG AA's 4.5:1, and colored text is capped in lightness on the light theme. The dark theme derives a lighter version of each color.
+
+To let people choose, pass a closure, which runs on every request:
+
+```php
+$panel->colors(fn (): array => ['primary' => Color::fromName(auth()->user()?->theme) ?? Color::Blue]);
+```
+
+`Color::options()` gives a Select its choices. Anything that isn't a color is refused, because these end up in a style attribute.
+
+`font('DM Sans')` picks a family from Bunny Fonts, loaded after the page so a slow font host can't hold it back. Everything else is a `--xq-*` token, set under `:root[data-xq-panel]`.
 
 Icons in PHP are names. The panels plugin adds common sidebar icons to the forms set, and `createXelqunForms({ icons })` adds your own.
 

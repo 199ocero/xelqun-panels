@@ -3,7 +3,7 @@
 <html
     lang="{{ str_replace('_', '-', app()->getLocale()) }}"
     data-xq-panel
-    style="--xq-panel-font: '{{ $panel->getFont() }}'; @if ($panel->getPrimaryColor()) --xq-panel-primary: {{ $panel->getPrimaryColor() }}; @endif"
+    style="--xq-panel-font: '{{ $panel->getFont() }}'; @foreach ($panel->getColorVariables() as $variable => $color) {{ $variable }}: {{ $color }}; @endforeach"
 >
     <head>
         <meta charset="utf-8">

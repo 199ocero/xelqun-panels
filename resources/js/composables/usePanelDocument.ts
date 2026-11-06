@@ -3,6 +3,14 @@ import type { Ref } from 'vue';
 import type { PanelShell } from '../types';
 import { useThemeSync } from './useTheme';
 
+function clearColors(): void {
+    const { style } = document.documentElement;
+
+    [...style]
+        .filter((name) => name.startsWith('--xq-panel-') && name !== '--xq-panel-font')
+        .forEach((name) => style.removeProperty(name));
+}
+
 /**
  * Puts a panel's look on `<html>`. A visit from outside the panel doesn't load
  * the root view, which is what normally does this.
@@ -17,21 +25,20 @@ export function usePanelDocument(panel: Ref<PanelShell>): void {
 
         const root = document.documentElement;
 
+        clearColors();
         root.setAttribute('data-xq-panel', '');
         root.style.setProperty('--xq-panel-font', `'${panel.value.theme.font}'`);
 
-        if (panel.value.theme.primary) {
-            root.style.setProperty('--xq-panel-primary', panel.value.theme.primary);
-        } else {
-            root.style.removeProperty('--xq-panel-primary');
-        }
+        Object.entries(panel.value.theme.colors).forEach(([variable, color]) =>
+            root.style.setProperty(variable, color),
+        );
     });
 
     onBeforeUnmount(() => {
         const root = document.documentElement;
 
+        clearColors();
         root.removeAttribute('data-xq-panel');
         root.style.removeProperty('--xq-panel-font');
-        root.style.removeProperty('--xq-panel-primary');
     });
 }

@@ -8,6 +8,7 @@ use Xelqun\Panels\Navigation\SidebarCard;
 use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
+use Xelqun\Panels\Support\Colors\Color;
 
 class FirstPage extends Page
 {
@@ -153,7 +154,8 @@ describe('theme', function () {
         app(Panels::class)->get('admin')->colors(['primary' => '#ff0088']);
 
         $this->get('/admin')->assertInertia(fn (Assert $page) => $page
-            ->where('xelqunPanel.theme', ['primary' => '#ff0088', 'font' => 'Inter']));
+            ->where('xelqunPanel.theme.font', 'Inter')
+            ->where('xelqunPanel.theme.colors.--xq-panel-primary', '#ff0088'));
     });
 
     it('refuses a color that could break out of a style attribute', function (array $colors) {
@@ -161,13 +163,12 @@ describe('theme', function () {
     })->throws(PanelDefinitionException::class)->with([
         'css' => [['primary' => 'red; background: url(evil)']],
         'quote' => [['primary' => '#000"><script>']],
-        'other key' => [['primary' => '#000000', 'danger' => '#ff0000']],
+        'other key' => [['accent' => '#000000']],
         'too short for a color' => [['primary' => '#0071e']],
-        'nothing' => [[]],
     ]);
 
     it('takes every length of hex color', function (string $color) {
-        expect(Panel::make()->colors(['primary' => $color])->getPrimaryColor())->toBe($color);
+        expect(Panel::make()->colors(['primary' => $color])->getColorVariables()['--xq-panel-primary'])->toBe($color);
     })->with(['#07e', '#07ef', '#0071e3', '#0071E3ff']);
 
     it('refuses a font that could break out of a style attribute', function () {
@@ -180,4 +181,77 @@ it('sends the page\'s heading parts', function () {
         ->where('page.eyebrow', null)
         ->where('page.subheading', null)
         ->where('page.breadcrumbs', [['label' => 'Home']]));
+});
+
+describe('colors', function () {
+    it('uses Filament\'s semantic colors until told otherwise', function () {
+        expect(Panel::make()->getColorVariables())->toMatchArray([
+            '--xq-panel-danger' => Color::Red->value,
+            '--xq-panel-gray' => Color::Zinc->value,
+            '--xq-panel-info' => Color::Blue->value,
+            '--xq-panel-success' => Color::Green->value,
+            '--xq-panel-warning' => Color::Amber->value,
+        ]);
+    });
+
+    it('changes only the colors it names, from a Color or a hex value', function () {
+        expect(Panel::make()->colors(['primary' => Color::Amber, 'danger' => '#ff0000'])->getColorVariables())->toMatchArray([
+            '--xq-panel-primary' => '#d97706',
+            '--xq-panel-primary-foreground' => '#000000',
+            '--xq-panel-danger' => '#ff0000',
+            '--xq-panel-gray' => '#52525b',
+        ]);
+    });
+
+    it('chooses text that reads on the color', function (string $color, string $text) {
+        expect(Color::foregroundOn($color))->toBe($text);
+    })->with([
+        'dark blue' => ['#0071e3', '#ffffff'],
+        'short form' => ['#fff', '#000000'],
+        'black' => ['#000000', '#ffffff'],
+        'with alpha' => ['#ffff00ff', '#000000'],
+        'yellow' => [Color::Yellow->value, '#000000'],
+    ]);
+
+    it('meets WCAG AA for text on every color of the palette, and on any other', function () {
+        $colors = [...array_column(Color::cases(), 'value'), '#777777', '#7f7f7f', '#808080', '#868686'];
+
+        foreach ($colors as $color) {
+            expect(Color::contrast($color, Color::foregroundOn($color)))->toBeGreaterThanOrEqual(4.5);
+        }
+    });
+
+    it('measures contrast the way WCAG does', function () {
+        expect(round(Color::contrast('#000000', '#ffffff'), 2))->toBe(21.0)
+            ->and(round(Color::contrast('#777777', '#ffffff'), 2))->toBe(4.48);
+    });
+
+    it('reads a closure on each request, and still checks it', function () {
+        $color = Color::Rose;
+        $panel = Panel::make()->colors(function () use (&$color): array {
+            return ['primary' => $color];
+        });
+
+        expect($panel->getColorVariables()['--xq-panel-primary'])->toBe('#e11d48');
+
+        $color = 'red; background: url(evil)';
+
+        expect(fn () => $panel->getColorVariables())->toThrow(PanelDefinitionException::class);
+    });
+
+    it('refuses anything else', function (array $colors) {
+        expect(fn () => Panel::make()->colors($colors))->toThrow(PanelDefinitionException::class);
+    })->with([
+        'an unknown name' => [['accent' => Color::Blue]],
+        'not a color' => [['primary' => 'red']],
+        'css injection' => [['primary' => '#fff; background: red']],
+        'a number' => [['primary' => 123]],
+    ]);
+
+    it('finds a case by name for a saved setting', function () {
+        expect(Color::fromName('Amber'))->toBe(Color::Amber)
+            ->and(Color::fromName('Nope'))->toBeNull()
+            ->and(Color::fromName(null))->toBeNull()
+            ->and(Color::options())->toHaveKey('Amber', 'Amber');
+    });
 });

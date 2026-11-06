@@ -38,7 +38,7 @@ defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
                 :aria-current="tab.active ? 'page' : undefined"
                 :class="
                     cn(
-                        'gap-1.5 px-3 py-2 text-sm font-medium -mb-px flex shrink-0 items-center border-b-2 whitespace-nowrap',
+                        'gap-1.5 px-3 py-2 text-sm font-medium flex shrink-0 items-center border-b-2 whitespace-nowrap',
                         tab.active
                             ? 'border-xq-primary text-xq-foreground'
                             : 'text-xq-muted-foreground hover:text-xq-foreground border-transparent',

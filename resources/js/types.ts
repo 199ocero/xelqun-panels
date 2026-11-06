@@ -51,7 +51,7 @@ export interface PanelShell {
     id: string;
     url: string;
     brand: { name: string };
-    theme: { primary: string | null; font: string };
+    theme: { colors: Record<string, string>; font: string };
     navigation: PanelNavigationGroup[];
     quickCreate: PanelQuickCreateItem[];
     searchUrl: string | null;

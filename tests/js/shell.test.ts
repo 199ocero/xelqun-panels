@@ -30,7 +30,7 @@ const shell: PanelShell = {
     id: 'admin',
     url: '/admin',
     brand: { name: 'Shop' },
-    theme: { primary: null, font: 'Inter' },
+    theme: { colors: {}, font: 'Inter' },
     navigation: [
         { label: null, items: [item('Home', { active: true })] },
         { label: 'Catalog', items: [item('Products', { badge: '12' }), item('Categories')] },

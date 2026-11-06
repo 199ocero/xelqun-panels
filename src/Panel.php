@@ -20,6 +20,7 @@ use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Navigation\SidebarCard;
 use Xelqun\Panels\Pages\Page;
+use Xelqun\Panels\Support\Colors\Color;
 use Xelqun\Panels\Widgets\PanelWidget;
 
 /**
@@ -35,6 +36,16 @@ final class Panel
     private const string HEX_COLOR = '/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i';
 
     private const string FONT = '/^[A-Za-z0-9 ]+$/';
+
+    /** Filament's semantic defaults. colors() changes only the ones it names. */
+    private const array DEFAULT_COLORS = [
+        'primary' => '#0071e3',
+        'danger' => Color::Red,
+        'gray' => Color::Zinc,
+        'info' => Color::Blue,
+        'success' => Color::Green,
+        'warning' => Color::Amber,
+    ];
 
     private string $id = '';
 
@@ -63,7 +74,8 @@ final class Panel
     /** @var class-string<EditProfileForm>|null */
     private ?string $profileForm = null;
 
-    private ?string $primaryColor = null;
+    /** @var array<string, Color|string>|Closure(): array<string, Color|string> */
+    private array|Closure $colors = [];
 
     private string $font = 'Inter';
 
@@ -146,27 +158,51 @@ final class Panel
     }
 
     /**
-     * The panel's accent, as a hex value. The dark theme derives its own from it.
-     * It ends up in a style attribute, which is why nothing else is accepted.
+     * The panel's colors, by name: primary, danger, gray, info, success and
+     * warning. Each is a Color or a hex value, and any left out keep their
+     * default. Text stays readable in both themes, whichever you pick. A closure
+     * runs on every request, so a color can come from a setting.
      *
-     * @param  array{primary?: string}  $colors
+     * @param  array<string, Color|string>|Closure(): array<string, Color|string>  $colors
      */
-    public function colors(array $colors): self
+    public function colors(array|Closure $colors): self
     {
-        $primary = $colors['primary'] ?? '';
+        $this->colors = $colors;
 
-        if (array_keys($colors) !== ['primary'] || preg_match(self::HEX_COLOR, $primary) !== 1) {
-            throw new PanelDefinitionException('colors() takes a primary color as a hex value, like ["primary" => "#0071e3"].');
+        if (is_array($colors)) {
+            $this->getColorVariables();
         }
-
-        $this->primaryColor = $primary;
 
         return $this;
     }
 
-    public function getPrimaryColor(): ?string
+    /**
+     * What the colors become on <html>. They end up in a style attribute, which is
+     * why nothing but a color is accepted, however they arrived.
+     *
+     * @return array<string, string>
+     */
+    public function getColorVariables(): array
     {
-        return $this->primaryColor;
+        $variables = [];
+
+        $colors = $this->colors instanceof Closure ? ($this->colors)() : $this->colors;
+
+        foreach ([...self::DEFAULT_COLORS, ...$colors] as $name => $color) {
+            $hex = $color instanceof Color ? $color->value : $color;
+
+            if (! isset(self::DEFAULT_COLORS[$name]) || ! is_string($hex) || preg_match(self::HEX_COLOR, $hex) !== 1) {
+                throw new PanelDefinitionException('colors() takes primary, danger, gray, info, success and warning, each a Color or a hex value.');
+            }
+
+            $variables["--xq-panel-{$name}"] = $hex;
+
+            if ($name === 'primary') {
+                $variables['--xq-panel-primary-foreground'] = Color::foregroundOn($hex);
+            }
+        }
+
+        return $variables;
     }
 
     /**
@@ -539,7 +575,7 @@ final class Panel
             'id' => $this->id,
             'url' => $this->getUrl(),
             'brand' => ['name' => $this->getBrandName()],
-            'theme' => ['primary' => $this->primaryColor, 'font' => $this->font],
+            'theme' => ['colors' => (object) $this->getColorVariables(), 'font' => $this->font],
             'navigation' => $isInside ? $this->getNavigation() : [],
             'quickCreate' => $isInside ? $this->getQuickCreateItems() : [],
             'searchUrl' => $isInside ? route($this->routeName('search')) : null,

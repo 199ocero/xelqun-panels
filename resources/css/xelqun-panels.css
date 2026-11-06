@@ -15,59 +15,76 @@
     --color-xq-nav-active: var(--xq-nav-active);
 }
 
+/* Each neutral keeps its lightness, and takes only its tint from the gray color. */
 :root[data-xq-panel] {
     --xq-radius: 0.875rem;
-    --xq-shell: #f0f0f2;
-    --xq-nav-hover: #e6e6e9;
-    --xq-nav-active: #e3e3e6;
-    --xq-background: #f6f6f7;
+    --xq-shell: oklch(from var(--xq-panel-gray, #52525b) 0.956 calc(c * 0.35) h);
+    --xq-nav-hover: oklch(from var(--xq-panel-gray, #52525b) 0.926 calc(c * 0.35) h);
+    --xq-nav-active: oklch(from var(--xq-panel-gray, #52525b) 0.917 calc(c * 0.35) h);
+    --xq-background: oklch(from var(--xq-panel-gray, #52525b) 0.973 calc(c * 0.35) h);
     --xq-foreground: #1c1c1e;
     --xq-card: #ffffff;
     --xq-card-foreground: #1c1c1e;
     --xq-popover: #ffffff;
     --xq-popover-foreground: #1c1c1e;
     --xq-primary: var(--xq-panel-primary, #0071e3);
-    --xq-primary-foreground: #ffffff;
+    --xq-primary-foreground: var(--xq-panel-primary-foreground, #ffffff);
     --xq-secondary: #f0f0f2;
     --xq-secondary-foreground: #1c1c1e;
-    --xq-muted: #f0f0f2;
-    --xq-muted-foreground: #66666d;
-    --xq-accent: #eeeef0;
+    --xq-muted: oklch(from var(--xq-panel-gray, #52525b) 0.956 calc(c * 0.35) h);
+    --xq-muted-foreground: oklch(from var(--xq-panel-gray, #52525b) 0.513 calc(c * 0.35) h);
+    --xq-accent: oklch(from var(--xq-panel-gray, #52525b) 0.95 calc(c * 0.35) h);
     --xq-accent-foreground: #1c1c1e;
-    --xq-border: #e6e6e9;
-    --xq-input: #dcdce0;
-    --xq-ring: var(--xq-panel-primary, #0071e3);
+    --xq-border: oklch(from var(--xq-panel-gray, #52525b) 0.926 calc(c * 0.35) h);
+    --xq-input: oklch(from var(--xq-panel-gray, #52525b) 0.896 calc(c * 0.35) h);
+    --xq-ring: oklch(from var(--xq-panel-primary, #0071e3) min(l, 0.6) c h);
+    --xq-destructive: oklch(from var(--xq-panel-danger, #dc2626) min(l, 0.52) c h);
+    --xq-success: oklch(from var(--xq-panel-success, #16a34a) min(l, 0.5) c h);
+    --xq-warning: oklch(from var(--xq-panel-warning, #d97706) min(l, 0.52) c h);
+    --xq-info: oklch(from var(--xq-panel-info, #2563eb) min(l, 0.52) c h);
     font-family: var(--xq-panel-font, 'Inter'), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* The same steps as the light theme, from the shell up. White text fails on a lighter blue, so the text goes dark. */
 :root[data-xq-panel].dark {
     color-scheme: dark;
-    --xq-shell: #0e0e10;
-    --xq-nav-hover: #1c1c1f;
-    --xq-nav-active: #232327;
-    --xq-background: #141416;
+    --xq-shell: oklch(from var(--xq-panel-gray, #52525b) 0.165 calc(c * 0.35) h);
+    --xq-nav-hover: oklch(from var(--xq-panel-gray, #52525b) 0.228 calc(c * 0.35) h);
+    --xq-nav-active: oklch(from var(--xq-panel-gray, #52525b) 0.258 calc(c * 0.35) h);
+    --xq-background: oklch(from var(--xq-panel-gray, #52525b) 0.192 calc(c * 0.35) h);
     --xq-foreground: #f4f4f5;
-    --xq-card: #1b1b1e;
+    --xq-card: oklch(from var(--xq-panel-gray, #52525b) 0.223 calc(c * 0.35) h);
     --xq-card-foreground: #f4f4f5;
-    --xq-popover: #212124;
+    --xq-popover: oklch(from var(--xq-panel-gray, #52525b) 0.249 calc(c * 0.35) h);
     --xq-popover-foreground: #f4f4f5;
     --xq-primary: oklch(from var(--xq-panel-primary, #0071e3) 0.74 c h);
-    --xq-primary-foreground: #0b1220;
+    --xq-primary-foreground: #000000;
     --xq-secondary: #26262a;
     --xq-secondary-foreground: #f4f4f5;
-    --xq-muted: #232327;
-    --xq-muted-foreground: #a0a0a8;
-    --xq-accent: #2a2a2e;
+    --xq-muted: oklch(from var(--xq-panel-gray, #52525b) 0.258 calc(c * 0.35) h);
+    --xq-muted-foreground: oklch(from var(--xq-panel-gray, #52525b) 0.708 calc(c * 0.35) h);
+    --xq-accent: oklch(from var(--xq-panel-gray, #52525b) 0.287 calc(c * 0.35) h);
     --xq-accent-foreground: #f4f4f5;
     --xq-border: rgb(255 255 255 / 9%);
     --xq-input: rgb(255 255 255 / 14%);
     --xq-ring: oklch(from var(--xq-panel-primary, #0071e3) 0.74 c h);
+    --xq-destructive: oklch(from var(--xq-panel-danger, #dc2626) 0.7 c h);
+    --xq-success: oklch(from var(--xq-panel-success, #16a34a) 0.74 c h);
+    --xq-warning: oklch(from var(--xq-panel-warning, #d97706) 0.8 c h);
+    --xq-info: oklch(from var(--xq-panel-info, #2563eb) 0.74 c h);
 }
 
 :root[data-xq-panel] body {
     background: var(--xq-shell);
     color: var(--xq-foreground);
+}
+
+/*
+ * Plain 600 shades miss AA as text on white: green-600 is 3.3:1 and amber-600 is
+ * 3.2:1. So what's read as text is capped in lightness, which keeps its hue.
+ */
+:root[data-xq-panel]:not(.dark) .text-xq-primary {
+    color: oklch(from var(--xq-primary) min(l, 0.52) c h);
 }
 
 /* No card shadows or tall corners: hairlines do the work, as buttons do with pills. */
