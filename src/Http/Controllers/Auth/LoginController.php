@@ -2,6 +2,7 @@
 
 namespace Xelqun\Panels\Http\Controllers\Auth;
 
+use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\SessionGuard;
 use Illuminate\Http\RedirectResponse;
@@ -12,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Response;
 use Xelqun\Panels\Auth\LoginForm;
+use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 
 final class LoginController extends AuthController
@@ -60,6 +62,8 @@ final class LoginController extends AuthController
             throw new PanelDefinitionException("The panel [{$panel->getId()}] needs a session guard to sign users in.");
         }
 
+        $this->explainMissingContract($guard);
+
         // Checked inside the attempt, so someone the panel refuses never gets a session.
         $credentials = ['email' => $data['email'], 'password' => $data['password']];
 
@@ -73,6 +77,22 @@ final class LoginController extends AuthController
         $request->session()->regenerate();
 
         return redirect()->intended($panel->getUrl());
+    }
+
+    /**
+     * Refused users all see the same failure, which is right for everyone but a
+     * developer who hasn't added the contract yet. With the right password, that
+     * reads like a bug.
+     */
+    private function explainMissingContract(SessionGuard $guard): void
+    {
+        $provider = $guard->getProvider();
+
+        if (config('app.debug') && $provider instanceof EloquentUserProvider && ! $provider->createModel() instanceof PanelUser) {
+            throw ValidationException::withMessages([
+                'data.email' => __('xelqun-panels::auth.not_a_panel_user', ['model' => $provider->getModel()]),
+            ]);
+        }
     }
 
     private function form(): LoginForm

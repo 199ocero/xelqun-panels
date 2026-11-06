@@ -2,6 +2,13 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+### Fixed
+
+- **A new panel works straight away.** `make:xelqun-panel` left out `login()` and any pages, so `/admin` was a 404.
+- **A missing `PanelUser` says so at login, in debug mode.** With the right password, the login page only said the credentials were wrong.
+
 ## 0.1.0 - 2026-11-06
 
 The first release. It needs `xelqun/forms` 0.6 and `xelqun/tables` 0.4.

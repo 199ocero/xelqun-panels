@@ -64,11 +64,15 @@ describe('xelqun-panels:install', function () {
 
 describe('make:xelqun-panel', function () {
     it('creates a provider and registers it', function (): void {
-        $this->artisan('make:xelqun-panel', ['name' => 'BackOffice'])->assertSuccessful();
+        $this->artisan('make:xelqun-panel', ['name' => 'BackOffice'])
+            ->expectsOutputToContain('PanelUser')
+            ->assertSuccessful();
 
         expect(File::get("{$this->appPath}/app/Providers/Xelqun/BackOfficePanelProvider.php"))
             ->toContain("->id('back-office')")
             ->toContain("->path('back-office')")
+            ->toContain('->login()')
+            ->toContain('->pages([Dashboard::class])')
             ->and(File::get("{$this->appPath}/bootstrap/providers.php"))
             ->toContain('App\Providers\Xelqun\BackOfficePanelProvider::class');
     });

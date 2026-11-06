@@ -49,7 +49,10 @@ class MakePanelCommand extends Command
         ServiceProvider::addProviderToBootstrapFile("{$namespace}\\{$class}");
 
         $this->components->info("Panel created. It will live at /{$id}.");
-        $this->components->bulletList([$path]);
+        $this->components->bulletList([
+            $path,
+            'Add Xelqun\Panels\Contracts\PanelUser to your user model, or nobody can sign in.',
+        ]);
 
         return self::SUCCESS;
     }

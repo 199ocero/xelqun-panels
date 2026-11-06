@@ -12,7 +12,9 @@ php artisan xelqun-panels:install
 php artisan make:xelqun-panel Admin
 ```
 
-The installer adds the npm package, two small page files in `resources/js/pages/xelqun`, the styles, and `panelsPlugin()` in your Inertia entry file.
+The installer adds the npm package, two small page files in `resources/js/pages/xelqun`, the styles, and `panelsPlugin()` in your Inertia entry file. The new panel has a login page and a dashboard at `/admin`.
+
+Then add `PanelUser` to your user model, as shown under [Access](#access). Nobody can sign in until you do.
 
 ## A panel
 

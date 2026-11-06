@@ -2,6 +2,7 @@
 
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Auth\User as PlainUser;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -143,6 +144,16 @@ describe('signing in', function () {
 
         expect(app(Panels::class)->get('admin')->allows($user))->toBeFalse();
     });
+
+    it('tells a developer the user model needs the contract, only in debug', function (bool $debug, string $message) {
+        config(['app.debug' => $debug, 'auth.providers.users.model' => PlainUser::class]);
+        Auth::forgetGuards();
+
+        login()->assertSessionHasErrors(['data.email' => $message]);
+    })->with([
+        'debug' => [true, '['.PlainUser::class.'] must implement Xelqun\Panels\Contracts\PanelUser before it can enter a panel.'],
+        'production' => [false, 'These credentials do not match our records.'],
+    ]);
 
     it('keeps the password out of the session', function () {
         login('wrong-password');

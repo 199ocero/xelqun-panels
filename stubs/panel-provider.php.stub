@@ -2,6 +2,7 @@
 
 namespace {{ namespace }};
 
+use Xelqun\Panels\Pages\Dashboard;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\PanelProvider;
 
@@ -11,6 +12,8 @@ class {{ class }} extends PanelProvider
     {
         return $panel
             ->id('{{ id }}')
-            ->path('{{ id }}');
+            ->path('{{ id }}')
+            ->login()
+            ->pages([Dashboard::class]);
     }
 }
