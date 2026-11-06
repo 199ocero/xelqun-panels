@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Deferred, Head } from '@inertiajs/vue3';
 import { XqActions, XqForm } from '@xelqun/forms';
 import { XqTable } from '@xelqun/tables';
+import XqPanelWidgets from '../components/widgets/XqPanelWidgets.vue';
 import XqPanelLayout from '../layouts/XqPanelLayout.vue';
-import type { PanelPageData } from '../types';
+import type { PanelPageData, PanelWidget } from '../types';
 
 defineOptions({ layout: XqPanelLayout });
-defineProps<{ page: PanelPageData }>();
+defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
 </script>
 
 <template>
@@ -24,6 +25,18 @@ defineProps<{ page: PanelPageData }>();
             </div>
             <XqActions v-if="page.headerActions" :actions="page.headerActions" />
         </header>
+        <Deferred v-if="page.hasWidgets" data="widgets">
+            <template #fallback>
+                <div class="gap-4 sm:grid-cols-2 lg:grid-cols-4 grid" data-xq-widgets-loading>
+                    <div
+                        v-for="placeholder in 4"
+                        :key="placeholder"
+                        class="h-36 bg-xq-muted animate-pulse rounded-xq-lg"
+                    ></div>
+                </div>
+            </template>
+            <XqPanelWidgets v-if="widgets" :widgets="widgets" />
+        </Deferred>
         <template v-for="item in page.content" :key="item.schema.id">
             <XqTable v-if="item.type === 'table'" :table="item.schema" />
             <XqForm

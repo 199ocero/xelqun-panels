@@ -38,6 +38,40 @@ export interface PanelShell {
     profileUrl: string | null;
 }
 
+export interface PanelStat {
+    label: string;
+    value: string;
+    description: string | null;
+    icon: string | null;
+    chart: number[];
+}
+
+export interface PanelTile {
+    label: string;
+    icon: string | null;
+    status: string | null;
+    color: string;
+    url: string | null;
+}
+
+interface PanelWidgetBase {
+    id: string;
+    columnSpan: number;
+}
+
+interface PanelWidgetCard {
+    heading: string | null;
+    seeAllUrl: string | null;
+}
+
+export type PanelWidget = PanelWidgetBase &
+    (
+        | { type: 'stats'; data: PanelWidgetCard & { stats: PanelStat[] } }
+        | { type: 'list' | 'table'; data: PanelWidgetCard & { table: TableSchema } }
+        | { type: 'tiles'; data: PanelWidgetCard & { tiles: PanelTile[] } }
+        | { type: string; data: PanelWidgetCard & Record<string, unknown> }
+    );
+
 export type PanelContent =
     | { type: 'table'; schema: TableSchema }
     | { type: 'actions'; schema: FormSchema }
@@ -69,6 +103,7 @@ export interface PanelPageData {
     eyebrow: string | null;
     subheading: string | null;
     breadcrumbs: PanelBreadcrumb[];
+    hasWidgets: boolean;
     headerActions: FormSchema | null;
     content: PanelContent[];
 }

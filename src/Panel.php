@@ -16,6 +16,7 @@ use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Navigation\SidebarCard;
 use Xelqun\Panels\Pages\Page;
+use Xelqun\Panels\Widgets\PanelWidget;
 
 /**
  * One admin area: its URL, its guard and what it holds. Configure it in a
@@ -67,6 +68,9 @@ final class Panel
 
     /** @var array<int, class-string<Resources\Resource>> */
     private array $resources = [];
+
+    /** @var array<int, class-string<PanelWidget>> */
+    private array $widgets = [];
 
     /** @var array<int, string> */
     private array $navigationGroups = [];
@@ -377,6 +381,26 @@ final class Panel
     public function getResources(): array
     {
         return $this->resources;
+    }
+
+    /**
+     * What the Dashboard page shows.
+     *
+     * @param  array<int, class-string<PanelWidget>>  $widgets
+     */
+    public function widgets(array $widgets): self
+    {
+        $this->widgets = [...$this->widgets, ...$widgets];
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, class-string<PanelWidget>>
+     */
+    public function getWidgets(): array
+    {
+        return $this->widgets;
     }
 
     /**

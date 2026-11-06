@@ -23,6 +23,7 @@ function render(page: Partial<PanelPageData>) {
                 eyebrow: null,
                 subheading: null,
                 breadcrumbs: [],
+                hasWidgets: false,
                 headerActions: null,
                 content: [],
                 ...page,

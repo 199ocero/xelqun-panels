@@ -101,10 +101,10 @@ it('sends a page\'s icon, url and badge', function () {
 });
 
 it('marks the page being viewed', function () {
-    $this->get('/admin/reports')->assertInertia(fn (Assert $page) => $page
-        ->where('xelqunPanel.navigation.0.items.0.active', false)
-        ->where('xelqunPanel.navigation.0.items.2.label', 'Reports')
-        ->where('xelqunPanel.navigation.0.items.2.active', true));
+    $items = collect($this->get('/admin/reports')->viewData('page')['props']['xelqunPanel']['navigation'][0]['items']);
+
+    expect($items->firstWhere('label', 'Reports')['active'])->toBeTrue()
+        ->and($items->firstWhere('label', 'Home')['active'])->toBeFalse();
 });
 
 it('works out a closure badge and url when the page renders', function () {

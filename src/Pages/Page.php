@@ -172,6 +172,14 @@ abstract class Page
         return [];
     }
 
+    /**
+     * Whether the browser should wait for a `widgets` prop.
+     */
+    protected function hasWidgets(): bool
+    {
+        return false;
+    }
+
     protected function getComponent(): string
     {
         return 'xelqun/Panel';
@@ -194,6 +202,7 @@ abstract class Page
             'eyebrow' => $this->getEyebrow(),
             'subheading' => $this->getSubheading(),
             'breadcrumbs' => $this->getBreadcrumbs(),
+            'hasWidgets' => $this->hasWidgets(),
             'headerActions' => $this->headerActions() === [] ? null : PageActionSet::for($this)->toSchema(),
             'content' => array_map(fn (Table|ActionSet|FormContent $item): array => match (true) {
                 $item instanceof Table => ['type' => 'table', 'schema' => $item->toSchema()],

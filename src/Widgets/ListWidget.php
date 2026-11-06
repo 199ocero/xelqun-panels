@@ -1,0 +1,81 @@
+<?php
+
+namespace Xelqun\Panels\Widgets;
+
+use Illuminate\Database\Eloquent\Model;
+use Xelqun\Tables\Columns\TextColumn;
+use Xelqun\Tables\Table;
+
+/**
+ * Rows of records, each with an icon, a title, a line of detail and either
+ * actions, a progress bar or a link. It's a table underneath, so query() limits
+ * what it can reach, and every row action is rebuilt and checked on the server.
+ *
+ * Define query(), title() and any of the others.
+ *
+ * @api
+ */
+abstract class ListWidget extends Table implements PanelWidget
+{
+    use HasWidgetSettings;
+
+    /** How many rows to show. */
+    protected static int $limit = 5;
+
+    protected function boot(): void
+    {
+        $this->id($this->getWidgetId())->paginationPageOptions([static::$limit]);
+    }
+
+    abstract protected function title(Model $record): string;
+
+    protected function meta(Model $record): ?string
+    {
+        return null;
+    }
+
+    protected function icon(Model $record): ?string
+    {
+        return null;
+    }
+
+    /**
+     * @return 'primary'|'success'|'warning'|'danger'|'gray'
+     */
+    protected function iconColor(Model $record): string
+    {
+        return 'gray';
+    }
+
+    /**
+     * From 0 to 1, or null for no bar.
+     */
+    protected function progress(Model $record): ?float
+    {
+        return null;
+    }
+
+    protected function progressNote(Model $record): ?string
+    {
+        return null;
+    }
+
+    final public function columns(): array
+    {
+        $cell = fn (string $name, callable $state): TextColumn => TextColumn::make($name)->state(fn (Model $record): mixed => $state($record));
+
+        return [
+            $cell('title', fn (Model $record): string => $this->title($record)),
+            $cell('meta', fn (Model $record): ?string => $this->meta($record)),
+            $cell('icon', fn (Model $record): ?string => $this->icon($record)),
+            $cell('iconColor', fn (Model $record): string => $this->iconColor($record)),
+            $cell('progress', fn (Model $record): ?float => $this->progress($record)),
+            $cell('progressNote', fn (Model $record): ?string => $this->progressNote($record)),
+        ];
+    }
+
+    public function toWidget(): array
+    {
+        return $this->widget('list', ['table' => $this->toSchema()]);
+    }
+}
