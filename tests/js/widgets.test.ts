@@ -1,6 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { createXelqunForms } from '@xelqun/forms';
-import { router } from '@inertiajs/vue3';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import XqPanelListWidget from '../../resources/js/components/widgets/XqPanelListWidget.vue';
@@ -9,8 +8,10 @@ import XqPanelTiles from '../../resources/js/components/widgets/XqPanelTiles.vue
 import XqPanelWidgets from '../../resources/js/components/widgets/XqPanelWidgets.vue';
 import type { PanelWidget } from '../../resources/js/types';
 
+const { reload } = vi.hoisted(() => ({ reload: vi.fn() }));
+
 vi.mock('@inertiajs/vue3', () => ({
-    router: { reload: vi.fn(), replace: vi.fn(), on: vi.fn(() => vi.fn()) },
+    router: { reload, replace: vi.fn(), on: vi.fn(() => vi.fn()) },
     Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
 }));
 
@@ -157,7 +158,7 @@ describe('the list widget', () => {
         await wrapper.find('[data-xq-list-row] button').trigger('click');
         await flushPromises();
 
-        expect(router.reload).toHaveBeenCalledWith({ only: ['widgets', 'page'] });
+        expect(reload).toHaveBeenCalledWith({ only: ['widgets', 'page'] });
         post.mockRestore();
     });
 
