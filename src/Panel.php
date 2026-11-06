@@ -5,6 +5,7 @@ namespace Xelqun\Panels;
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -16,6 +17,7 @@ use Xelqun\Panels\Auth\RegisterForm;
 use Xelqun\Panels\Auth\RequestPasswordResetForm;
 use Xelqun\Panels\Auth\ResetPasswordForm;
 use Xelqun\Panels\Contracts\HasAppAuthentication;
+use Xelqun\Panels\Contracts\HasTenants;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
@@ -94,6 +96,13 @@ final class Panel
 
     /** @var array<int, NavigationItem> */
     private array $navigationItems = [];
+
+    /** @var class-string<Model>|null */
+    private ?string $tenantModel = null;
+
+    private ?string $tenantSlugAttribute = null;
+
+    private ?string $tenantOwnershipRelationship = null;
 
     private bool $hasMultiFactorAuthentication = false;
 
@@ -355,6 +364,79 @@ final class Panel
     public function hasVerifiedEmail(?Authenticatable $user): bool
     {
         return ! $this->requiresEmailVerification || ($user instanceof MustVerifyEmail && $user->hasVerifiedEmail());
+    }
+
+    /**
+     * Split this panel between tenants, such as teams, under /admin/{tenant}. The
+     * user model needs HasTenants. A resource's records must belong to a tenant
+     * through $ownershipRelationship, which by default is named after the model.
+     *
+     * @param  class-string<Model>  $model
+     * @param  string|null  $slugAttribute  What identifies a tenant in the URL. By default, its route key.
+     */
+    public function tenant(string $model, ?string $slugAttribute = null, ?string $ownershipRelationship = null): self
+    {
+        $this->tenantModel = $model;
+        $this->tenantSlugAttribute = $slugAttribute;
+        $this->tenantOwnershipRelationship = $ownershipRelationship;
+
+        return $this;
+    }
+
+    public function hasTenancy(): bool
+    {
+        return $this->tenantModel !== null;
+    }
+
+    /**
+     * @return class-string<Model>|null
+     */
+    public function getTenantModel(): ?string
+    {
+        return $this->tenantModel;
+    }
+
+    public function getTenantSlugAttribute(): string
+    {
+        return $this->tenantSlugAttribute ?? (new $this->tenantModel)->getRouteKeyName();
+    }
+
+    public function getTenantOwnershipRelationship(): string
+    {
+        return $this->tenantOwnershipRelationship ?? Str::camel(class_basename($this->tenantModel));
+    }
+
+    /**
+     * By what the URL says. A word can't be looked up in a number column on every database.
+     */
+    public function findTenant(string $slug): ?Model
+    {
+        $tenant = new $this->tenantModel;
+        $attribute = $this->getTenantSlugAttribute();
+
+        if ($attribute === $tenant->getKeyName() && $tenant->getKeyType() === 'int' && ! ctype_digit($slug)) {
+            return null;
+        }
+
+        return $tenant->newQuery()->where($attribute, $slug)->first();
+    }
+
+    public function canAccessTenant(?Authenticatable $user, Model $tenant): bool
+    {
+        return $user instanceof HasTenants && $user->canAccessTenant($tenant);
+    }
+
+    /**
+     * @return Collection<int, Model>
+     */
+    public function getTenantsFor(?Authenticatable $user): Collection
+    {
+        return $user instanceof HasTenants ? $user->getTenants($this) : collect();
+    }
+
+    public function getTenantUrl(Model $tenant): string
+    {
+        return url($this->path.'/'.$tenant->getAttribute($this->getTenantSlugAttribute()));
     }
 
     /**
@@ -642,11 +724,22 @@ final class Panel
     public function toShell(): array
     {
         $user = auth()->user();
-        $isInside = $this->allows($user) && $this->hasVerifiedEmail($user);
+        $tenant = app(Panels::class)->tenant();
+
+        // Without its tenant a panel with tenants has no links to give, as on the email prompt.
+        $isInside = $this->allows($user) && $this->hasVerifiedEmail($user) && (! $this->hasTenancy() || $tenant !== null);
 
         return [
             'id' => $this->id,
-            'url' => $this->getUrl(),
+            'url' => $tenant === null ? $this->getUrl() : $this->getTenantUrl($tenant),
+            'tenant' => $isInside && $tenant !== null ? [
+                'name' => (string) $tenant->getAttribute('name'),
+                'tenants' => $this->getTenantsFor($user)->map(fn (Model $option): array => [
+                    'name' => (string) $option->getAttribute('name'),
+                    'url' => $this->getTenantUrl($option),
+                    'active' => $option->is($tenant),
+                ])->values()->all(),
+            ] : null,
             'brand' => ['name' => $this->getBrandName()],
             'theme' => ['colors' => (object) $this->getColorVariables(), 'font' => $this->font],
             'navigation' => $isInside ? $this->getNavigation() : [],

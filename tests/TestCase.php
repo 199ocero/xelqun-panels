@@ -14,6 +14,7 @@ use Xelqun\Panels\PanelsServiceProvider;
 use Xelqun\Panels\Tests\Fixtures\AdminPanelProvider;
 use Xelqun\Panels\Tests\Fixtures\HandleInertia;
 use Xelqun\Panels\Tests\Fixtures\StaffPanelProvider;
+use Xelqun\Panels\Tests\Fixtures\TeamPanelProvider;
 use Xelqun\Panels\Tests\Fixtures\User;
 use Xelqun\Tables\TablesServiceProvider;
 use Xelqun\Tables\Testing\InteractsWithTables;
@@ -32,6 +33,7 @@ abstract class TestCase extends Orchestra
             PanelsServiceProvider::class,
             AdminPanelProvider::class,
             StaffPanelProvider::class,
+            TeamPanelProvider::class,
         ];
     }
 
@@ -101,6 +103,36 @@ abstract class TestCase extends Orchestra
             $table->id();
             $table->string('name');
             $table->timestamps();
+        });
+
+        Schema::create('teams', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->timestamps();
+        });
+
+        Schema::create('team_user', function (Blueprint $table): void {
+            $table->foreignId('team_id');
+            $table->foreignId('user_id');
+        });
+
+        Schema::create('projects', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('team_id');
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::create('folders', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::create('folder_team', function (Blueprint $table): void {
+            $table->foreignId('folder_id');
+            $table->foreignId('team_id');
         });
 
         Schema::create('notifications', function (Blueprint $table): void {

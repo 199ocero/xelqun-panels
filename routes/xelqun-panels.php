@@ -10,9 +10,12 @@ use Xelqun\Panels\Http\Controllers\Auth\ProfileController;
 use Xelqun\Panels\Http\Controllers\Auth\RegisterController;
 use Xelqun\Panels\Http\Controllers\GlobalSearchController;
 use Xelqun\Panels\Http\Controllers\NotificationController;
+use Xelqun\Panels\Http\Controllers\RedirectToTenantController;
 use Xelqun\Panels\Http\Controllers\ResourceRecordController;
 use Xelqun\Panels\Http\Middleware\Authenticate;
 use Xelqun\Panels\Http\Middleware\EnterPanel;
+use Xelqun\Panels\Http\Middleware\IdentifyTenant;
+use Xelqun\Panels\Http\Middleware\RequireMultiFactorSetup;
 use Xelqun\Panels\Panels;
 
 foreach (app(Panels::class)->all() as $panel) {
@@ -53,49 +56,57 @@ foreach (app(Panels::class)->all() as $panel) {
             Route::post('logout', LogoutController::class)->name('auth.logout');
 
             Route::middleware(Authenticate::class)->group(function () use ($panel): void {
-                // The underscore keeps it clear of a page or resource called search.
-                Route::post('_search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
+                if ($panel->hasTenancy()) {
+                    Route::get('', RedirectToTenantController::class)->name('tenant.redirect');
+                }
 
-                if ($panel->hasDatabaseNotifications()) {
-                    Route::prefix('_notifications')->middleware('throttle:120,1')->name('notifications.')->group(function (): void {
-                        Route::post('', [NotificationController::class, 'index'])->name('index');
-                        Route::post('read-all', [NotificationController::class, 'readAll'])->name('read-all');
-                        Route::post('clear', [NotificationController::class, 'clear'])->name('clear');
-                        Route::post('{notification}/read', [NotificationController::class, 'read'])->name('read');
+                Route::prefix($panel->hasTenancy() ? '{tenant}' : '')
+                    ->middleware([...($panel->hasTenancy() ? [IdentifyTenant::class] : []), RequireMultiFactorSetup::class])
+                    ->group(function () use ($panel): void {
+                        // The underscore keeps it clear of a page or resource called search.
+                        Route::post('_search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
+
+                        if ($panel->hasDatabaseNotifications()) {
+                            Route::prefix('_notifications')->middleware('throttle:120,1')->name('notifications.')->group(function (): void {
+                                Route::post('', [NotificationController::class, 'index'])->name('index');
+                                Route::post('read-all', [NotificationController::class, 'readAll'])->name('read-all');
+                                Route::post('clear', [NotificationController::class, 'clear'])->name('clear');
+                                Route::post('{notification}/read', [NotificationController::class, 'read'])->name('read');
+                            });
+                        }
+
+                        if ($panel->getProfileForm() !== null) {
+                            Route::get('profile', [ProfileController::class, 'show'])->name('auth.profile');
+                            Route::put('profile', [ProfileController::class, 'update'])->name('auth.profile.update');
+                        }
+
+                        foreach ($panel->getPages() as $page) {
+                            Route::get($page::getSlug(), $page)->name($page::getRouteName());
+                        }
+
+                        foreach ($panel->getResources() as $resource) {
+                            $pages = $resource::getPages();
+                            $slug = $resource::getSlug();
+
+                            Route::prefix($slug)->name("resources.{$slug}.")->group(function () use ($pages, $resource): void {
+                                Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
+
+                                if (isset($pages['create'])) {
+                                    Route::get('create', $pages['create'])->name('create')->defaults('resource', $resource);
+                                    Route::post('', [ResourceRecordController::class, 'store'])->name('store')->defaults('resource', $resource);
+                                }
+
+                                if (isset($pages['view'])) {
+                                    Route::get('{record}', $pages['view'])->name('view')->defaults('resource', $resource);
+                                }
+
+                                if (isset($pages['edit'])) {
+                                    Route::get('{record}/edit', $pages['edit'])->name('edit')->defaults('resource', $resource);
+                                    Route::put('{record}', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
+                                }
+                            });
+                        }
                     });
-                }
-
-                if ($panel->getProfileForm() !== null) {
-                    Route::get('profile', [ProfileController::class, 'show'])->name('auth.profile');
-                    Route::put('profile', [ProfileController::class, 'update'])->name('auth.profile.update');
-                }
-
-                foreach ($panel->getPages() as $page) {
-                    Route::get($page::getSlug(), $page)->name($page::getRouteName());
-                }
-
-                foreach ($panel->getResources() as $resource) {
-                    $pages = $resource::getPages();
-                    $slug = $resource::getSlug();
-
-                    Route::prefix($slug)->name("resources.{$slug}.")->group(function () use ($pages, $resource): void {
-                        Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
-
-                        if (isset($pages['create'])) {
-                            Route::get('create', $pages['create'])->name('create')->defaults('resource', $resource);
-                            Route::post('', [ResourceRecordController::class, 'store'])->name('store')->defaults('resource', $resource);
-                        }
-
-                        if (isset($pages['view'])) {
-                            Route::get('{record}', $pages['view'])->name('view')->defaults('resource', $resource);
-                        }
-
-                        if (isset($pages['edit'])) {
-                            Route::get('{record}/edit', $pages['edit'])->name('edit')->defaults('resource', $resource);
-                            Route::put('{record}', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
-                        }
-                    });
-                }
             });
         });
 }

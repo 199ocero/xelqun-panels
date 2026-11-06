@@ -66,6 +66,10 @@ export interface PanelShell {
     id: string;
     url: string;
     brand: { name: string };
+    tenant: {
+        name: string;
+        tenants: Array<{ name: string; url: string; active: boolean }>;
+    } | null;
     theme: { colors: Record<string, string>; font: string };
     navigation: PanelNavigationGroup[];
     quickCreate: PanelQuickCreateItem[];

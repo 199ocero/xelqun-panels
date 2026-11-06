@@ -5,11 +5,14 @@ namespace Xelqun\Panels\Resources;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Xelqun\Actions\Action;
 use Xelqun\Actions\ActionGroup;
 use Xelqun\Forms\Components\Component;
+use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
@@ -50,6 +53,12 @@ abstract class Resource
     protected static ?string $navigationGroup = null;
 
     protected static int $navigationSort = 0;
+
+    /** Turn this off for a model that isn't owned by a tenant. */
+    protected static bool $isScopedToTenant = true;
+
+    /** Overrides the panel's ownership relationship for this model. */
+    protected static ?string $tenantOwnershipRelationship = null;
 
     /** How many records one resource adds to the search results. */
     private const int GLOBAL_SEARCH_LIMIT = 5;
@@ -166,7 +175,84 @@ abstract class Resource
      */
     public static function getEloquentQuery(): Builder
     {
+        $panels = app(Panels::class);
+
+        // Records of every tenant would otherwise show. Nothing reaches here like this today, so this is the backstop.
+        abort_if(static::$isScopedToTenant && $panels->current()?->hasTenancy() && $panels->tenant() === null, 404);
+
         return static::$model::query();
+    }
+
+    /**
+     * Keep this model to the current tenant, for every query in this request:
+     * tables, Select options, widgets, scopedUnique() and your own. It reads the
+     * tenant as each query runs, so it does nothing outside a tenant, including
+     * for later requests under Octane.
+     */
+    public static function scopeToTenants(Panel $panel): void
+    {
+        if (! static::$isScopedToTenant) {
+            return;
+        }
+
+        $relationship = static::getTenantRelationshipName($panel);
+
+        if (! method_exists(static::$model, $relationship)) {
+            throw new PanelDefinitionException('['.static::$model."] needs a [{$relationship}] relationship to belong to a tenant. Set \$isScopedToTenant to false if it doesn't.");
+        }
+
+        static::$model::addGlobalScope('xelqun-panels.tenant', function (Builder $query) use ($relationship): void {
+            $tenant = app(Panels::class)->tenant();
+
+            if ($tenant === null) {
+                return;
+            }
+
+            if ($query->getModel()->{$relationship}() instanceof BelongsTo) {
+                $query->whereBelongsTo($tenant, $relationship);
+            } else {
+                $query->whereHas($relationship, fn (Builder $tenants): Builder => $tenants->whereKey($tenant->getKey()));
+            }
+        });
+    }
+
+    /**
+     * A new record starts out in the current tenant. A many-to-many has to wait
+     * until the record exists: see attachToTenant().
+     */
+    public static function assignToTenant(Model $record): void
+    {
+        $tenant = app(Panels::class)->tenant();
+
+        if ($tenant === null || ! static::$isScopedToTenant) {
+            return;
+        }
+
+        $relation = $record->{static::getTenantRelationshipName(app(Panels::class)->current())}();
+
+        if ($relation instanceof BelongsTo) {
+            $relation->associate($tenant);
+        }
+    }
+
+    public static function attachToTenant(Model $record): void
+    {
+        $tenant = app(Panels::class)->tenant();
+
+        if ($tenant === null || ! static::$isScopedToTenant) {
+            return;
+        }
+
+        $relation = $record->{static::getTenantRelationshipName(app(Panels::class)->current())}();
+
+        if ($relation instanceof BelongsToMany) {
+            $relation->attach($tenant);
+        }
+    }
+
+    protected static function getTenantRelationshipName(Panel $panel): string
+    {
+        return static::$tenantOwnershipRelationship ?? $panel->getTenantOwnershipRelationship();
     }
 
     /**

@@ -7,6 +7,7 @@ import { iconButtonClass } from '../ui/classes';
 import XqPanelNavItem from './XqPanelNavItem.vue';
 import XqPanelNewMenu from './XqPanelNewMenu.vue';
 import XqPanelSidebarCard from './XqPanelSidebarCard.vue';
+import XqPanelTenantMenu from './XqPanelTenantMenu.vue';
 import XqPanelUserMenu from './XqPanelUserMenu.vue';
 
 const props = defineProps<{ panel: PanelShell; collapsed?: boolean }>();
@@ -41,6 +42,8 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
                 <PanelLeft class="size-4" aria-hidden="true" />
             </button>
         </div>
+
+        <XqPanelTenantMenu v-if="panel.tenant && !collapsed" :tenant="panel.tenant" />
 
         <div
             v-if="collapsed || panel.quickCreate.length > 0"

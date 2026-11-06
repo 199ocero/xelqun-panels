@@ -2,7 +2,9 @@
 
 namespace Xelqun\Panels;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 
 /**
@@ -18,6 +20,8 @@ final class Panels
     public const string VERSION = '0.1.0';
 
     private const string CURRENT = 'xelqun-panels.current';
+
+    private const string TENANT = 'xelqun-panels.tenant';
 
     /** @var array<string, Panel> */
     private array $panels = [];
@@ -65,6 +69,32 @@ final class Panels
         $panel = request()->attributes->get(self::CURRENT);
 
         return $panel instanceof Panel ? $panel : null;
+    }
+
+    /**
+     * The tenant this request is in, on a panel that has them.
+     */
+    public function tenant(): ?Model
+    {
+        $tenant = request()->attributes->get(self::TENANT);
+
+        return $tenant instanceof Model ? $tenant : null;
+    }
+
+    /**
+     * From here on the panel's URLs carry this tenant, and its resources' models
+     * only show its records.
+     */
+    public function enterTenant(Model $tenant): void
+    {
+        $panel = $this->current() ?? throw new PanelDefinitionException('Enter a panel before a tenant.');
+
+        request()->attributes->set(self::TENANT, $tenant);
+        URL::defaults(['tenant' => $tenant->getAttribute($panel->getTenantSlugAttribute())]);
+
+        foreach ($panel->getResources() as $resource) {
+            $resource::scopeToTenants($panel);
+        }
     }
 
     /**

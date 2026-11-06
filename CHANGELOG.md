@@ -15,6 +15,7 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **A `Color` enum, as in Filament.** `colors(['primary' => Color::Amber])` takes Tailwind's palettes or a hex value, for `primary`, `danger`, `gray`, `info`, `success` and `warning`, and a closure for a color that comes from a setting. Text on any color meets WCAG AA.
 - **A notification bell.** `databaseNotifications()`, with `DatabaseNotification::make()->sendToDatabase($user)`.
 - **Two-factor authentication.** `multiFactorAuthentication()` adds authenticator apps and recovery codes, optional or required, with no new dependency.
+- **Tenancy.** `tenant(Team::class)` moves a panel under `/admin/{tenant}`, keeps its resources' models to that tenant in every query, and adds a switcher to the sidebar.
 - **Infolists.** `Resource::infolist()` with `TextEntry`, `IconEntry` and `ImageEntry`, in place of a disabled form on the view page.
 
 ### Changed

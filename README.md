@@ -203,6 +203,37 @@ public static function getGlobalSearchResultDetails(Model $record): array
 
 Return `[]` to keep a resource out. Search runs through `getEloquentQuery()`, skips a resource the user can't `viewAny`, and checks `view` on each record, showing up to 5 per resource. Results link to the view page. A policy that refuses more than the first 20 matches can hide later ones.
 
+## Tenancy
+
+Split a panel between teams, shops or companies. Every page moves under `/admin/{tenant}`:
+
+```php
+$panel->tenant(Team::class, slugAttribute: 'slug');
+```
+
+Say who belongs where on your user model:
+
+```php
+class User extends Authenticatable implements HasTenants, PanelUser
+{
+    public function getTenants(Panel $panel): Collection
+    {
+        return $this->teams;
+    }
+
+    public function canAccessTenant(Model $tenant): bool
+    {
+        return $this->teams()->whereKey($tenant)->exists();
+    }
+}
+```
+
+Each resource's model needs a relationship to the tenant, named after it (`team()`) unless you pass `ownershipRelationship`, or set `$tenantOwnershipRelationship` on the resource. It can be a belongs-to or a many-to-many. Set `$isScopedToTenant = false` on a resource that isn't owned by a tenant.
+
+Inside a tenant, those models stay in it for every query of the request: tables, search, Select options, widgets, `scopedUnique()`, `scopedExists()` and your own code. New records join the tenant on their own, and it never comes from the browser. A tenant the user isn't in is a 404, and taking someone out takes effect at once, even on an open page.
+
+A sidebar switcher moves between tenants. Notifications belong to the user, not the tenant.
+
 ## Notifications
 
 `databaseNotifications()` adds a bell to the top bar, which checks every 30 seconds. Change that with `databaseNotificationsPolling('60s')`, or pass `null` to check only on page load. It needs Laravel's table, from `php artisan make:notifications-table`, and `Notifiable` on your user model.
@@ -285,7 +316,6 @@ Icons in PHP are names. The panels plugin adds common sidebar icons to the forms
 
 ## Current limits
 
-- Tenancy comes next.
 - A relation manager can create a many-to-many record, but can't attach an existing one yet.
 - `%` and `_` in a search act as wildcards.
 - `discoverResources()` walks its folder on every request.

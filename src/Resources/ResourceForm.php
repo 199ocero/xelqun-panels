@@ -56,6 +56,21 @@ final class ResourceForm extends Form
         return $this->getResource()::getModel();
     }
 
+    /**
+     * What a create form saves into, already in the current tenant, so the tenant
+     * never comes from the browser.
+     */
+    public function getModelInstance(): Model
+    {
+        $model = parent::getModelInstance();
+
+        if (! $model->exists) {
+            $this->getResource()::assignToTenant($model);
+        }
+
+        return $model;
+    }
+
     public function resolveRecord(int|string $key): Model
     {
         return $this->getResource()::findRecord($key);
@@ -102,6 +117,7 @@ final class ResourceForm extends Form
         $resource = $this->getResource();
 
         if ($this->getOperation() === self::CREATE) {
+            $resource::attachToTenant($record);
             $resource::afterCreate($record, $data);
         } else {
             $resource::afterSave($record, $data);

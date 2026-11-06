@@ -29,20 +29,33 @@ class PanelsServiceProvider extends ServiceProvider
             $panels = $this->app->make(Panels::class);
 
             $tokens->scopeUsing(
-                fn (): ?string => $panels->current()?->getId(),
-                function (?string $id) use ($panels): void {
-                    if ($id === null) {
+                fn (): ?string => $panels->current() === null ? null : implode(':', array_filter([$panels->current()->getId(), $panels->tenant()?->getKey()])),
+                function (?string $scope) use ($panels): void {
+                    if ($scope === null) {
                         return;
                     }
 
+                    [$id, $tenantKey] = array_pad(explode(':', $scope, 2), 2, null);
                     $panel = $panels->get($id) ?? throw InvalidFormToken::make('the token belongs to an unknown panel');
-
                     $panels->enter($panel);
+                    $user = auth()->user();
 
                     // A guest is fine here, because the token's user is compared next.
-                    if (auth()->check() && ! ($panel->allows(auth()->user()) && $panel->hasVerifiedEmail(auth()->user()))) {
+                    if ($user !== null && ! ($panel->allows($user) && $panel->hasVerifiedEmail($user))) {
                         throw InvalidFormToken::make('this user can no longer enter the panel');
                     }
+
+                    if (! $panel->hasTenancy()) {
+                        return;
+                    }
+
+                    $tenant = $tenantKey === null ? null : (new ($panel->getTenantModel()))->newQuery()->find($tenantKey);
+
+                    if ($tenant === null || ($user !== null && ! $panel->canAccessTenant($user, $tenant))) {
+                        throw InvalidFormToken::make('this user can no longer reach the tenant');
+                    }
+
+                    $panels->enterTenant($tenant);
                 },
             );
         });

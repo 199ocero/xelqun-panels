@@ -31,6 +31,7 @@ const shell: PanelShell = {
     id: 'admin',
     url: '/admin',
     brand: { name: 'Shop' },
+    tenant: null,
     theme: { colors: {}, font: 'Inter' },
     navigation: [
         { label: null, items: [item('Home', { active: true })] },
@@ -103,6 +104,22 @@ describe('the new button', () => {
 
         expect(wrapper.find('[data-xq-new]').attributes('aria-label')).toBe('New');
         expect(wrapper.text()).toBe('');
+    });
+});
+
+describe('the tenant switcher', () => {
+    const tenant = {
+        name: 'Red team',
+        tenants: [{ name: 'Red team', url: '/red', active: true }],
+    };
+
+    it('names the tenant, and only shows on a panel with them', () => {
+        const switcher = (panel: PanelShell, collapsed = false) =>
+            mount(XqPanelSidebar, { props: { panel, collapsed } }).find('[data-xq-tenant]');
+
+        expect(switcher({ ...shell, tenant }).text()).toBe('Red team');
+        expect(switcher(shell).exists()).toBe(false);
+        expect(switcher({ ...shell, tenant }, true).exists()).toBe(false);
     });
 });
 
