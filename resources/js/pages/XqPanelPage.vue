@@ -10,17 +10,23 @@ defineProps<{ page: PanelPageData }>();
 </script>
 
 <template>
-    <main data-xq-page>
+    <div class="gap-6 px-4 py-6 sm:px-8 sm:py-8 max-w-7xl mx-auto grid" data-xq-page>
         <Head :title="page.title" />
-        <header class="gap-4 flex items-center justify-between">
-            <h1 class="text-2xl font-semibold">{{ page.title }}</h1>
+        <header class="gap-4 flex flex-wrap items-start justify-between">
+            <div class="min-w-0">
+                <p v-if="page.eyebrow" class="text-sm text-xq-muted-foreground">
+                    {{ page.eyebrow }}
+                </p>
+                <h1 class="text-2xl font-semibold sm:text-3xl tracking-tight">{{ page.title }}</h1>
+                <p v-if="page.subheading" class="mt-1 text-sm text-xq-muted-foreground">
+                    {{ page.subheading }}
+                </p>
+            </div>
             <XqActions v-if="page.headerActions" :actions="page.headerActions" />
         </header>
-        <div class="mt-6 gap-6 grid">
-            <template v-for="item in page.content" :key="item.schema.id">
-                <XqTable v-if="item.type === 'table'" :table="item.schema" />
-                <XqActions v-else :actions="item.schema" />
-            </template>
-        </div>
-    </main>
+        <template v-for="item in page.content" :key="item.schema.id">
+            <XqTable v-if="item.type === 'table'" :table="item.schema" />
+            <XqActions v-else :actions="item.schema" />
+        </template>
+    </div>
 </template>

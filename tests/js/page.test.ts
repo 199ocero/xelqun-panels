@@ -13,7 +13,17 @@ const XqTable = { props: ['table'], template: '<u data-table>{{ table.id }}</u>'
 
 function render(page: Partial<PanelPageData>) {
     return mount(XqPanelPage, {
-        props: { page: { title: 'Home', headerActions: null, content: [], ...page } },
+        props: {
+            page: {
+                title: 'Home',
+                eyebrow: null,
+                subheading: null,
+                breadcrumbs: [],
+                headerActions: null,
+                content: [],
+                ...page,
+            },
+        },
         global: { stubs: { Head: true, XqActions, XqTable } },
     });
 }

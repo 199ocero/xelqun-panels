@@ -8,6 +8,7 @@ use Inertia\Response;
 use Xelqun\Actions\Action;
 use Xelqun\Actions\ActionGroup;
 use Xelqun\Actions\ActionSet;
+use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Tables\Table;
@@ -26,9 +27,64 @@ abstract class Page
 
     protected static ?string $slug = null;
 
+    protected static ?string $navigationLabel = null;
+
+    protected static ?string $navigationIcon = null;
+
+    protected static ?string $navigationGroup = null;
+
+    protected static int $navigationSort = 0;
+
     public static function getTitle(): string
     {
         return static::$title ?? Str::headline(class_basename(static::class));
+    }
+
+    /**
+     * Small text above the title.
+     */
+    public function getEyebrow(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * A line under the title.
+     */
+    public function getSubheading(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * The trail in the top bar, ending with this page.
+     *
+     * @return array<int, array{label: string, url?: string}>
+     */
+    public function getBreadcrumbs(): array
+    {
+        return [['label' => static::getTitle()]];
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return true;
+    }
+
+    public static function getNavigationBadge(): string|int|null
+    {
+        return null;
+    }
+
+    public static function getNavigationItem(Panel $panel): NavigationItem
+    {
+        return NavigationItem::make(static::$navigationLabel ?? static::getTitle())
+            ->icon(static::$navigationIcon)
+            ->group(static::$navigationGroup)
+            ->sort(static::$navigationSort)
+            ->url(static::getUrl(panel: $panel))
+            ->badge(static::getNavigationBadge())
+            ->active(request()->routeIs($panel->routeName(static::getRouteName())));
     }
 
     /**
@@ -111,6 +167,9 @@ abstract class Page
     {
         return [
             'title' => static::getTitle(),
+            'eyebrow' => $this->getEyebrow(),
+            'subheading' => $this->getSubheading(),
+            'breadcrumbs' => $this->getBreadcrumbs(),
             'headerActions' => $this->headerActions() === [] ? null : PageActionSet::for($this)->toSchema(),
             'content' => array_map(fn (Table|ActionSet $item): array => match (true) {
                 $item instanceof Table => ['type' => 'table', 'schema' => $item->toSchema()],

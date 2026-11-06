@@ -2,5 +2,79 @@
  * Xelqun Panels styles. Import once in the app's Tailwind entry, after forms:
  *   @import '@xelqun/panels/style.css';
  * The @source below makes Tailwind scan the package's components.
+ *
+ * Tokens live on <html> so dialogs and the toaster, which render outside the
+ * layout, get them too. The selectors outweigh forms' :root and .dark, so the
+ * order of the imports doesn't matter.
  */
 @source "../js";
+
+@theme inline {
+    --color-xq-shell: var(--xq-shell);
+    --color-xq-nav-hover: var(--xq-nav-hover);
+    --color-xq-nav-active: var(--xq-nav-active);
+}
+
+:root[data-xq-panel] {
+    --xq-radius: 0.875rem;
+    --xq-shell: #f0f0f2;
+    --xq-nav-hover: #e6e6e9;
+    --xq-nav-active: #e3e3e6;
+    --xq-background: #f6f6f7;
+    --xq-foreground: #1c1c1e;
+    --xq-card: #ffffff;
+    --xq-card-foreground: #1c1c1e;
+    --xq-popover: #ffffff;
+    --xq-popover-foreground: #1c1c1e;
+    --xq-primary: var(--xq-panel-primary, #0071e3);
+    --xq-primary-foreground: #ffffff;
+    --xq-secondary: #f0f0f2;
+    --xq-secondary-foreground: #1c1c1e;
+    --xq-muted: #f0f0f2;
+    --xq-muted-foreground: #66666d;
+    --xq-accent: #eeeef0;
+    --xq-accent-foreground: #1c1c1e;
+    --xq-border: #e6e6e9;
+    --xq-input: #dcdce0;
+    --xq-ring: var(--xq-panel-primary, #0071e3);
+    font-family: var(--xq-panel-font, 'Inter'), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* The same steps as the light theme, from the shell up. White text fails on a lighter blue, so the text goes dark. */
+:root[data-xq-panel].dark {
+    color-scheme: dark;
+    --xq-shell: #0e0e10;
+    --xq-nav-hover: #1c1c1f;
+    --xq-nav-active: #232327;
+    --xq-background: #141416;
+    --xq-foreground: #f4f4f5;
+    --xq-card: #1b1b1e;
+    --xq-card-foreground: #f4f4f5;
+    --xq-popover: #212124;
+    --xq-popover-foreground: #f4f4f5;
+    --xq-primary: oklch(from var(--xq-panel-primary, #0071e3) 0.74 c h);
+    --xq-primary-foreground: #0b1220;
+    --xq-secondary: #26262a;
+    --xq-secondary-foreground: #f4f4f5;
+    --xq-muted: #232327;
+    --xq-muted-foreground: #a0a0a8;
+    --xq-accent: #2a2a2e;
+    --xq-accent-foreground: #f4f4f5;
+    --xq-border: rgb(255 255 255 / 9%);
+    --xq-input: rgb(255 255 255 / 14%);
+    --xq-ring: oklch(from var(--xq-panel-primary, #0071e3) 0.74 c h);
+}
+
+:root[data-xq-panel] body {
+    background: var(--xq-shell);
+    color: var(--xq-foreground);
+}
+
+/* No card shadows or tall corners: hairlines do the work, as buttons do with pills. */
+:root[data-xq-panel] [data-slot='xq-button'] {
+    border-radius: 9999px;
+}
+
+:root[data-xq-panel] [data-xq-table] table {
+    background: var(--xq-card);
+}

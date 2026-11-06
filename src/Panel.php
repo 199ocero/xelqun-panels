@@ -2,7 +2,11 @@
 
 namespace Xelqun\Panels;
 
+use Closure;
+use Illuminate\Support\Collection;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
+use Xelqun\Panels\Navigation\NavigationItem;
+use Xelqun\Panels\Navigation\SidebarCard;
 use Xelqun\Panels\Pages\Page;
 
 /**
@@ -15,6 +19,10 @@ final class Panel
 {
     private const string ID = '/^[a-z0-9]+(-[a-z0-9]+)*$/';
 
+    private const string HEX_COLOR = '/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i';
+
+    private const string FONT = '/^[A-Za-z0-9 ]+$/';
+
     private string $id = '';
 
     private string $path = '';
@@ -23,8 +31,21 @@ final class Panel
 
     private string $authGuard;
 
+    private ?string $primaryColor = null;
+
+    private string $font = 'Inter';
+
     /** @var array<int, class-string<Page>> */
     private array $pages = [];
+
+    /** @var array<int, string> */
+    private array $navigationGroups = [];
+
+    /** @var array<int, NavigationItem> */
+    private array $navigationItems = [];
+
+    /** @var (Closure(): ?SidebarCard)|null */
+    private ?Closure $sidebarFooter = null;
 
     /**
      * The default guard is read now, because entering a panel changes that
@@ -87,6 +108,49 @@ final class Panel
     }
 
     /**
+     * The panel's accent, as a hex value. The dark theme derives its own from it.
+     * It ends up in a style attribute, which is why nothing else is accepted.
+     *
+     * @param  array{primary?: string}  $colors
+     */
+    public function colors(array $colors): self
+    {
+        $primary = $colors['primary'] ?? '';
+
+        if (array_keys($colors) !== ['primary'] || preg_match(self::HEX_COLOR, $primary) !== 1) {
+            throw new PanelDefinitionException('colors() takes a primary color as a hex value, like ["primary" => "#0071e3"].');
+        }
+
+        $this->primaryColor = $primary;
+
+        return $this;
+    }
+
+    public function getPrimaryColor(): ?string
+    {
+        return $this->primaryColor;
+    }
+
+    /**
+     * A family from Bunny Fonts.
+     */
+    public function font(string $family): self
+    {
+        if (preg_match(self::FONT, $family) !== 1) {
+            throw new PanelDefinitionException("[{$family}] is not a valid font family.");
+        }
+
+        $this->font = $family;
+
+        return $this;
+    }
+
+    public function getFont(): string
+    {
+        return $this->font;
+    }
+
+    /**
      * Must be a session guard.
      */
     public function authGuard(string $guard): self
@@ -120,6 +184,73 @@ final class Panel
     }
 
     /**
+     * The order of the sidebar's groups. Ungrouped links come first, and a group
+     * not named here comes last.
+     *
+     * @param  array<int, string>  $groups
+     */
+    public function navigationGroups(array $groups): self
+    {
+        $this->navigationGroups = $groups;
+
+        return $this;
+    }
+
+    /**
+     * Links to anything other than this panel's pages.
+     *
+     * @param  array<int, NavigationItem>  $items
+     */
+    public function navigationItems(array $items): self
+    {
+        $this->navigationItems = [...$this->navigationItems, ...$items];
+
+        return $this;
+    }
+
+    /**
+     * What the viewer can reach, grouped and in order.
+     *
+     * @return array<int, array{label: string|null, items: array<int, array<string, mixed>>}>
+     */
+    public function getNavigation(): array
+    {
+        /** @var Collection<string, Collection<int, NavigationItem>> $groups */
+        $groups = collect($this->pages)
+            ->filter(fn (string $page): bool => $page::shouldRegisterNavigation() && $page::canAccess())
+            ->map(fn (string $page): NavigationItem => $page::getNavigationItem($this))
+            ->concat($this->navigationItems)
+            ->sortBy(fn (NavigationItem $item): int => $item->getSort())
+            ->groupBy(fn (NavigationItem $item): string => (string) $item->getGroup());
+
+        return $groups
+            ->sortBy(function (Collection $items, string $label): int|float {
+                $position = array_search($label, $this->navigationGroups, true);
+
+                return $label === '' ? -1 : ($position === false ? INF : $position);
+            })
+            ->map(fn (Collection $items, string $label): array => [
+                'label' => $label === '' ? null : $label,
+                'items' => $items->map(fn (NavigationItem $item): array => $item->toArray())->values()->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * A card at the foot of the sidebar. It's a closure because it runs on every
+     * page, for the current user.
+     *
+     * @param  Closure(): ?SidebarCard  $card
+     */
+    public function sidebarFooter(Closure $card): self
+    {
+        $this->sidebarFooter = $card;
+
+        return $this;
+    }
+
+    /**
      * The full name of a route of this panel, as in route($panel->routeName('pages.home')).
      */
     public function routeName(string $name): string
@@ -131,7 +262,7 @@ final class Panel
      * What the shell needs on every page. The user is picked field by field,
      * because a whole model would send every attribute it doesn't hide.
      *
-     * @return array{id: string, url: string, brand: array{name: string}, user: array{name: string, email: string}|null}
+     * @return array<string, mixed>
      */
     public function toShell(): array
     {
@@ -139,6 +270,9 @@ final class Panel
             'id' => $this->id,
             'url' => $this->getUrl(),
             'brand' => ['name' => $this->getBrandName()],
+            'theme' => ['primary' => $this->primaryColor, 'font' => $this->font],
+            'navigation' => $this->getNavigation(),
+            'sidebarFooter' => $this->sidebarFooter === null ? null : ($this->sidebarFooter)()?->toArray(),
             'user' => $this->shellUser(),
         ];
     }

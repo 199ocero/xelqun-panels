@@ -2,6 +2,7 @@
 
 namespace Xelqun\Panels\Tests;
 
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Inertia\ServiceProvider as InertiaServiceProvider;
@@ -34,7 +35,8 @@ abstract class TestCase extends Orchestra
     {
         $app['config']->set('auth.guards.admin', ['driver' => 'session', 'provider' => 'users']);
         $app['config']->set('inertia.testing.ensure_pages_exist', false);
-        $app['router']->pushMiddlewareToGroup('web', HandleInertia::class);
+        $app['view']->addLocation(__DIR__.'/Fixtures/views');
+        $app->make(Kernel::class)->appendMiddlewareToGroup('web', HandleInertia::class);
     }
 
     protected function setUp(): void
