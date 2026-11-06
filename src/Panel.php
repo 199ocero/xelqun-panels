@@ -3,7 +3,10 @@
 namespace Xelqun\Panels;
 
 use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
+use Xelqun\Panels\Auth\LoginForm;
+use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Navigation\SidebarCard;
@@ -30,6 +33,9 @@ final class Panel
     private ?string $brandName = null;
 
     private string $authGuard;
+
+    /** @var class-string<LoginForm>|null */
+    private ?string $loginForm = null;
 
     private ?string $primaryColor = null;
 
@@ -166,6 +172,45 @@ final class Panel
     }
 
     /**
+     * Give this panel a login page. Without one, a guest is refused.
+     *
+     * @param  class-string<LoginForm>  $form
+     */
+    public function login(string $form = LoginForm::class): self
+    {
+        $this->loginForm = $form;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string<LoginForm>|null
+     */
+    public function getLoginForm(): ?string
+    {
+        return $this->loginForm;
+    }
+
+    public function getLoginUrl(): ?string
+    {
+        return $this->loginForm === null ? null : route($this->routeName('auth.login'));
+    }
+
+    public function getLogoutUrl(): string
+    {
+        return route($this->routeName('auth.logout'));
+    }
+
+    /**
+     * Whether this user may be in this panel. A user model that hasn't declared
+     * it can't be.
+     */
+    public function allows(?Authenticatable $user): bool
+    {
+        return $user instanceof PanelUser && $user->canAccessPanel($this);
+    }
+
+    /**
      * @param  array<int, class-string<Page>>  $pages
      */
     public function pages(array $pages): self
@@ -260,30 +305,25 @@ final class Panel
 
     /**
      * What the shell needs on every page. The user is picked field by field,
-     * because a whole model would send every attribute it doesn't hide.
+     * because a whole model would send every attribute it doesn't hide. The login
+     * page gets this too, so what's inside the panel stays out until they're in.
      *
      * @return array<string, mixed>
      */
     public function toShell(): array
     {
+        $user = auth()->user();
+        $isInside = $this->allows($user);
+
         return [
             'id' => $this->id,
             'url' => $this->getUrl(),
             'brand' => ['name' => $this->getBrandName()],
             'theme' => ['primary' => $this->primaryColor, 'font' => $this->font],
-            'navigation' => $this->getNavigation(),
-            'sidebarFooter' => $this->sidebarFooter === null ? null : ($this->sidebarFooter)()?->toArray(),
-            'user' => $this->shellUser(),
+            'navigation' => $isInside ? $this->getNavigation() : [],
+            'sidebarFooter' => $isInside && $this->sidebarFooter !== null ? ($this->sidebarFooter)()?->toArray() : null,
+            'user' => $isInside ? ['name' => (string) data_get($user, 'name'), 'email' => (string) data_get($user, 'email')] : null,
+            'logoutUrl' => $isInside ? $this->getLogoutUrl() : null,
         ];
-    }
-
-    /**
-     * @return array{name: string, email: string}|null
-     */
-    private function shellUser(): ?array
-    {
-        $user = auth()->user();
-
-        return $user === null ? null : ['name' => (string) data_get($user, 'name'), 'email' => (string) data_get($user, 'email')];
     }
 }

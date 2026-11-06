@@ -4,6 +4,7 @@ namespace Xelqun\Panels\Tests;
 
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Inertia\ServiceProvider as InertiaServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -12,6 +13,7 @@ use Xelqun\Panels\PanelsServiceProvider;
 use Xelqun\Panels\Tests\Fixtures\AdminPanelProvider;
 use Xelqun\Panels\Tests\Fixtures\HandleInertia;
 use Xelqun\Panels\Tests\Fixtures\StaffPanelProvider;
+use Xelqun\Panels\Tests\Fixtures\User;
 use Xelqun\Tables\TablesServiceProvider;
 use Xelqun\Tables\Testing\InteractsWithTables;
 
@@ -34,6 +36,7 @@ abstract class TestCase extends Orchestra
     protected function defineEnvironment($app): void
     {
         $app['config']->set('auth.guards.admin', ['driver' => 'session', 'provider' => 'users']);
+        $app['config']->set('auth.providers.users.model', User::class);
         $app['config']->set('inertia.testing.ensure_pages_exist', false);
         $app['view']->addLocation(__DIR__.'/Fixtures/views');
         $app->make(Kernel::class)->appendMiddlewareToGroup('web', HandleInertia::class);
@@ -44,6 +47,19 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         $this->withoutVite();
+        User::$allowed = true;
+    }
+
+    /**
+     * Someone who may enter, signed in on both guards the test panels use.
+     */
+    protected function signIn(array $attributes = []): User
+    {
+        $user = User::create(['name' => 'Ada', 'email' => 'ada@example.com', 'password' => Hash::make('secret'), ...$attributes]);
+
+        $this->actingAs($user, 'web')->actingAs($user, 'admin');
+
+        return $user;
     }
 
     protected function defineDatabaseMigrations(): void

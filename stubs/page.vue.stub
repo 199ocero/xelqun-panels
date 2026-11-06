@@ -1,0 +1,5 @@
+<script lang="ts">
+import { {{ component }} } from '@xelqun/panels';
+
+export default {{ component }};
+</script>

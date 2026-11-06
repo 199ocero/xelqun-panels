@@ -70,6 +70,10 @@ function defineNavigationRoutes(Panel $panel): void
     app('router')->getRoutes()->refreshNameLookups();
 }
 
+beforeEach(function () {
+    $this->signIn();
+});
+
 it('orders groups by the panel, with ungrouped links first and unknown groups last', function () {
     $panel = panelWithPages()->navigationGroups(['Catalog', 'Reports'])
         ->navigationItems([NavigationItem::make('Docs')->url('https://example.com')->group('Help')]);
@@ -126,9 +130,13 @@ it('keeps a sidebar meter between empty and full', function (float $given, float
 
 it('runs the sidebar card for each page, and copes with having none', function () {
     $panel = app(Panels::class)->get('admin');
-    $panel->sidebarFooter(fn (): ?SidebarCard => auth()->check() ? SidebarCard::make('Credits') : null);
+    $panel->sidebarFooter(fn (): ?SidebarCard => null);
 
     expect($panel->toShell()['sidebarFooter'])->toBeNull();
+
+    $panel->sidebarFooter(fn (): SidebarCard => SidebarCard::make('Credits'));
+
+    expect($panel->toShell()['sidebarFooter']['title'])->toBe('Credits');
 });
 
 describe('theme', function () {

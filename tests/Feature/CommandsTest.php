@@ -39,6 +39,7 @@ describe('xelqun-panels:install', function () {
         $this->artisan('xelqun-panels:install', ['--without-node' => true])->assertSuccessful();
 
         expect(File::get("{$this->appPath}/resources/js/pages/xelqun/Panel.vue"))->toContain('export default XqPanelPage')
+            ->and(File::get("{$this->appPath}/resources/js/pages/xelqun/PanelAuth.vue"))->toContain('export default XqPanelAuthPage')
             ->and(File::get("{$this->appPath}/resources/css/app.css"))
             ->toContain('@xelqun/forms/style.css')
             ->toContain('@xelqun/tables/style.css')

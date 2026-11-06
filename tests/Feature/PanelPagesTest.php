@@ -13,11 +13,11 @@ use Xelqun\Panels\Http\Middleware\EnterPanel;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Tests\Fixtures\Pages\Home;
-use Xelqun\Panels\Tests\Fixtures\User;
 
 beforeEach(function () {
     Home::$allowed = true;
     Home::$calls = [];
+    $this->user = $this->signIn();
 });
 
 function runHeaderAction(string $token): TestResponse
@@ -40,7 +40,7 @@ it('renders a page inside its panel', function () {
             ->where('page.title', 'Home')
             ->where('xelqunPanel.id', 'admin')
             ->where('xelqunPanel.brand.name', 'Admin')
-            ->where('xelqunPanel.user', null));
+            ->where('xelqunPanel.user', ['name' => 'Ada', 'email' => 'ada@example.com']));
 });
 
 it('keeps two panels apart, each on its own guard', function () {
@@ -55,14 +55,6 @@ it('names the app in a panel with no brand of its own', function () {
     config(['app.name' => 'Shop']);
 
     $this->get('/staff')->assertInertia(fn (Assert $page) => $page->where('xelqunPanel.brand.name', 'Shop'));
-});
-
-it('sends only what the shell shows about the user', function () {
-    $user = User::create(['name' => 'Ada', 'email' => 'ada@example.com', 'password' => 'secret']);
-
-    $this->actingAs($user, 'admin')
-        ->get('/admin')
-        ->assertInertia(fn (Assert $page) => $page->where('xelqunPanel.user', ['name' => 'Ada', 'email' => 'ada@example.com']));
 });
 
 it('leaves out the parts of a page the user may not see', function () {

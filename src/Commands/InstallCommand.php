@@ -29,7 +29,8 @@ class InstallCommand extends Command
 
         $this->call('xelqun-forms:install', ['--without-node' => true]);
         $this->call('xelqun-tables:install', ['--without-node' => true]);
-        $this->writePageStub();
+        $this->writePageStub('Panel', 'XqPanelPage');
+        $this->writePageStub('PanelAuth', 'XqPanelAuthPage');
 
         $manualStep = $this->importStylesheet(self::STYLESHEET);
 
@@ -52,17 +53,17 @@ class InstallCommand extends Command
     }
 
     /**
-     * The Vite plugin only finds pages in the app, so the package's page needs a file there.
+     * The Vite plugin only finds pages in the app, so a page of the package needs a file there.
      */
-    private function writePageStub(): void
+    private function writePageStub(string $file, string $component): void
     {
-        $path = resource_path('js/pages/xelqun/Panel.vue');
+        $path = resource_path("js/pages/xelqun/{$file}.vue");
 
         if (File::exists($path)) {
             return;
         }
 
         File::ensureDirectoryExists(dirname($path));
-        File::copy(__DIR__.'/../../stubs/Panel.vue', $path);
+        File::put($path, str_replace('{{ component }}', $component, File::get(__DIR__.'/../../stubs/page.vue.stub')));
     }
 }

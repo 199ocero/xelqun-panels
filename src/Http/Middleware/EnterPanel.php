@@ -25,6 +25,12 @@ final class EnterPanel
         $this->panels->enter($panel);
 
         Inertia::setRootView('xelqun-panels::app');
+
+        // Records stay in the browser's history after signing out unless they're encrypted. That needs HTTPS.
+        if ($request->secure()) {
+            Inertia::encryptHistory();
+        }
+
         // Sharing lasts as long as the process, so under Octane this runs for later requests too.
         Inertia::share('xelqunPanel', fn (): ?array => $this->panels->current()?->toShell());
 

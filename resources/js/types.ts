@@ -34,11 +34,20 @@ export interface PanelShell {
     navigation: PanelNavigationGroup[];
     sidebarFooter: PanelSidebarCard | null;
     user: { name: string; email: string } | null;
+    logoutUrl: string | null;
 }
 
 export type PanelContent =
     | { type: 'table'; schema: TableSchema }
     | { type: 'actions'; schema: FormSchema };
+
+export interface PanelAuthPageData {
+    title: string;
+    description: string | null;
+    form: FormSchema;
+    action: string;
+    submitLabel: string;
+}
 
 export interface PanelBreadcrumb {
     label: string;

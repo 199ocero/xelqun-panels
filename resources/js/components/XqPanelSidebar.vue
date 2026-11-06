@@ -77,6 +77,11 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
 
         <XqPanelSidebarCard v-if="panel.sidebarFooter && !collapsed" :card="panel.sidebarFooter" />
 
-        <XqPanelUserMenu v-if="panel.user" :user="panel.user" :collapsed="collapsed" />
+        <XqPanelUserMenu
+            v-if="panel.user"
+            :user="panel.user"
+            :logout-url="panel.logoutUrl"
+            :collapsed="collapsed"
+        />
     </nav>
 </template>

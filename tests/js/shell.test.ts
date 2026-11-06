@@ -34,6 +34,7 @@ const shell: PanelShell = {
     ],
     sidebarFooter: null,
     user: { name: 'Ada Lovelace', email: 'ada@example.com' },
+    logoutUrl: '/admin/logout',
 };
 
 afterEach(() => {

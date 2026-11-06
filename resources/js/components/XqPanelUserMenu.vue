@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Check, Monitor, Moon, Settings2, Sun } from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3';
+import { Check, LogOut, Monitor, Moon, Settings2, Sun } from 'lucide-vue-next';
 import {
     DropdownMenuContent,
     DropdownMenuItem,
@@ -15,7 +16,11 @@ import type { ThemeChoice } from '../composables/useTheme';
 import type { PanelShell } from '../types';
 import { iconButtonClass, menuClass, menuItemClass } from '../ui/classes';
 
-const props = defineProps<{ user: NonNullable<PanelShell['user']>; collapsed?: boolean }>();
+const props = defineProps<{
+    user: NonNullable<PanelShell['user']>;
+    logoutUrl: string | null;
+    collapsed?: boolean;
+}>();
 const choice = useThemeChoice();
 
 const themes: Array<{ value: ThemeChoice; label: string; icon: typeof Sun }> = [
@@ -68,8 +73,13 @@ const initials = computed(() =>
                             aria-hidden="true"
                         />
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator class="my-1 bg-xq-border h-px" />
-                    <slot />
+                    <template v-if="logoutUrl">
+                        <DropdownMenuSeparator class="my-1 bg-xq-border h-px" />
+                        <DropdownMenuItem :class="menuItemClass" @select="router.post(logoutUrl!)">
+                            <LogOut class="size-4" aria-hidden="true" />
+                            Sign out
+                        </DropdownMenuItem>
+                    </template>
                 </DropdownMenuContent>
             </DropdownMenuPortal>
         </DropdownMenuRoot>

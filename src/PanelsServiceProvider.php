@@ -24,8 +24,17 @@ class PanelsServiceProvider extends ServiceProvider
             $tokens->scopeUsing(
                 fn (): ?string => $panels->current()?->getId(),
                 function (?string $id) use ($panels): void {
-                    if ($id !== null) {
-                        $panels->enter($panels->get($id) ?? throw InvalidFormToken::make('the token belongs to an unknown panel'));
+                    if ($id === null) {
+                        return;
+                    }
+
+                    $panel = $panels->get($id) ?? throw InvalidFormToken::make('the token belongs to an unknown panel');
+
+                    $panels->enter($panel);
+
+                    // A guest is fine here, because the token's user is compared next.
+                    if (auth()->check() && ! $panel->allows(auth()->user())) {
+                        throw InvalidFormToken::make('this user can no longer enter the panel');
                     }
                 },
             );
@@ -35,12 +44,17 @@ class PanelsServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'xelqun-panels');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'xelqun-panels');
         $this->loadRoutesFrom(__DIR__.'/../routes/xelqun-panels.php');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__.'/../config/xelqun-panels.php' => config_path('xelqun-panels.php'),
             ], 'xelqun-panels-config');
+
+            $this->publishes([
+                __DIR__.'/../resources/lang' => lang_path('vendor/xelqun-panels'),
+            ], 'xelqun-panels-lang');
 
             $this->commands([InstallCommand::class, MakePageCommand::class, MakePanelCommand::class]);
         }

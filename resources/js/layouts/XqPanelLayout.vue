@@ -9,11 +9,11 @@ import {
     DialogRoot,
     DialogTitle,
 } from 'reka-ui';
-import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import XqPanelSearch from '../components/XqPanelSearch.vue';
 import XqPanelSidebar from '../components/XqPanelSidebar.vue';
 import XqPanelTopbar from '../components/XqPanelTopbar.vue';
-import { useThemeSync } from '../composables/useTheme';
+import { usePanelDocument } from '../composables/usePanelDocument';
 import type { PanelPageData, PanelShell } from '../types';
 
 const COLLAPSED_KEY = 'xq-panel-sidebar-collapsed';
@@ -28,7 +28,7 @@ const collapsed = ref(false);
 const drawerOpen = ref(false);
 const searchOpen = ref(false);
 
-useThemeSync();
+usePanelDocument(panel);
 
 function toggleCollapsed(): void {
     collapsed.value = !collapsed.value;
@@ -51,27 +51,6 @@ const stopListening = router.on('navigate', () => {
     drawerOpen.value = false;
 });
 
-/**
- * A visit from a page outside the panel doesn't load the root view, which is
- * what normally sets these.
- */
-watchEffect(() => {
-    if (typeof document === 'undefined') {
-        return;
-    }
-
-    const root = document.documentElement;
-
-    root.setAttribute('data-xq-panel', '');
-    root.style.setProperty('--xq-panel-font', `'${panel.value.theme.font}'`);
-
-    if (panel.value.theme.primary) {
-        root.style.setProperty('--xq-panel-primary', panel.value.theme.primary);
-    } else {
-        root.style.removeProperty('--xq-panel-primary');
-    }
-});
-
 onMounted(() => {
     window.addEventListener('keydown', onKeydown);
 
@@ -85,12 +64,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
     stopListening();
     window.removeEventListener('keydown', onKeydown);
-
-    const root = document.documentElement;
-
-    root.removeAttribute('data-xq-panel');
-    root.style.removeProperty('--xq-panel-font');
-    root.style.removeProperty('--xq-panel-primary');
 });
 </script>
 
