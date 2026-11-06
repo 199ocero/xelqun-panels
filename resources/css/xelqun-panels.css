@@ -1,0 +1,6 @@
+/*
+ * Xelqun Panels styles. Import once in the app's Tailwind entry, after forms:
+ *   @import '@xelqun/panels/style.css';
+ * The @source below makes Tailwind scan the package's components.
+ */
+@source "../js";

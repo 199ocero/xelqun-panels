@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
+        "strict": true,
+        "noUncheckedIndexedAccess": false,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "jsx": "preserve",
+        "types": ["vite/client"],
+        "noEmit": true,
+        "paths": {
+            "@xelqun/panels": ["./resources/js/index.ts"]
+        }
+    },
+    "include": ["resources/js/**/*.ts", "resources/js/**/*.vue", "stubs/*.vue", "tests/js/**/*.ts"]
+}
