@@ -52,6 +52,8 @@ abstract class TestCase extends Orchestra
 
     /**
      * Someone who may enter, signed in on both guards the test panels use.
+     *
+     * @param  array<string, mixed>  $attributes
      */
     protected function signIn(array $attributes = []): User
     {
