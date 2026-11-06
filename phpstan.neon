@@ -7,3 +7,6 @@ parameters:
         - tests/TestCase.php
 
     level: 6
+    ignoreErrors:
+        # Traits here are for an app's models, so nothing in this package uses them.
+        - identifier: trait.unused

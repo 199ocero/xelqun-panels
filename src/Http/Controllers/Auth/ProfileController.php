@@ -8,6 +8,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Xelqun\Notifications\Notification;
 use Xelqun\Panels\Auth\EditProfileForm;
+use Xelqun\Panels\Auth\ProfileActions;
+use Xelqun\Panels\Contracts\HasAppAuthentication;
 use Xelqun\Panels\Pages\FormContent;
 
 final class ProfileController extends AuthController
@@ -24,7 +26,8 @@ final class ProfileController extends AuthController
             'breadcrumbs' => [['label' => $title]],
             'hasWidgets' => false,
             'tabs' => [],
-            'headerActions' => null,
+            'headerActions' => $this->canUseTwoFactor($request) ? ProfileActions::make($request->user())->toSchema() : null,
+            'notice' => $this->recoveryCodesNotice(),
             'content' => [$form->toArray()],
         ]]);
     }
@@ -36,6 +39,27 @@ final class ProfileController extends AuthController
         Notification::make()->title(__('xelqun-panels::auth.profile.saved'))->success()->send();
 
         return redirect()->route($this->panel()->routeName('auth.profile'));
+    }
+
+    private function canUseTwoFactor(Request $request): bool
+    {
+        return $this->panel()->hasMultiFactorAuthentication() && $request->user() instanceof HasAppAuthentication;
+    }
+
+    /**
+     * Once, right after they're made. Only their hashes are kept.
+     *
+     * @return array{title: string, description: string, lines: array<int, string>}|null
+     */
+    private function recoveryCodesNotice(): ?array
+    {
+        $codes = session(ProfileActions::RECOVERY_CODES);
+
+        return is_array($codes) ? [
+            'title' => __('xelqun-panels::auth.mfa.codes_title'),
+            'description' => __('xelqun-panels::auth.mfa.codes_description'),
+            'lines' => $codes,
+        ] : null;
     }
 
     private function form(Request $request): EditProfileForm

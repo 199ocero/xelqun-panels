@@ -1,5 +1,6 @@
 import type { XelqunPlugin } from '@xelqun/forms';
 import {
+    Bell,
     ChartColumn,
     ClipboardList,
     FileText,
@@ -9,6 +10,7 @@ import {
     LayoutDashboard,
     Package,
     Palette,
+    Shield,
     ShoppingCart,
     Tag,
     Truck,
@@ -26,6 +28,7 @@ export function panelsPlugin(): XelqunPlugin {
         id: 'xelqun/panels',
         components: { 'xelqun-panels/entry': XqPanelEntry },
         icons: {
+            bell: Bell,
             'chart-column': ChartColumn,
             'clipboard-list': ClipboardList,
             'file-text': FileText,
@@ -35,6 +38,7 @@ export function panelsPlugin(): XelqunPlugin {
             'layout-dashboard': LayoutDashboard,
             package: Package,
             palette: Palette,
+            shield: Shield,
             'shopping-cart': ShoppingCart,
             tag: Tag,
             truck: Truck,

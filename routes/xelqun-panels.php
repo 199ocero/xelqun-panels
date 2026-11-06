@@ -4,10 +4,12 @@ use Illuminate\Support\Facades\Route;
 use Xelqun\Panels\Http\Controllers\Auth\EmailVerificationController;
 use Xelqun\Panels\Http\Controllers\Auth\LoginController;
 use Xelqun\Panels\Http\Controllers\Auth\LogoutController;
+use Xelqun\Panels\Http\Controllers\Auth\MultiFactorChallengeController;
 use Xelqun\Panels\Http\Controllers\Auth\PasswordResetController;
 use Xelqun\Panels\Http\Controllers\Auth\ProfileController;
 use Xelqun\Panels\Http\Controllers\Auth\RegisterController;
 use Xelqun\Panels\Http\Controllers\GlobalSearchController;
+use Xelqun\Panels\Http\Controllers\NotificationController;
 use Xelqun\Panels\Http\Controllers\ResourceRecordController;
 use Xelqun\Panels\Http\Middleware\Authenticate;
 use Xelqun\Panels\Http\Middleware\EnterPanel;
@@ -21,6 +23,11 @@ foreach (app(Panels::class)->all() as $panel) {
             if ($panel->getLoginForm() !== null) {
                 Route::get('login', [LoginController::class, 'show'])->name('auth.login');
                 Route::post('login', [LoginController::class, 'store'])->name('auth.login.store');
+            }
+
+            if ($panel->hasMultiFactorAuthentication()) {
+                Route::get('two-factor', [MultiFactorChallengeController::class, 'show'])->name('auth.challenge');
+                Route::post('two-factor', [MultiFactorChallengeController::class, 'store'])->name('auth.challenge.store');
             }
 
             if ($panel->getPasswordResetRequestForm() !== null) {
@@ -48,6 +55,15 @@ foreach (app(Panels::class)->all() as $panel) {
             Route::middleware(Authenticate::class)->group(function () use ($panel): void {
                 // The underscore keeps it clear of a page or resource called search.
                 Route::post('_search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
+
+                if ($panel->hasDatabaseNotifications()) {
+                    Route::prefix('_notifications')->middleware('throttle:120,1')->name('notifications.')->group(function (): void {
+                        Route::post('', [NotificationController::class, 'index'])->name('index');
+                        Route::post('read-all', [NotificationController::class, 'readAll'])->name('read-all');
+                        Route::post('clear', [NotificationController::class, 'clear'])->name('clear');
+                        Route::post('{notification}/read', [NotificationController::class, 'read'])->name('read');
+                    });
+                }
 
                 if ($panel->getProfileForm() !== null) {
                     Route::get('profile', [ProfileController::class, 'show'])->name('auth.profile');

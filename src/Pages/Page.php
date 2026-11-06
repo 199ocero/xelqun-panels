@@ -215,6 +215,7 @@ abstract class Page
             'breadcrumbs' => $this->getBreadcrumbs(),
             'hasWidgets' => $this->hasWidgets(),
             'tabs' => $this->getTabs(),
+            'notice' => null,
             'headerActions' => $this->headerActions() === [] ? null : PageActionSet::for($this)->toSchema(),
             'content' => array_map(fn (Table|ActionSet|FormContent $item): array => match (true) {
                 $item instanceof Table => [

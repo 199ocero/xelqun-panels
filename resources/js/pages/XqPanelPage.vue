@@ -25,6 +25,17 @@ defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
             </div>
             <XqActions v-if="page.headerActions" :actions="page.headerActions" />
         </header>
+        <section
+            v-if="page.notice"
+            class="p-4 rounded-xq-lg border-xq-border bg-xq-card border"
+            data-xq-notice
+        >
+            <h2 class="font-semibold">{{ page.notice.title }}</h2>
+            <p class="mt-1 text-sm text-xq-muted-foreground">{{ page.notice.description }}</p>
+            <ul class="mt-3 gap-1 text-sm sm:grid-cols-2 font-mono grid">
+                <li v-for="line in page.notice.lines" :key="line">{{ line }}</li>
+            </ul>
+        </section>
         <nav
             v-if="page.tabs.length > 0"
             aria-label="Views"

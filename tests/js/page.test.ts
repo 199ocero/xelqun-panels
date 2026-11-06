@@ -26,6 +26,7 @@ function render(page: Partial<PanelPageData>) {
                 breadcrumbs: [],
                 hasWidgets: false,
                 tabs: [],
+                notice: null,
                 headerActions: null,
                 content: [],
                 ...page,
@@ -47,6 +48,17 @@ describe('XqPanelPage', () => {
 
         expect(wrapper.find('[data-xq-tabs] [aria-current="page"]').text()).toBe('All');
         expect(wrapper.find('[data-xq-tabs]').text()).toContain('3');
+    });
+
+    it('shows a notice, such as recovery codes', () => {
+        const wrapper = render({
+            notice: { title: 'Save these', description: 'Once only', lines: ['aaa', 'bbb'] },
+        });
+
+        expect(wrapper.findAll('[data-xq-notice] li').map((line) => line.text())).toEqual([
+            'aaa',
+            'bbb',
+        ]);
     });
 
     it('names a relation table with a heading', () => {

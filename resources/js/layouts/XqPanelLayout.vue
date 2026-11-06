@@ -10,6 +10,7 @@ import {
     DialogTitle,
 } from 'reka-ui';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import XqPanelNotifications from '../components/XqPanelNotifications.vue';
 import XqPanelSearch from '../components/XqPanelSearch.vue';
 import XqPanelSidebar from '../components/XqPanelSidebar.vue';
 import XqPanelTopbar from '../components/XqPanelTopbar.vue';
@@ -109,7 +110,13 @@ onBeforeUnmount(() => {
                 :breadcrumbs="breadcrumbs"
                 @menu="drawerOpen = true"
                 @search="searchOpen = true"
-            />
+            >
+                <XqPanelNotifications
+                    v-if="panel.notifications"
+                    :url="panel.notifications.url"
+                    :poll-seconds="panel.notifications.pollSeconds"
+                />
+            </XqPanelTopbar>
             <main class="min-h-0 flex-1 overflow-y-auto" scroll-region>
                 <slot />
             </main>

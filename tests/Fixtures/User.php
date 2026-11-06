@@ -5,11 +5,14 @@ namespace Xelqun\Panels\Tests\Fixtures;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Xelqun\Panels\Auth\Concerns\InteractsWithAppAuthentication;
+use Xelqun\Panels\Contracts\HasAppAuthentication;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Panel;
 
-class User extends Authenticatable implements MustVerifyEmail, PanelUser
+class User extends Authenticatable implements HasAppAuthentication, MustVerifyEmail, PanelUser
 {
+    use InteractsWithAppAuthentication;
     use Notifiable;
 
     public static bool $allowed = true;

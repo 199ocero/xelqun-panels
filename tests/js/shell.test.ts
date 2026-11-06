@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, nextTick, ref } from 'vue';
 import XqPanelEntry from '../../resources/js/components/XqPanelEntry.vue';
+import XqPanelNotifications from '../../resources/js/components/XqPanelNotifications.vue';
 import XqPanelNewMenu from '../../resources/js/components/XqPanelNewMenu.vue';
 import XqPanelSearch from '../../resources/js/components/XqPanelSearch.vue';
 import XqPanelSidebar from '../../resources/js/components/XqPanelSidebar.vue';
@@ -37,6 +38,7 @@ const shell: PanelShell = {
     ],
     quickCreate: [],
     searchUrl: '/admin/_search',
+    notifications: null,
     sidebarFooter: null,
     user: { name: 'Ada Lovelace', email: 'ada@example.com' },
     logoutUrl: '/admin/logout',
@@ -450,6 +452,87 @@ describe('record search', () => {
 
         expect(reload).toHaveBeenCalled();
         expect(open.value).toBe(false);
+    });
+});
+
+describe('the bell', () => {
+    const list = (unread: number) => ({
+        unread,
+        notifications: [
+            {
+                id: 'a',
+                title: 'Paid',
+                body: null,
+                status: 'success',
+                url: '/orders/1',
+                read: false,
+                time: 'now',
+            },
+        ],
+    });
+
+    function respondWith(status: number, body: unknown): ReturnType<typeof vi.fn> {
+        const fetchMock = vi.fn(async () => new Response(JSON.stringify(body), { status }));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        return fetchMock;
+    }
+
+    beforeEach(() => vi.useFakeTimers());
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
+
+    const bell = (pollSeconds: number | null = 30) =>
+        mount(XqPanelNotifications, { props: { url: '/n', pollSeconds } });
+
+    it('names the unread count for screen readers, and caps what it shows', async () => {
+        respondWith(200, list(12));
+        const wrapper = bell();
+
+        await flushPromises();
+
+        expect(wrapper.find('[data-xq-bell]').attributes('aria-label')).toBe(
+            'Notifications, 12 unread',
+        );
+        expect(wrapper.find('[data-xq-bell]').text()).toBe('9+');
+    });
+
+    it('checks again on its interval, and stops when unmounted', async () => {
+        const fetchMock = respondWith(200, list(0));
+        const wrapper = bell();
+
+        await vi.advanceTimersByTimeAsync(30_000);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+
+        wrapper.unmount();
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('checks once when polling is off', async () => {
+        const fetchMock = respondWith(200, list(0));
+
+        bell(null);
+        await vi.advanceTimersByTimeAsync(120_000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops checking once the session ends, but not for a passing failure', async () => {
+        const fetchMock = respondWith(500, {});
+
+        bell();
+        await vi.advanceTimersByTimeAsync(30_000);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+
+        const signedOut = respondWith(401, {});
+
+        await vi.advanceTimersByTimeAsync(90_000);
+        expect(signedOut).toHaveBeenCalledTimes(1);
     });
 });
 

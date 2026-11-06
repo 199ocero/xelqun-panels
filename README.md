@@ -71,6 +71,19 @@ Auth is built in, per panel, on Laravel's own `Auth`, `Password` and `RateLimite
 
 Each one takes a form class, so `login(MyLoginForm::class)` swaps the form. Use `authGuard()` to give a panel its own session guard, and `authPasswordBroker()` for its own broker.
 
+### Two-factor authentication
+
+```php
+$panel->multiFactorAuthentication();                    // optional for each user
+$panel->multiFactorAuthentication(isRequired: true);    // nobody gets past the profile page without it
+```
+
+Add the columns with `php artisan vendor:publish --tag=xelqun-panels-mfa`, then put `HasAppAuthentication` and the `InteractsWithAppAuthentication` trait on your user model. People turn it on from the profile page.
+
+It's the standard 30 second, 6 digit TOTP that any authenticator app reads, with 8 recovery codes. A code works once, guesses are limited to 5 a minute, and the right password alone never makes a session. Secrets are encrypted, and only hashes of recovery codes are kept.
+
+Setup gives a link and a key to type, with no QR code, because that would need a new dependency.
+
 On HTTPS, the browser's history is encrypted and cleared on sign out, so Back can't show records afterwards. Behind a proxy, set up trusted proxies, or Laravel won't see the request as secure.
 
 ## Resources
@@ -190,6 +203,21 @@ public static function getGlobalSearchResultDetails(Model $record): array
 
 Return `[]` to keep a resource out. Search runs through `getEloquentQuery()`, skips a resource the user can't `viewAny`, and checks `view` on each record, showing up to 5 per resource. Results link to the view page. A policy that refuses more than the first 20 matches can hide later ones.
 
+## Notifications
+
+`databaseNotifications()` adds a bell to the top bar, which checks every 30 seconds. Change that with `databaseNotificationsPolling('60s')`, or pass `null` to check only on page load. It needs Laravel's table, from `php artisan make:notifications-table`, and `Notifiable` on your user model.
+
+```php
+use Xelqun\Panels\Notifications\DatabaseNotification;
+
+DatabaseNotification::make()
+    ->title('Order paid')
+    ->body('Order 1001 is ready to ship.')
+    ->success()
+    ->url(OrderResource::getUrl('view', ['record' => $order]))
+    ->sendToDatabase($user);
+```
+
 ## Pages
 
 ```php
@@ -257,7 +285,7 @@ Icons in PHP are names. The panels plugin adds common sidebar icons to the forms
 
 ## Current limits
 
-- Tenancy and two-factor auth come next.
+- Tenancy comes next.
 - A relation manager can create a many-to-many record, but can't attach an existing one yet.
 - `%` and `_` in a search act as wildcards.
 - `discoverResources()` walks its folder on every request.

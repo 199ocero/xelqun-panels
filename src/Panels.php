@@ -40,6 +40,10 @@ final class Panels
             }
         }
 
+        if ($panel->mustSetUpMultiFactorAuthentication(null) && $panel->getProfileForm() === null) {
+            throw new PanelDefinitionException("The panel [{$id}] requires two-factor authentication, which is set up on the profile page, so it needs profile().");
+        }
+
         $this->panels[$id] = $panel;
     }
 

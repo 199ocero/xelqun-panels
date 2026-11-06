@@ -15,6 +15,7 @@ use Xelqun\Panels\Auth\LoginForm;
 use Xelqun\Panels\Auth\RegisterForm;
 use Xelqun\Panels\Auth\RequestPasswordResetForm;
 use Xelqun\Panels\Auth\ResetPasswordForm;
+use Xelqun\Panels\Contracts\HasAppAuthentication;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
@@ -93,6 +94,14 @@ final class Panel
 
     /** @var array<int, NavigationItem> */
     private array $navigationItems = [];
+
+    private bool $hasMultiFactorAuthentication = false;
+
+    private bool $requiresMultiFactorAuthentication = false;
+
+    private bool $hasDatabaseNotifications = false;
+
+    private ?int $notificationPollingSeconds = 30;
 
     /** @var (Closure(): ?SidebarCard)|null */
     private ?Closure $sidebarFooter = null;
@@ -349,6 +358,70 @@ final class Panel
     }
 
     /**
+     * Let users protect their account with an authenticator app, from the profile
+     * page. With $isRequired, nobody gets past that page until they have. The user
+     * model needs HasAppAuthentication.
+     */
+    public function multiFactorAuthentication(bool $isRequired = false): self
+    {
+        $this->hasMultiFactorAuthentication = true;
+        $this->requiresMultiFactorAuthentication = $isRequired;
+
+        return $this;
+    }
+
+    public function hasMultiFactorAuthentication(): bool
+    {
+        return $this->hasMultiFactorAuthentication;
+    }
+
+    /**
+     * Whether a password alone isn't enough for this user here.
+     */
+    public function needsChallenge(?Authenticatable $user): bool
+    {
+        return $this->hasMultiFactorAuthentication && $user instanceof HasAppAuthentication && $user->getAppAuthenticationSecret() !== null;
+    }
+
+    /**
+     * Whether this user has to set up an authenticator before going any further.
+     */
+    public function mustSetUpMultiFactorAuthentication(?Authenticatable $user): bool
+    {
+        return $this->requiresMultiFactorAuthentication && ! $this->needsChallenge($user);
+    }
+
+    /**
+     * A bell in the top bar. It needs Laravel's notifications table, and Notifiable
+     * on the user model. Send to it with DatabaseNotification.
+     */
+    public function databaseNotifications(bool $condition = true): self
+    {
+        $this->hasDatabaseNotifications = $condition;
+
+        return $this;
+    }
+
+    public function hasDatabaseNotifications(): bool
+    {
+        return $this->hasDatabaseNotifications;
+    }
+
+    /**
+     * How often the bell checks, as in '30s', or null to check on page load only.
+     */
+    public function databaseNotificationsPolling(?string $interval): self
+    {
+        if ($interval !== null && preg_match('/^[1-9]\d*s$/', $interval) !== 1) {
+            throw new PanelDefinitionException("[{$interval}] is not an interval. Use seconds, as in '30s'.");
+        }
+
+        $this->notificationPollingSeconds = $interval === null ? null : (int) $interval;
+
+        return $this;
+    }
+
+    /**
      * Give users a page to change their own details.
      *
      * @param  class-string<EditProfileForm>  $form
@@ -579,6 +652,10 @@ final class Panel
             'navigation' => $isInside ? $this->getNavigation() : [],
             'quickCreate' => $isInside ? $this->getQuickCreateItems() : [],
             'searchUrl' => $isInside ? route($this->routeName('search')) : null,
+            'notifications' => $isInside && $this->hasDatabaseNotifications ? [
+                'url' => route($this->routeName('notifications.index')),
+                'pollSeconds' => $this->notificationPollingSeconds,
+            ] : null,
             'sidebarFooter' => $isInside && $this->sidebarFooter !== null ? ($this->sidebarFooter)()?->toArray() : null,
             'user' => $isInside ? ['name' => (string) data_get($user, 'name'), 'email' => (string) data_get($user, 'email')] : null,
             'logoutUrl' => $isInside ? $this->getLogoutUrl() : null,

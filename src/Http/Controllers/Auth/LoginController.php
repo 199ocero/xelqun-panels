@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Response;
 use Xelqun\Panels\Auth\LoginForm;
+use Xelqun\Panels\Contracts\HasAppAuthentication;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 
@@ -67,7 +68,27 @@ final class LoginController extends AuthController
         // Checked inside the attempt, so someone the panel refuses never gets a session.
         $credentials = ['email' => $data['email'], 'password' => $data['password']];
 
-        if (! $guard->attemptWhen($credentials, fn ($user): bool => $panel->allows($user), (bool) ($data['remember'] ?? false))) {
+        // Someone with a second step stops here too, so the right password alone never makes a session.
+        // shortcut: Laravel fires its Failed event for them, as it can't tell why the callback said no. Check the credentials by hand if an app audits that event.
+        $challenged = null;
+        $remember = (bool) ($data['remember'] ?? false);
+        $isSignedIn = $guard->attemptWhen($credentials, function ($user) use ($panel, &$challenged): bool {
+            if ($panel->allows($user) && $panel->needsChallenge($user)) {
+                $challenged = $user;
+
+                return false;
+            }
+
+            return $panel->allows($user);
+        }, $remember);
+
+        if ($challenged instanceof HasAppAuthentication) {
+            RateLimiter::clear($rateLimitKey);
+
+            return app(MultiFactorChallengeController::class)->begin($request, $challenged, $remember);
+        }
+
+        if (! $isSignedIn) {
             RateLimiter::hit($rateLimitKey);
 
             throw ValidationException::withMessages(['data.email' => __('xelqun-panels::auth.failed')]);

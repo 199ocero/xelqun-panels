@@ -35,6 +35,21 @@ export interface PanelSearchGroup {
     results: PanelSearchResult[];
 }
 
+export interface PanelNotification {
+    id: string;
+    title: string | null;
+    body: string | null;
+    status: string | null;
+    url: string | null;
+    read: boolean;
+    time: string | null;
+}
+
+export interface PanelNotificationList {
+    unread: number;
+    notifications: PanelNotification[];
+}
+
 export interface PanelSidebarCard {
     title: string;
     icon: string | null;
@@ -55,6 +70,7 @@ export interface PanelShell {
     navigation: PanelNavigationGroup[];
     quickCreate: PanelQuickCreateItem[];
     searchUrl: string | null;
+    notifications: { url: string; pollSeconds: number | null } | null;
     sidebarFooter: PanelSidebarCard | null;
     user: { name: string; email: string } | null;
     logoutUrl: string | null;
@@ -137,6 +153,7 @@ export interface PanelPageData {
     breadcrumbs: PanelBreadcrumb[];
     hasWidgets: boolean;
     tabs: PanelTab[];
+    notice: { title: string; description: string; lines: string[] } | null;
     headerActions: FormSchema | null;
     content: PanelContent[];
 }
