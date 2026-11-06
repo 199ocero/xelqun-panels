@@ -3,7 +3,6 @@
 namespace Xelqun\Panels\Resources\Pages;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 use Inertia\Response;
 use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Resources\Resource;
@@ -87,7 +86,7 @@ abstract class ResourcePage extends Page
     public function getBreadcrumbs(): array
     {
         return [
-            ['label' => Str::headline($this->resource::getPluralModelLabel()), 'url' => $this->resource::getUrl()],
+            ['label' => $this->resource::getNavigationLabel(), 'url' => $this->resource::getUrl()],
             ['label' => $this->getHeading()],
         ];
     }

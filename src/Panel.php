@@ -5,7 +5,11 @@ namespace Xelqun\Panels;
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use ReflectionClass;
+use Symfony\Component\Finder\SplFileInfo;
 use Xelqun\Panels\Auth\EditProfileForm;
 use Xelqun\Panels\Auth\LoginForm;
 use Xelqun\Panels\Auth\RegisterForm;
@@ -376,11 +380,49 @@ final class Panel
     }
 
     /**
+     * Add every resource under a directory, so a new one needs no listing. A
+     * directory that isn't there yet adds nothing.
+     *
+     * shortcut: this walks the directory on every request. Cache the list if an app has enough files to notice.
+     */
+    public function discoverResources(string $in, string $for): self
+    {
+        if (! is_dir($in)) {
+            return $this;
+        }
+
+        return $this->resources(collect((new Filesystem)->allFiles($in))
+            ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'php')
+            ->map(fn (SplFileInfo $file): string => trim($for, '\\').'\\'.Str::beforeLast(strtr($file->getRelativePathname(), '/', '\\'), '.'))
+            ->filter(fn (string $class): bool => is_subclass_of($class, Resources\Resource::class) && ! (new ReflectionClass($class))->isAbstract())
+            ->values()
+            ->all());
+    }
+
+    /**
      * @return array<int, class-string<Resources\Resource>>
      */
     public function getResources(): array
     {
-        return $this->resources;
+        return array_values(array_unique($this->resources));
+    }
+
+    /**
+     * What this user can start from the sidebar's New menu.
+     *
+     * @return array<int, array{label: string, icon: string|null, url: string}>
+     */
+    public function getQuickCreateItems(): array
+    {
+        return collect($this->getResources())
+            ->filter(fn (string $resource): bool => $resource::can('create'))
+            ->map(fn (string $resource): array => [
+                'label' => Str::ucfirst($resource::getModelLabel()),
+                'icon' => $resource::getNavigationIcon(),
+                'url' => $resource::getUrl('create', panel: $this),
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -439,7 +481,7 @@ final class Panel
         $groups = collect($this->pages)
             ->filter(fn (string $page): bool => $page::shouldRegisterNavigation() && $page::canAccess())
             ->map(fn (string $page): NavigationItem => $page::getNavigationItem($this))
-            ->concat(collect($this->resources)
+            ->concat(collect($this->getResources())
                 ->filter(fn (string $resource): bool => $resource::can('viewAny'))
                 ->map(fn (string $resource): NavigationItem => $resource::getNavigationItem($this)))
             ->concat($this->navigationItems)
@@ -499,6 +541,8 @@ final class Panel
             'brand' => ['name' => $this->getBrandName()],
             'theme' => ['primary' => $this->primaryColor, 'font' => $this->font],
             'navigation' => $isInside ? $this->getNavigation() : [],
+            'quickCreate' => $isInside ? $this->getQuickCreateItems() : [],
+            'searchUrl' => $isInside ? route($this->routeName('search')) : null,
             'sidebarFooter' => $isInside && $this->sidebarFooter !== null ? ($this->sidebarFooter)()?->toArray() : null,
             'user' => $isInside ? ['name' => (string) data_get($user, 'name'), 'email' => (string) data_get($user, 'email')] : null,
             'logoutUrl' => $isInside ? $this->getLogoutUrl() : null,

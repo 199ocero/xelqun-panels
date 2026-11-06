@@ -28,6 +28,9 @@ final class Authenticate
 
             abort_if($loginUrl === null, 403);
 
+            // A redirect would save this as where to land after signing in, and it isn't a page.
+            abort_if($request->wantsJson(), 401);
+
             return redirect()->guest($loginUrl);
         }
 

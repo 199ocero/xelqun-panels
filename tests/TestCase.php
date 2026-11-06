@@ -75,6 +75,7 @@ abstract class TestCase extends Orchestra
             $table->string('status')->default('draft');
             $table->json('tags')->nullable();
             $table->string('cover')->nullable();
+            $table->foreignId('user_id')->nullable();
             $table->timestamps();
         });
 

@@ -4,6 +4,16 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 
 ## Unreleased
 
+### Added
+
+- **Global search finds records.** ⌘K searches each resource through `getEloquentQuery()` and its policy. Choose the columns with `getGloballySearchableAttributes()` and what shows under a result with `getGlobalSearchResultDetails()`.
+- **A New button in the sidebar**, listing every resource the user may create.
+- **`discoverResources()`** adds every resource in a folder. `make:xelqun-panel` now includes it.
+
+### Changed
+
+- A signed-out JSON request to a panel gets a 401 instead of a redirect to login.
+
 ### Fixed
 
 - **A new panel works straight away.** `make:xelqun-panel` left out `login()` and any pages, so `/admin` was a 404.

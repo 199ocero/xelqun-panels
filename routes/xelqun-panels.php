@@ -7,6 +7,7 @@ use Xelqun\Panels\Http\Controllers\Auth\LogoutController;
 use Xelqun\Panels\Http\Controllers\Auth\PasswordResetController;
 use Xelqun\Panels\Http\Controllers\Auth\ProfileController;
 use Xelqun\Panels\Http\Controllers\Auth\RegisterController;
+use Xelqun\Panels\Http\Controllers\GlobalSearchController;
 use Xelqun\Panels\Http\Controllers\ResourceRecordController;
 use Xelqun\Panels\Http\Middleware\Authenticate;
 use Xelqun\Panels\Http\Middleware\EnterPanel;
@@ -45,6 +46,9 @@ foreach (app(Panels::class)->all() as $panel) {
             Route::post('logout', LogoutController::class)->name('auth.logout');
 
             Route::middleware(Authenticate::class)->group(function () use ($panel): void {
+                // The underscore keeps it clear of a page or resource called search.
+                Route::post('_search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
+
                 if ($panel->getProfileForm() !== null) {
                     Route::get('profile', [ProfileController::class, 'show'])->name('auth.profile');
                     Route::put('profile', [ProfileController::class, 'update'])->name('auth.profile.update');

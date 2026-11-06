@@ -72,6 +72,7 @@ describe('make:xelqun-panel', function () {
             ->toContain("->id('back-office')")
             ->toContain("->path('back-office')")
             ->toContain('->login()')
+            ->toContain("->discoverResources(in: app_path('Xelqun/BackOffice/Resources'), for: 'App\\\\Xelqun\\\\BackOffice\\\\Resources')")
             ->toContain('->pages([Dashboard::class])')
             ->and(File::get("{$this->appPath}/bootstrap/providers.php"))
             ->toContain('App\Providers\Xelqun\BackOfficePanelProvider::class');

@@ -14,6 +14,27 @@ export interface PanelNavigationGroup {
     items: PanelNavigationItem[];
 }
 
+export interface PanelQuickCreateItem {
+    label: string;
+    icon: string | null;
+    url: string;
+}
+
+export interface PanelSearchResult {
+    title: string;
+    url: string;
+    details: string;
+    /** Falls back to the group's. */
+    icon?: string | null;
+}
+
+/** One resource's matches, as the panel's search route returns them. */
+export interface PanelSearchGroup {
+    label: string;
+    icon: string | null;
+    results: PanelSearchResult[];
+}
+
 export interface PanelSidebarCard {
     title: string;
     icon: string | null;
@@ -32,6 +53,8 @@ export interface PanelShell {
     brand: { name: string };
     theme: { primary: string | null; font: string };
     navigation: PanelNavigationGroup[];
+    quickCreate: PanelQuickCreateItem[];
+    searchUrl: string | null;
     sidebarFooter: PanelSidebarCard | null;
     user: { name: string; email: string } | null;
     logoutUrl: string | null;

@@ -55,7 +55,7 @@ class MakeResourceCommand extends Command
         $this->components->info('Resource created.');
         $this->components->bulletList([
             $path,
-            "Add {$class}::class to ->resources([...]) in your panel provider.",
+            "Add {$class}::class to ->resources([...]) if your panel doesn't use discoverResources().",
             "Fill in app/Policies/{$model}Policy.php. Until then, nobody can open this resource.",
         ]);
 

@@ -97,13 +97,33 @@ class ProductResource extends Resource
 }
 ```
 
-`php artisan make:xelqun-resource Product` creates this and a policy.
+`php artisan make:xelqun-resource Product` creates this and a policy. A panel made with `make:xelqun-panel` picks it up by itself, through `discoverResources(in: app_path('Xelqun/Admin/Resources'), for: 'App\\Xelqun\\Admin\\Resources')`. Otherwise, add it to `resources()`.
 
 **Access goes through the model's policy:** `viewAny`, `view`, `create`, `update` and `delete`. With no policy, or no such method, the answer is no. This differs from Filament, which allows by default.
 
 `getEloquentQuery()` is the security boundary. A record it leaves out is a 404 on every page, table action and form request.
 
 Override `filters()`, `recordActions()`, `bulkActions()`, `configureTable()` and the hooks `mutateBeforeSave()`, `beforeCreate()`, `afterCreate()`, `beforeSave()` and `afterSave()`. To change a page, extend `ListRecords`, `CreateRecord`, `EditRecord` or `ViewRecord` and return it from `getPages()`.
+
+The sidebar's New button lists every resource the user may `create`.
+
+### Global search
+
+⌘K finds pages and records. A resource with `$recordTitleAttribute` is searched on that column, so if the title is an accessor, or you want more columns, override this:
+
+```php
+public static function getGloballySearchableAttributes(): array
+{
+    return ['name', 'sku', 'category.name'];
+}
+
+public static function getGlobalSearchResultDetails(Model $record): array
+{
+    return ['SKU' => $record->sku];
+}
+```
+
+Return `[]` to keep a resource out. Search runs through `getEloquentQuery()`, skips a resource the user can't `viewAny`, and checks `view` on each record, showing up to 5 per resource. Results link to the view page. A policy that refuses more than the first 20 matches can hide later ones.
 
 ## Pages
 
@@ -148,7 +168,9 @@ Icons in PHP are names. The panels plugin adds common sidebar icons to the forms
 
 ## Current limits
 
-- Global search only finds pages. Searching records comes next, along with relation managers, tenancy and two-factor auth.
+- Relation managers, tenancy and two-factor auth come next.
+- `%` and `_` in a search act as wildcards.
+- `discoverResources()` walks its folder on every request.
 - Signing out of one panel signs out of the others in that session.
 - A queued verification email gets Laravel's route, not the panel's.
 - Changing a password ends "remember me" on other devices, but not their open sessions. Add Laravel's `AuthenticateSession` middleware for that.

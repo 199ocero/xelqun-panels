@@ -36,13 +36,14 @@ class MakePanelCommand extends Command
             return self::FAILURE;
         }
 
-        $namespace = $this->laravel->getNamespace().'Providers\\Xelqun';
+        $appNamespace = $this->laravel->getNamespace();
+        $namespace = "{$appNamespace}Providers\\Xelqun";
         $id = Str::kebab($name);
 
         File::ensureDirectoryExists(dirname($path));
         File::put($path, str_replace(
-            ['{{ namespace }}', '{{ class }}', '{{ id }}'],
-            [$namespace, $class, $id],
+            ['{{ namespace }}', '{{ class }}', '{{ id }}', '{{ name }}', '{{ resourceNamespace }}'],
+            [$namespace, $class, $id, $name, str_replace('\\', '\\\\', "{$appNamespace}Xelqun\\{$name}\\Resources")],
             File::get(__DIR__.'/../../stubs/panel-provider.php.stub'),
         ));
 

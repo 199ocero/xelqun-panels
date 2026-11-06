@@ -51,6 +51,12 @@ abstract class Resource
 
     protected static int $navigationSort = 0;
 
+    /** How many records one resource adds to the search results. */
+    private const int GLOBAL_SEARCH_LIMIT = 5;
+
+    /** How many matches go to the policy, so one that refuses a few still leaves a full list. */
+    private const int GLOBAL_SEARCH_CANDIDATES = 20;
+
     /**
      * @return array<int, Component>
      */
@@ -200,6 +206,77 @@ abstract class Resource
     }
 
     /**
+     * The columns the ⌘K palette looks in, with `author.name` to reach through a
+     * relation. By default that's the record title, so a title that's an accessor
+     * needs this overridden. Return nothing to keep a resource out of search.
+     *
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return static::$recordTitleAttribute === null ? [] : [static::$recordTitleAttribute];
+    }
+
+    /**
+     * What a search result shows under its title, as label => value. Add any
+     * relation this reads to getEloquentQuery(), or each result runs a query.
+     *
+     * @return array<string, string>
+     */
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [];
+    }
+
+    /**
+     * Matching records the current user may view. Only getEloquentQuery() can
+     * bring them back, and the policy sees each one before it leaves.
+     *
+     * shortcut: a policy that refuses more than the first 20 matches can hide records from search. Page through matches if an app's policies are that narrow.
+     *
+     * @return array<int, array{title: string, url: string, details: string}>
+     */
+    public static function getGlobalSearchResults(string $search): array
+    {
+        $attributes = static::getGloballySearchableAttributes();
+
+        if ($attributes === []) {
+            return [];
+        }
+
+        // shortcut: % and _ in a search act as wildcards, as they do in table search.
+        $pattern = "%{$search}%";
+
+        return static::getEloquentQuery()
+            // Grouped, or an OR here would step outside the resource's own scope.
+            ->where(function (Builder $query) use ($attributes, $pattern): void {
+                foreach ($attributes as $attribute) {
+                    if (str_contains($attribute, '.')) {
+                        $query->orWhereHas(
+                            Str::beforeLast($attribute, '.'),
+                            fn (Builder $related): Builder => $related->whereLike($related->qualifyColumn(Str::afterLast($attribute, '.')), $pattern),
+                        );
+                    } else {
+                        $query->orWhereLike($query->qualifyColumn($attribute), $pattern);
+                    }
+                }
+            })
+            ->limit(self::GLOBAL_SEARCH_CANDIDATES)
+            ->get()
+            ->filter(fn (Model $record): bool => static::can('view', $record))
+            ->take(self::GLOBAL_SEARCH_LIMIT)
+            ->map(fn (Model $record): array => [
+                'title' => static::getRecordTitle($record),
+                'url' => static::getUrl('view', ['record' => $record]),
+                'details' => collect(static::getGlobalSearchResultDetails($record))
+                    ->map(fn (?string $value, string $label): string => "{$label}: {$value}")
+                    ->implode(' · '),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Whether the current user can do this, by the model's policy.
      */
     public static function can(string $ability, ?Model $record = null): bool
@@ -242,10 +319,20 @@ abstract class Resource
         return null;
     }
 
+    public static function getNavigationIcon(): ?string
+    {
+        return static::$navigationIcon;
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return Str::headline(static::getPluralModelLabel());
+    }
+
     public static function getNavigationItem(Panel $panel): NavigationItem
     {
-        return NavigationItem::make(Str::headline(static::getPluralModelLabel()))
-            ->icon(static::$navigationIcon)
+        return NavigationItem::make(static::getNavigationLabel())
+            ->icon(static::getNavigationIcon())
             ->group(static::$navigationGroup)
             ->sort(static::$navigationSort)
             ->url(static::getUrl(panel: $panel))

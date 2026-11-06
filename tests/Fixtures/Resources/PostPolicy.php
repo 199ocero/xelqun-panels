@@ -10,6 +10,9 @@ class PostPolicy
     /** @var array<int, string> */
     public static array $denied = [];
 
+    /** @var array<int, string> */
+    public static array $hiddenTitles = [];
+
     public function viewAny(User $user): bool
     {
         return ! in_array('viewAny', self::$denied, true);
@@ -17,7 +20,7 @@ class PostPolicy
 
     public function view(User $user, Post $post): bool
     {
-        return ! in_array('view', self::$denied, true);
+        return ! in_array('view', self::$denied, true) && ! in_array($post->title, self::$hiddenTitles, true);
     }
 
     public function create(User $user): bool

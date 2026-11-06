@@ -58,6 +58,16 @@ class PostResource extends Resource
         return parent::getEloquentQuery()->where('team', 'red');
     }
 
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title', 'status', 'author.name'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return ['Status' => $record->getAttribute('status')];
+    }
+
     public static function mutateBeforeSave(array $attributes): array
     {
         return [...$attributes, 'title' => trim((string) $attributes['title'])];

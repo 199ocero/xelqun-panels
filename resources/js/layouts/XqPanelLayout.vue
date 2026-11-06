@@ -96,7 +96,7 @@ onBeforeUnmount(() => {
                     <XqPanelSidebar
                         :panel="panel"
                         @collapse="drawerOpen = false"
-                        @search="searchOpen = true"
+                        @search="((drawerOpen = false), (searchOpen = true))"
                     />
                 </DialogContent>
             </DialogPortal>
@@ -115,6 +115,10 @@ onBeforeUnmount(() => {
             </main>
         </div>
 
-        <XqPanelSearch v-model:open="searchOpen" :navigation="panel.navigation" />
+        <XqPanelSearch
+            v-model:open="searchOpen"
+            :navigation="panel.navigation"
+            :search-url="panel.searchUrl"
+        />
     </div>
 </template>

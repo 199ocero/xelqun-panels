@@ -1,0 +1,1 @@
+Not PHP, so discovery has to skip it.

@@ -5,6 +5,7 @@ import { computed } from 'vue';
 import type { PanelShell } from '../types';
 import { iconButtonClass } from '../ui/classes';
 import XqPanelNavItem from './XqPanelNavItem.vue';
+import XqPanelNewMenu from './XqPanelNewMenu.vue';
 import XqPanelSidebarCard from './XqPanelSidebarCard.vue';
 import XqPanelUserMenu from './XqPanelUserMenu.vue';
 
@@ -41,15 +42,24 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
             </button>
         </div>
 
-        <button
-            v-if="collapsed"
-            type="button"
-            :class="[iconButtonClass, 'mx-auto']"
-            aria-label="Search"
-            @click="$emit('search')"
+        <div
+            v-if="collapsed || panel.quickCreate.length > 0"
+            :class="['gap-2 flex items-center', collapsed ? 'flex-col' : 'px-1']"
         >
-            <Search class="size-4" aria-hidden="true" />
-        </button>
+            <XqPanelNewMenu
+                v-if="panel.quickCreate.length > 0"
+                :items="panel.quickCreate"
+                :collapsed="collapsed"
+            />
+            <button
+                type="button"
+                :class="iconButtonClass"
+                aria-label="Search"
+                @click="$emit('search')"
+            >
+                <Search class="size-4" aria-hidden="true" />
+            </button>
+        </div>
 
         <div class="gap-5 min-h-0 flex flex-1 flex-col overflow-y-auto">
             <div

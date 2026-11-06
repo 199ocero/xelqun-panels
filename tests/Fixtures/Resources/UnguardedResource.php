@@ -11,6 +11,11 @@ class UnguardedResource extends Resource
 {
     protected static string $model = Unguarded::class;
 
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title'];
+    }
+
     public static function form(): array
     {
         return [TextInput::make('title')];
