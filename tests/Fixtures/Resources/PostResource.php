@@ -13,6 +13,7 @@ use Xelqun\Panels\Infolists\TextEntry;
 use Xelqun\Panels\Resources\Resource;
 use Xelqun\Panels\Resources\Tab;
 use Xelqun\Panels\Tests\Fixtures\Post;
+use Xelqun\Panels\Widgets\PanelWidget;
 use Xelqun\Tables\Columns\TextColumn;
 use Xelqun\Tables\Filters\SelectFilter;
 use Xelqun\Tables\Table;
@@ -31,6 +32,14 @@ class PostResource extends Resource
     public static array $calls = [];
 
     public static bool $usesInfolist = false;
+
+    /** @var array<int, class-string<PanelWidget>> */
+    public static array $headerWidgets = [];
+
+    public static function getHeaderWidgets(): array
+    {
+        return self::$headerWidgets;
+    }
 
     public static function form(): array
     {

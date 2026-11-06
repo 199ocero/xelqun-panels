@@ -3,7 +3,8 @@ import { useRegistry } from '@xelqun/forms';
 import { XqTable } from '@xelqun/tables';
 import type { TableSchema } from '@xelqun/tables';
 import type { Component } from 'vue';
-import type { PanelStat, PanelTile, PanelWidget } from '../../types';
+import type { PanelChart, PanelStat, PanelTile, PanelWidget } from '../../types';
+import XqPanelChart from './XqPanelChart.vue';
 import XqPanelListWidget from './XqPanelListWidget.vue';
 import XqPanelStats from './XqPanelStats.vue';
 import XqPanelTiles from './XqPanelTiles.vue';
@@ -32,6 +33,13 @@ function customWidget(type: string): Component | undefined {
                 v-if="widget.type === 'stats'"
                 :stats="widget.data.stats as PanelStat[]"
             />
+            <XqPanelWidgetCard
+                v-else-if="widget.type === 'chart'"
+                :heading="widget.data.heading"
+                :see-all-url="widget.data.seeAllUrl"
+            >
+                <XqPanelChart :chart="widget.data.chart as PanelChart" class="px-5 pb-4" />
+            </XqPanelWidgetCard>
             <XqPanelListWidget
                 v-else-if="widget.type === 'list'"
                 :table="widget.data.table as TableSchema"

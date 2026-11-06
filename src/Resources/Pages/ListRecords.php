@@ -43,6 +43,11 @@ class ListRecords extends ResourcePage
         return [ResourceTable::for($this->resource, $this->getActiveTab())];
     }
 
+    protected function getWidgets(): array
+    {
+        return $this->resource::getHeaderWidgets();
+    }
+
     public function getTabs(): array
     {
         $activeTab = $this->getActiveTab();

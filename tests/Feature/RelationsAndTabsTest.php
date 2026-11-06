@@ -125,6 +125,63 @@ describe('relation managers', function () {
         $this->get("/admin/posts/{$this->post->id}/edit")->assertOk()->assertInertia(fn (Assert $page) => $page->has('page.content', 1));
     });
 
+    it('attaches an existing record, and offers only what isn\'t attached', function () {
+        $table = RelationTable::for(PostResource::class, LabelsRelationManager::class, $this->post, false);
+        $attached = Label::create(['name' => 'Attached']);
+        $free = Label::create(['name' => 'Free']);
+        $this->post->labels()->attach($attached);
+
+        $this->runTableAction($table, 'attach', null, ['record' => $free->id])->assertOk();
+
+        expect($this->post->labels()->pluck('name')->all())->toBe(['Attached', 'Free']);
+    });
+
+    it('can\'t attach what the list didn\'t offer', function () {
+        $table = RelationTable::for(PostResource::class, LabelsRelationManager::class, $this->post, false);
+        $attached = Label::create(['name' => 'Attached']);
+        $this->post->labels()->attach($attached);
+
+        $this->runTableAction($table, 'attach', null, ['record' => $attached->id])->assertStatus(422);
+
+        expect($this->post->labels()->count())->toBe(1);
+    });
+
+    it('detaches, and keeps the record', function () {
+        $table = RelationTable::for(PostResource::class, LabelsRelationManager::class, $this->post, false);
+        $label = Label::create(['name' => 'Mine']);
+        $this->post->labels()->attach($label);
+
+        $this->runTableAction($table, 'detach', $label->id)->assertOk();
+
+        expect($this->post->labels()->count())->toBe(0)->and($label->fresh())->not->toBeNull();
+    });
+
+    it('associates a record with no parent, and can\'t take one from another parent', function () {
+        $free = Comment::create(['body' => 'Free']);
+        $taken = Post::create(['title' => 'Other'])->comments()->create(['body' => 'Taken']);
+
+        $this->runTableAction(commentsTable($this->post), 'associate', null, ['record' => $taken->id])->assertStatus(422);
+        $this->runTableAction(commentsTable($this->post), 'associate', null, ['record' => $free->id])->assertOk();
+
+        expect($free->fresh()->post_id)->toBe($this->post->id)
+            ->and($taken->fresh()->post_id)->not->toBe($this->post->id);
+    });
+
+    it('dissociates, and keeps the record', function () {
+        $this->runTableAction(commentsTable($this->post), 'dissociate', $this->comment->id)->assertOk();
+
+        expect($this->comment->fresh()->post_id)->toBeNull();
+    });
+
+    it('needs update on the parent to link anything', function () {
+        PostPolicy::$denied = ['update'];
+        $free = Comment::create(['body' => 'Free']);
+
+        $this->runTableAction(commentsTable($this->post), 'associate', null, ['record' => $free->id])->assertNotFound();
+
+        expect($free->fresh()->post_id)->toBeNull();
+    });
+
     it('finds the parent once, however many rows there are', function () {
         foreach (range(1, 9) as $number) {
             $this->post->comments()->create(['body' => "Comment {$number}"]);

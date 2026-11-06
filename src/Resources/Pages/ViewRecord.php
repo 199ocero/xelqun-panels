@@ -2,7 +2,7 @@
 
 namespace Xelqun\Panels\Resources\Pages;
 
-use Xelqun\Actions\Action;
+use Xelqun\Panels\Actions\EditAction;
 use Xelqun\Panels\Pages\FormContent;
 use Xelqun\Panels\Resources\ResourceForm;
 
@@ -25,13 +25,7 @@ class ViewRecord extends ResourcePage
 
     public function headerActions(): array
     {
-        return ! $this->resource::hasPage('edit') ? [] : [
-            Action::make('edit')
-                ->label(__('xelqun-panels::resources.edit_action'))
-                ->icon('pencil')
-                ->authorize('update')
-                ->url($this->resource::getUrl('edit', ['record' => $this->record])),
-        ];
+        return ! $this->resource::hasPage('edit') ? [] : [EditAction::for($this->resource)->button()];
     }
 
     public function content(): array

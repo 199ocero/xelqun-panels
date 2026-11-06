@@ -1,10 +1,15 @@
 <?php
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
+use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Tests\Fixtures\Post;
+use Xelqun\Panels\Tests\Fixtures\Resources\PostPolicy;
+use Xelqun\Panels\Tests\Fixtures\Resources\PostResource;
 use Xelqun\Panels\Tests\Fixtures\Widgets\BrokenWidget;
 use Xelqun\Panels\Tests\Fixtures\Widgets\PendingPosts;
+use Xelqun\Panels\Tests\Fixtures\Widgets\SalesChart;
 
 beforeEach(function () {
     PendingPosts::$canApprove = true;
@@ -145,4 +150,64 @@ it('needs the panel, like any other page', function () {
     auth('admin')->logout();
 
     $this->get('/admin/dashboard')->assertRedirect('/admin/login');
+});
+
+describe('charts', function () {
+    afterEach(function () {
+        SalesChart::$type = 'line';
+    });
+
+    it('sends the data the browser draws from', function () {
+        expect(SalesChart::make()->toWidget())->toMatchArray(['type' => 'chart'])
+            ->and(SalesChart::make()->toWidget()['data']['chart'])->toBe([
+                'type' => 'line',
+                'labels' => ['Jan', 'Feb'],
+                'datasets' => [['label' => 'Orders', 'data' => [1.0, 2.0]]],
+            ]);
+    });
+
+    it('refuses a type it can\'t draw', function () {
+        SalesChart::$type = 'radar';
+
+        SalesChart::make()->toWidget();
+    })->throws(PanelDefinitionException::class);
+
+    it('folds extra doughnut slices into one, rather than repeating a color', function () {
+        SalesChart::$type = 'doughnut';
+        $before = SalesChart::$data;
+        SalesChart::$data = ['labels' => range(1, 10), 'datasets' => [['data' => range(1, 10)]]];
+
+        $chart = SalesChart::make()->toWidget()['data']['chart'];
+        SalesChart::$data = $before;
+
+        expect($chart['labels'])->toHaveCount(8)
+            ->and($chart['labels'][7])->toBe('Other')
+            ->and($chart['datasets'][0]['data'][7])->toBe(27.0)
+            ->and(array_sum($chart['datasets'][0]['data']))->toBe(55.0);
+    });
+
+    it('refuses more series than it has colors', function () {
+        $before = SalesChart::$data;
+        SalesChart::$data = ['labels' => ['a'], 'datasets' => array_fill(0, 9, ['data' => [1]])];
+
+        try {
+            SalesChart::make()->toWidget();
+            $this->fail('It drew nine series.');
+        } catch (PanelDefinitionException) {
+            expect(true)->toBeTrue();
+        } finally {
+            SalesChart::$data = $before;
+        }
+    });
+});
+
+it('shows a resource\'s widgets above its list', function () {
+    Gate::policy(Post::class, PostPolicy::class);
+    PostResource::$headerWidgets = [SalesChart::class];
+
+    $this->get('/admin/posts')->assertInertia(fn (Assert $page) => $page->where('page.hasWidgets', true));
+
+    PostResource::$headerWidgets = [];
+
+    $this->get('/admin/posts')->assertInertia(fn (Assert $page) => $page->where('page.hasWidgets', false));
 });

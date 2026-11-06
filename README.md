@@ -120,6 +120,28 @@ Override `filters()`, `recordActions()`, `bulkActions()`, `configureTable()` and
 
 The sidebar's New button lists every resource with a create page that the user may `create`.
 
+### Actions
+
+`recordActions()` starts with edit and delete. Build your own list from the same parts, which take labels, modals and policies from the resource:
+
+```php
+public static function recordActions(): array
+{
+    return [
+        ViewAction::for(static::class),
+        EditAction::for(static::class),
+        ReplicateAction::for(static::class)->excludeAttributes(['slug']),
+        DeleteAction::for(static::class),
+    ];
+}
+```
+
+Each takes the usual action methods, such as `->label()` or `->visible()`. `ReplicateAction` needs `replicate` in the policy.
+
+### Soft deletes
+
+A model with `SoftDeletes` gets this by itself: deleted records leave the list, a filter brings them back, and `RestoreAction`, `ForceDeleteAction` and their bulk versions appear. They need `restore` and `forceDelete` in the policy. If you override `filters()`, add `TrashedFilter::make('trashed')`.
+
 ### Relation managers
 
 A table of a relationship, under a record's edit and view pages, with create, edit and delete in modals:
@@ -135,6 +157,15 @@ class OrdersRelationManager extends RelationManager
 ```
 
 Return it from `getRelations()` on the resource, or run `php artisan make:xelqun-relation-manager Customer orders`. Set `$relatedResource` to reuse a resource's form, columns and filters instead.
+
+To link records that already exist, add `AttachAction` and `DetachAction` for a many-to-many, or `AssociateAction` and `DissociateAction` for a has-many:
+
+```php
+public static function headerActions(Model $owner): array
+{
+    return [...parent::headerActions($owner), AttachAction::for(static::class, $owner)];
+}
+```
 
 Access goes through the related model's policy and the parent's `view`. Changing anything also takes the parent's `update`, and the view page is read-only. It works for has-many, morph-many and many-to-many, where a new record is attached to the parent.
 
@@ -280,9 +311,30 @@ class Reports extends Page
 | `ListWidget`    | Rows with an icon, a title, detail, and actions, a progress bar or a link. It's a table underneath, so actions are checked on the server and `query()` limits what it reaches. |
 | `TileWidget`    | A grid of small cards with a status.                                                                                                                                           |
 | `TableWidget`   | A full table.                                                                                                                                                                  |
+| `ChartWidget`   | Line, bar and doughnut charts, drawn with no chart library.                                                                                                                    |
 | `Widget`        | Your own, with a Vue component registered in `createXelqunForms({ components })`.                                                                                              |
 
-Set `$columnSpan` (out of 12), `$sort` and `$heading`, and override `canView()` to hide one.
+Set `$columnSpan` (out of 12), `$sort` and `$heading`, and override `canView()` to hide one. `getHeaderWidgets()` on a resource shows widgets above its list.
+
+```php
+class OrdersChart extends ChartWidget
+{
+    protected static ?string $heading = 'Orders';
+
+    protected function getType(): string
+    {
+        return 'line'; // or 'bar' or 'doughnut'
+    }
+
+    protected function getData(): array
+    {
+        return [
+            'labels' => ['Jan', 'Feb', 'Mar'],
+            'datasets' => [['label' => 'Orders', 'data' => [12, 19, 8]]],
+        ];
+    }
+}
+```
 
 ## Theming
 
@@ -332,13 +384,12 @@ Register the component in `createXelqunForms({ components })`. The places are `S
 
 ## Current limits
 
-- A relation manager can create a many-to-many record, but can't attach an existing one yet.
 - `%` and `_` in a search act as wildcards.
 - `discoverResources()` walks its folder on every request.
 - Signing out of one panel signs out of the others in that session.
 - A queued verification email gets Laravel's route, not the panel's.
 - Changing a password ends "remember me" on other devices, but not their open sessions. Add Laravel's `AuthenticateSession` middleware for that.
-- Charts are a sparkline on a stat. SSR isn't tested.
+- SSR isn't tested.
 
 ## Developing
 

@@ -2,11 +2,12 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { createXelqunForms } from '@xelqun/forms';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
+import XqPanelChart from '../../resources/js/components/widgets/XqPanelChart.vue';
 import XqPanelListWidget from '../../resources/js/components/widgets/XqPanelListWidget.vue';
 import XqPanelStats from '../../resources/js/components/widgets/XqPanelStats.vue';
 import XqPanelTiles from '../../resources/js/components/widgets/XqPanelTiles.vue';
 import XqPanelWidgets from '../../resources/js/components/widgets/XqPanelWidgets.vue';
-import type { PanelWidget } from '../../resources/js/types';
+import type { PanelChart, PanelWidget } from '../../resources/js/types';
 
 const { reload } = vi.hoisted(() => ({ reload: vi.fn() }));
 
@@ -231,5 +232,97 @@ describe('the widget grid', () => {
         await flushPromises();
 
         expect(wrapper.find('[data-hello]').text()).toBe('Hi');
+    });
+});
+
+describe('XqPanelChart', () => {
+    const chart = (overrides: Partial<PanelChart> = {}): PanelChart => ({
+        type: 'line',
+        labels: ['Jan', 'Feb', 'Mar'],
+        datasets: [{ label: 'Orders', data: [10, 40, 25] }],
+        ...overrides,
+    });
+
+    it('draws one line per series, with no legend for a single one', () => {
+        const wrapper = mount(XqPanelChart, { props: { chart: chart() } });
+
+        expect(wrapper.findAll('[data-xq-chart-line]')).toHaveLength(1);
+        expect(wrapper.find('[data-xq-chart-legend]').exists()).toBe(false);
+    });
+
+    it('names every series once there are two', () => {
+        const wrapper = mount(XqPanelChart, {
+            props: {
+                chart: chart({
+                    datasets: [
+                        { label: 'Orders', data: [1, 2, 3] },
+                        { label: 'Returns', data: [0, 1, 0] },
+                    ],
+                }),
+            },
+        });
+
+        expect(wrapper.find('[data-xq-chart-legend]').text()).toContain('Returns');
+    });
+
+    it('draws a bar for each value, no wider than 24px', () => {
+        const wrapper = mount(XqPanelChart, { props: { chart: chart({ type: 'bar' }) } });
+        const bars = wrapper.findAll('[data-xq-chart-bar]');
+
+        expect(bars).toHaveLength(3);
+        expect(Number(bars[0].attributes('width'))).toBeLessThanOrEqual(24);
+    });
+
+    it('keeps a bar on the baseline for a negative value', () => {
+        const wrapper = mount(XqPanelChart, {
+            props: {
+                chart: chart({ type: 'bar', datasets: [{ label: 'Net', data: [10, -10, 0] }] }),
+            },
+        });
+        const heights = wrapper
+            .findAll('[data-xq-chart-bar]')
+            .map((bar) => Number(bar.attributes('height')));
+
+        expect(heights[0]).toBeCloseTo(heights[1]);
+        expect(heights[2]).toBe(0);
+    });
+
+    it('puts gridlines on round numbers', () => {
+        const wrapper = mount(XqPanelChart, {
+            props: { chart: chart({ datasets: [{ label: 'Orders', data: [5, 25, 12] }] }) },
+        });
+        const labels = wrapper.findAll('svg g text').map((label) => label.text());
+
+        expect(labels).toEqual(['0', '10', '20', '30']);
+    });
+
+    it('draws a flat zero series without dividing by zero', () => {
+        const wrapper = mount(XqPanelChart, {
+            props: { chart: chart({ datasets: [{ label: 'Orders', data: [0, 0, 0] }] }) },
+        });
+
+        expect(wrapper.find('[data-xq-chart-line]').attributes('points')).not.toContain('NaN');
+    });
+
+    it('shows a slice per label, and the total in the middle', () => {
+        const wrapper = mount(XqPanelChart, { props: { chart: chart({ type: 'doughnut' }) } });
+
+        expect(wrapper.findAll('[data-xq-chart-slice]')).toHaveLength(3);
+        expect(wrapper.find('svg text').text()).toBe('75');
+    });
+
+    it('explains a point on hover', async () => {
+        const wrapper = mount(XqPanelChart, { props: { chart: chart() } });
+
+        await wrapper.findAll('[data-xq-chart-target]')[1].trigger('mouseenter');
+
+        expect(wrapper.find('[data-xq-chart-tooltip]').text()).toContain('Feb');
+        expect(wrapper.find('[data-xq-chart-tooltip]').text()).toContain('40');
+    });
+
+    it('leaves a table for screen readers', () => {
+        const wrapper = mount(XqPanelChart, { props: { chart: chart() } });
+
+        expect(wrapper.find('table.sr-only').text()).toContain('Feb');
     });
 });

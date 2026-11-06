@@ -12,6 +12,7 @@ use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\RelationTable;
+use Xelqun\Panels\Widgets\PanelWidget;
 use Xelqun\Tables\Table;
 
 /**
@@ -184,11 +185,30 @@ abstract class Page
     }
 
     /**
-     * Whether the browser should wait for a `widgets` prop.
+     * Widgets above the content.
+     *
+     * @return array<int, class-string<PanelWidget>>
      */
-    protected function hasWidgets(): bool
+    protected function getWidgets(): array
     {
-        return false;
+        return [];
+    }
+
+    /**
+     * Deferred, so the page paints at once and a slow query only holds back the cards.
+     *
+     * @return array<string, mixed>
+     */
+    private function getWidgetProps(): array
+    {
+        return $this->getWidgets() === [] ? [] : ['widgets' => Inertia::defer(fn (): array => collect($this->getWidgets())
+            ->filter(fn (string $widget): bool => $widget::canView())
+            ->sortBy(fn (string $widget): int => $widget::getSort())
+            // One failing widget shouldn't take the others down. rescue() reports it.
+            ->map(fn (string $widget): ?array => rescue(fn (): array => $widget::make()->toWidget()))
+            ->filter()
+            ->values()
+            ->all())];
     }
 
     protected function getComponent(): string
@@ -200,7 +220,7 @@ abstract class Page
     {
         abort_unless($this->isAccessible(), 403, $this->getAccessDeniedReason());
 
-        return Inertia::render($this->getComponent(), [...$this->getProps(), 'page' => $this->toData()]);
+        return Inertia::render($this->getComponent(), [...$this->getWidgetProps(), ...$this->getProps(), 'page' => $this->toData()]);
     }
 
     /**
@@ -213,7 +233,7 @@ abstract class Page
             'eyebrow' => $this->getEyebrow(),
             'subheading' => $this->getSubheading(),
             'breadcrumbs' => $this->getBreadcrumbs(),
-            'hasWidgets' => $this->hasWidgets(),
+            'hasWidgets' => $this->getWidgets() !== [],
             'tabs' => $this->getTabs(),
             'notice' => null,
             'headerActions' => $this->headerActions() === [] ? null : PageActionSet::for($this)->toSchema(),

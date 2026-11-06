@@ -5,7 +5,11 @@ namespace Xelqun\Panels\Resources;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use LogicException;
+use Xelqun\Panels\Tables\TrashedFilter;
+use Xelqun\Tables\Filters\BaseFilter;
+use Xelqun\Tables\State\TableState;
 use Xelqun\Tables\Table;
 
 /**
@@ -16,6 +20,8 @@ use Xelqun\Tables\Table;
  */
 final class ResourceTable extends Table
 {
+    private bool $hidesTrashed = false;
+
     /**
      * @param  class-string<\Xelqun\Panels\Resources\Resource>  $resource
      */
@@ -39,8 +45,41 @@ final class ResourceTable extends Table
     {
         $resource = $this->getResource();
         $tab = $resource::getTabs()[$this->context['tab'] ?? ''] ?? null;
+        $query = $tab === null ? $resource::getEloquentQuery() : $tab->applyTo($resource::getEloquentQuery());
 
-        return $tab === null ? $resource::getEloquentQuery() : $tab->applyTo($resource::getEloquentQuery());
+        if (! $this->hasTrashedFilter()) {
+            return $query;
+        }
+
+        // Restore has to be able to find a trashed row, so only what's listed hides them.
+        return $query->withoutGlobalScope(SoftDeletingScope::class)->when(
+            $this->hidesTrashed,
+            fn (Builder $visible): Builder => $visible->whereNull($this->getResource()::getDeletedAtColumn()),
+        );
+    }
+
+    public function toResult(TableState $state): array
+    {
+        $this->hidesTrashed = $this->hasTrashedFilter() && ! $this->wantsTrashed($state);
+
+        return parent::toResult($state);
+    }
+
+    public function getSelectableKeys(TableState $state): ?array
+    {
+        $this->hidesTrashed = $this->hasTrashedFilter() && ! $this->wantsTrashed($state);
+
+        return parent::getSelectableKeys($state);
+    }
+
+    private function hasTrashedFilter(): bool
+    {
+        return collect($this->getFilters())->contains(fn (BaseFilter $filter): bool => $filter instanceof TrashedFilter);
+    }
+
+    private function wantsTrashed(TableState $state): bool
+    {
+        return collect($this->getFilters())->contains(fn (BaseFilter $filter): bool => $filter instanceof TrashedFilter && $filter->isActive($state->filters));
     }
 
     public function authorize(?Authenticatable $user): bool

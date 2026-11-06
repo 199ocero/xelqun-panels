@@ -2,12 +2,11 @@
 
 namespace Xelqun\Panels\Resources\Pages;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Xelqun\Actions\Action;
 use Xelqun\Notifications\Notification;
+use Xelqun\Panels\Actions\DeleteAction;
 use Xelqun\Panels\Pages\FormContent;
 use Xelqun\Panels\Resources\ResourceForm;
 
@@ -29,15 +28,9 @@ class EditRecord extends ResourcePage
     public function headerActions(): array
     {
         return [
-            Action::make('delete')
-                ->label(__('xelqun-panels::resources.delete'))
-                ->icon('trash')
-                ->color('danger')
-                ->authorize('delete')
-                ->requiresConfirmation()
-                ->successNotificationTitle(__('xelqun-panels::resources.deleted', ['label' => Str::ucfirst($this->resource::getModelLabel())]))
-                ->successRedirectUrl($this->resource::getUrl())
-                ->action(fn (Model $record) => $record->delete()),
+            DeleteAction::for($this->resource)
+                ->button()
+                ->successRedirectUrl($this->resource::getUrl()),
         ];
     }
 

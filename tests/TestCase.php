@@ -83,7 +83,7 @@ abstract class TestCase extends Orchestra
 
         Schema::create('comments', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('post_id');
+            $table->foreignId('post_id')->nullable();
             $table->string('body');
             $table->timestamps();
         });
@@ -133,6 +133,14 @@ abstract class TestCase extends Orchestra
         Schema::create('folder_team', function (Blueprint $table): void {
             $table->foreignId('folder_id');
             $table->foreignId('team_id');
+        });
+
+        Schema::create('tasks', function (Blueprint $table): void {
+            $table->id();
+            $table->string('title');
+            $table->string('slug')->nullable();
+            $table->softDeletes();
+            $table->timestamps();
         });
 
         Schema::create('notifications', function (Blueprint $table): void {

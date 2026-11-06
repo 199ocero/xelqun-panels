@@ -110,6 +110,12 @@ interface PanelWidgetCard {
     seeAllUrl: string | null;
 }
 
+export interface PanelChart {
+    type: 'line' | 'bar' | 'doughnut';
+    labels: string[];
+    datasets: Array<{ label: string; data: number[] }>;
+}
+
 export type PanelWidget = PanelWidgetBase &
     (
         | { type: 'stats'; data: PanelWidgetCard & { stats: PanelStat[] } }

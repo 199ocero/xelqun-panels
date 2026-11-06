@@ -7,11 +7,16 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Xelqun\Actions\Action;
 use Xelqun\Actions\ActionGroup;
 use Xelqun\Forms\Components\Component;
+use Xelqun\Panels\Actions\DeleteAction;
+use Xelqun\Panels\Actions\EditAction;
+use Xelqun\Panels\Actions\ForceDeleteAction;
+use Xelqun\Panels\Actions\RestoreAction;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Panel;
@@ -20,6 +25,8 @@ use Xelqun\Panels\Resources\Pages\CreateRecord;
 use Xelqun\Panels\Resources\Pages\EditRecord;
 use Xelqun\Panels\Resources\Pages\ListRecords;
 use Xelqun\Panels\Resources\Pages\ViewRecord;
+use Xelqun\Panels\Tables\TrashedFilter;
+use Xelqun\Panels\Widgets\PanelWidget;
 use Xelqun\Tables\Actions\BulkAction;
 use Xelqun\Tables\Columns\Column;
 use Xelqun\Tables\Filters\BaseFilter;
@@ -81,7 +88,7 @@ abstract class Resource
      */
     public static function filters(): array
     {
-        return [];
+        return static::usesSoftDeletes() ? [TrashedFilter::make('trashed')] : [];
     }
 
     /**
@@ -106,6 +113,16 @@ abstract class Resource
     }
 
     /**
+     * Widgets above the list.
+     *
+     * @return array<int, class-string<PanelWidget>>
+     */
+    public static function getHeaderWidgets(): array
+    {
+        return [];
+    }
+
+    /**
      * Relationship tables for the edit and view pages.
      *
      * @return array<int, class-string<RelationManager>>
@@ -120,29 +137,10 @@ abstract class Resource
      */
     public static function recordActions(): array
     {
-        $edit = Action::make('edit')
-            ->label(__('xelqun-panels::resources.edit_action'))
-            ->icon('pencil')
-            ->iconButton()
-            ->authorize('update');
-
         return [
-            static::hasPage('edit')
-                ? $edit->url(fn (Model $record): string => static::getUrl('edit', ['record' => $record]))
-                : $edit
-                    ->schema(fn (): array => static::form())
-                    ->modalSubmitActionLabel(__('xelqun-panels::resources.save'))
-                    ->successNotificationTitle(__('xelqun-panels::resources.saved', ['label' => Str::ucfirst(static::getModelLabel())]))
-                    ->action(fn (array $data, Model $record): Model => ResourceForm::for(static::class, ResourceForm::EDIT, $record)->persist($data)),
-            Action::make('delete')
-                ->label(__('xelqun-panels::resources.delete'))
-                ->icon('trash')
-                ->iconButton()
-                ->color('danger')
-                ->authorize('delete')
-                ->requiresConfirmation()
-                ->successNotificationTitle(__('xelqun-panels::resources.deleted', ['label' => Str::ucfirst(static::getModelLabel())]))
-                ->action(fn (Model $record) => $record->delete()),
+            EditAction::for(static::class),
+            DeleteAction::for(static::class),
+            ...(static::usesSoftDeletes() ? [RestoreAction::for(static::class), ForceDeleteAction::for(static::class)] : []),
         ];
     }
 
@@ -159,6 +157,21 @@ abstract class Resource
                 ->requiresConfirmation()
                 ->successNotificationTitle(__('xelqun-panels::resources.deleted_many'))
                 ->action(fn (Collection $records) => $records->each->delete()),
+            ...(! static::usesSoftDeletes() ? [] : [
+                BulkAction::make('restore')
+                    ->label(__('xelqun-panels::resources.restore_selected'))
+                    ->authorize('restore')
+                    ->requiresConfirmation()
+                    ->successNotificationTitle(__('xelqun-panels::resources.restored_many'))
+                    ->action(fn (Collection $records) => $records->each(static::restoreRecord(...))),
+                BulkAction::make('forceDelete')
+                    ->label(__('xelqun-panels::resources.force_delete_selected'))
+                    ->color('danger')
+                    ->authorize('forceDelete')
+                    ->requiresConfirmation()
+                    ->successNotificationTitle(__('xelqun-panels::resources.deleted_many'))
+                    ->action(fn (Collection $records) => $records->each->forceDelete()),
+            ]),
         ];
     }
 
@@ -271,6 +284,30 @@ abstract class Resource
         ];
     }
 
+    public static function usesSoftDeletes(): bool
+    {
+        return in_array(SoftDeletes::class, class_uses_recursive(static::$model), true);
+    }
+
+    public static function getDeletedAtColumn(): string
+    {
+        $model = new static::$model;
+
+        return $model->qualifyColumn(method_exists($model, 'getDeletedAtColumn') ? $model->getDeletedAtColumn() : 'deleted_at');
+    }
+
+    public static function isTrashed(?Model $record): bool
+    {
+        return static::usesSoftDeletes() && $record?->exists && $record->getAttribute(Str::afterLast(static::getDeletedAtColumn(), '.')) !== null;
+    }
+
+    public static function restoreRecord(Model $record): void
+    {
+        if (method_exists($record, 'restore')) {
+            $record->restore();
+        }
+    }
+
     public static function hasPage(string $page): bool
     {
         return isset(static::getPages()[$page]);
@@ -282,6 +319,8 @@ abstract class Resource
     public static function getRecordUrl(Model $record): ?string
     {
         return match (true) {
+            // Pages only find records that aren't trashed.
+            static::isTrashed($record) => null,
             static::hasPage('edit') && static::can('update', $record) => static::getUrl('edit', ['record' => $record]),
             static::hasPage('view') && static::can('view', $record) => static::getUrl('view', ['record' => $record]),
             default => null,

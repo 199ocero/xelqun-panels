@@ -20,6 +20,11 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **Plugins.** `Panel::plugin()` with the `Plugin` contract.
 - **Render hooks.** `Panel::renderHook()` puts a Vue component in the shell.
 - **Translations.** The shell's text comes from `shell.php`, so every part of a panel can be translated.
+- **Ready-made actions.** `ViewAction`, `EditAction`, `DeleteAction`, `ReplicateAction`, `RestoreAction` and `ForceDeleteAction`.
+- **Soft deletes.** A model that uses them gets a filter, restore and force delete, one at a time or in bulk.
+- **Linking existing records.** `AttachAction`, `DetachAction`, `AssociateAction` and `DissociateAction` for relation managers.
+- **Chart widgets.** `ChartWidget` draws line, bar and doughnut charts as SVG, with no chart library.
+- **Widgets on resource lists.** `Resource::getHeaderWidgets()`.
 - **Infolists.** `Resource::infolist()` with `TextEntry`, `IconEntry` and `ImageEntry`, in place of a disabled form on the view page.
 
 ### Changed

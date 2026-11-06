@@ -30,7 +30,8 @@ use Xelqun\Tables\Table;
  * parent's `view`. Changing anything also takes the parent's `update`, and a view
  * page is read-only.
  *
- * shortcut: attaching an existing record to a many-to-many isn't here, only creating one. Add attach and detach actions when an app needs them.
+ * Add AttachAction and DetachAction for a many-to-many, or AssociateAction and
+ * DissociateAction for a has-many, to link records that already exist.
  *
  * @api
  */
@@ -43,6 +44,9 @@ abstract class RelationManager
 
     /** @var class-string<\Xelqun\Panels\Resources\Resource>|null */
     protected static ?string $relatedResource = null;
+
+    /** The column that names a record in the attach and associate modals. */
+    protected static string $recordTitleAttribute = 'name';
 
     /**
      * @return array<int, Component>
@@ -137,6 +141,11 @@ abstract class RelationManager
     public static function getTitle(): string
     {
         return static::$title ?? Str::headline(static::$relationship);
+    }
+
+    public static function getRecordTitleAttribute(): string
+    {
+        return static::$recordTitleAttribute;
     }
 
     /**
