@@ -74,7 +74,7 @@ final class Panel
     /** @var class-string<EditProfileForm>|null */
     private ?string $profileForm = null;
 
-    /** @var array<string, Color|string>|Closure(): array<string, Color|string> */
+    /** @var array<string, mixed>|Closure(): array<string, mixed> */
     private array|Closure $colors = [];
 
     private string $font = 'Inter';
@@ -163,7 +163,7 @@ final class Panel
      * default. Text stays readable in both themes, whichever you pick. A closure
      * runs on every request, so a color can come from a setting.
      *
-     * @param  array<string, Color|string>|Closure(): array<string, Color|string>  $colors
+     * @param  array<string, mixed>|Closure(): array<string, mixed>  $colors  Each a Color or a hex value, checked by getColorVariables().
      */
     public function colors(array|Closure $colors): self
     {
