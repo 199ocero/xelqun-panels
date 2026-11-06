@@ -1,0 +1,13 @@
+<?php
+
+namespace {{ namespace }};
+
+use Xelqun\Panels\Pages\Page;
+
+class {{ class }} extends Page
+{
+    public function content(): array
+    {
+        return [];
+    }
+}

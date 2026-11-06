@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import type { PanelShell } from '../types';
 
-const mountedAt = ref(Date.now());
+const panel = computed(() => usePage().props.xelqunPanel as PanelShell);
 </script>
 
 <template>
-    <div data-xq-panel-layout :data-mounted-at="mountedAt"><slot /></div>
+    <div data-xq-panel-layout>
+        <header>
+            <Link :href="panel.url">{{ panel.brand.name }}</Link>
+        </header>
+        <slot />
+    </div>
 </template>
