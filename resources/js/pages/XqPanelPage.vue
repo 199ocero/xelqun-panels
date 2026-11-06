@@ -2,6 +2,8 @@
 import { Deferred, Head, Link } from '@inertiajs/vue3';
 import { XqActions, XqForm, XqIcon, cn } from '@xelqun/forms';
 import { XqTable } from '@xelqun/tables';
+import { t } from '../composables/useMessages';
+import XqPanelHook from '../components/XqPanelHook.vue';
 import XqPanelWidgets from '../components/widgets/XqPanelWidgets.vue';
 import XqPanelLayout from '../layouts/XqPanelLayout.vue';
 import type { PanelPageData, PanelWidget } from '../types';
@@ -13,6 +15,7 @@ defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
 <template>
     <div class="gap-6 px-4 py-6 sm:px-8 sm:py-8 max-w-7xl mx-auto grid" data-xq-page>
         <Head :title="page.title" />
+        <XqPanelHook name="content.start" />
         <header class="gap-4 flex flex-wrap items-start justify-between">
             <div class="min-w-0">
                 <p v-if="page.eyebrow" class="text-sm text-xq-muted-foreground">
@@ -38,7 +41,7 @@ defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
         </section>
         <nav
             v-if="page.tabs.length > 0"
-            aria-label="Views"
+            :aria-label="t('Views')"
             class="gap-1 border-xq-border -mt-2 flex overflow-x-auto border-b"
             data-xq-tabs
         >
@@ -95,5 +98,6 @@ defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
             />
             <XqActions v-else :actions="item.schema" />
         </template>
+        <XqPanelHook name="content.end" />
     </div>
 </template>

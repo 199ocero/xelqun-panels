@@ -7,6 +7,7 @@ vi.mock('@inertiajs/vue3', () => ({
     Head: { template: '<i />' },
     Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
     router: { on: vi.fn(() => vi.fn()) },
+    usePage: () => ({ props: { xelqunPanel: { hooks: {} } } }),
 }));
 
 const XqActions = { props: ['actions'], template: '<b data-actions>{{ actions.id }}</b>' };

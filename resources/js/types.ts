@@ -71,6 +71,9 @@ export interface PanelShell {
         tenants: Array<{ name: string; url: string; active: boolean }>;
     } | null;
     theme: { colors: Record<string, string>; font: string };
+    topNavigation: boolean;
+    hooks: Record<string, Array<{ component: string; props: Record<string, unknown> }>>;
+    messages: Record<string, string>;
     navigation: PanelNavigationGroup[];
     quickCreate: PanelQuickCreateItem[];
     searchUrl: string | null;

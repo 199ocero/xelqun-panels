@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { HttpError, XqIcon, cn, postJson } from '@xelqun/forms';
 import { Search } from 'lucide-vue-next';
@@ -32,7 +33,7 @@ const pageGroup = computed<PanelSearchGroup>(() => {
     const search = query.value.trim().toLowerCase();
 
     return {
-        label: 'Pages',
+        label: t('Pages'),
         icon: null,
         results: props.navigation
             .flatMap((group) => group.items)
@@ -130,17 +131,17 @@ function go(result: PanelSearchResult | undefined): void {
                 class="max-w-lg rounded-xq-xl border-xq-border bg-xq-popover text-xq-popover-foreground shadow-xl fixed top-[15vh] left-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 overflow-hidden border outline-none"
                 data-xq-search
             >
-                <DialogTitle class="sr-only">Search</DialogTitle>
+                <DialogTitle class="sr-only">{{ t('Search') }}</DialogTitle>
                 <DialogDescription class="sr-only">
-                    Go to a page or a record of this panel.
+                    {{ t('Go to a page or a record of this panel.') }}
                 </DialogDescription>
                 <div class="gap-2 px-4 border-xq-border flex items-center border-b">
                     <Search class="size-4 text-xq-muted-foreground" aria-hidden="true" />
                     <input
                         v-model="query"
                         type="search"
-                        placeholder="Search"
-                        aria-label="Search"
+                        :placeholder="t('Search')"
+                        :aria-label="t('Search')"
                         maxlength="100"
                         class="py-3 text-sm w-full bg-transparent outline-none"
                         @keydown.down.prevent="move(1)"
@@ -192,14 +193,14 @@ function go(result: PanelSearchResult | undefined): void {
                     v-else-if="!isSearching && !searchFailed"
                     class="px-4 py-6 text-sm text-xq-muted-foreground text-center"
                 >
-                    Nothing found.
+                    {{ t('Nothing found.') }}
                 </p>
                 <p
                     v-if="isSearching || searchFailed"
                     role="status"
                     class="px-4 py-3 text-sm text-xq-muted-foreground border-xq-border border-t text-center"
                 >
-                    {{ isSearching ? 'Searching…' : "Records can't be searched right now." }}
+                    {{ isSearching ? t('Searching…') : t("Records can't be searched right now.") }}
                 </p>
             </DialogContent>
         </DialogPortal>

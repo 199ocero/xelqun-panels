@@ -312,7 +312,23 @@ $panel->colors(fn (): array => ['primary' => Color::fromName(auth()->user()?->th
 
 `font('DM Sans')` picks a family from Bunny Fonts, loaded after the page so a slow font host can't hold it back. Everything else is a `--xq-*` token, set under `:root[data-xq-panel]`.
 
+`topNavigation()` moves the navigation across the top, in place of the sidebar. Phones keep the drawer.
+
 Icons in PHP are names. The panels plugin adds common sidebar icons to the forms set, and `createXelqunForms({ icons })` adds your own.
+
+## Extending a panel
+
+**Plugins** bundle resources, pages and settings. Implement `Plugin`, then add it with `$panel->plugin(new BlogPlugin)`. `register()` runs as the panel is declared, and `boot()` once the app has booted.
+
+**Render hooks** put your own Vue component in the shell:
+
+```php
+$panel->renderHook(RenderHook::TopbarEnd, 'acme/credits', fn (): array => ['left' => auth()->user()->credits]);
+```
+
+Register the component in `createXelqunForms({ components })`. The places are `SidebarStart`, `SidebarEnd`, `TopbarStart`, `TopbarEnd`, `ContentStart`, `ContentEnd`, `AuthFormBefore` and `AuthFormAfter`. Only the two auth ones run for guests.
+
+**Translations.** All text comes from language files. Run `php artisan vendor:publish --tag=xelqun-panels-lang` to change it or add a language. In `shell.php` each key is the English text.
 
 ## Current limits
 
@@ -322,7 +338,6 @@ Icons in PHP are names. The panels plugin adds common sidebar icons to the forms
 - Signing out of one panel signs out of the others in that session.
 - A queued verification email gets Laravel's route, not the panel's.
 - Changing a password ends "remember me" on other devices, but not their open sessions. Add Laravel's `AuthenticateSession` middleware for that.
-- Text in the shell, such as "Search" and "Sign out", is English only for now.
 - Charts are a sparkline on a stat. SSR isn't tested.
 
 ## Developing

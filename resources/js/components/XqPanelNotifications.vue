@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { HttpError, cn, postJson } from '@xelqun/forms';
 import { Bell } from 'lucide-vue-next';
@@ -69,7 +70,11 @@ onBeforeUnmount(stopPolling);
     <PopoverRoot v-model:open="open">
         <PopoverTrigger
             :class="[iconButtonClass, 'relative']"
-            :aria-label="unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'"
+            :aria-label="
+                unread > 0
+                    ? t('Notifications, :count unread', { count: unread })
+                    : t('Notifications')
+            "
             data-xq-bell
         >
             <Bell class="size-4.5" aria-hidden="true" />
@@ -89,21 +94,21 @@ onBeforeUnmount(stopPolling);
                 data-xq-notifications
             >
                 <div class="px-3 py-2 border-xq-border flex items-center justify-between border-b">
-                    <p class="text-sm font-medium">Notifications</p>
+                    <p class="text-sm font-medium">{{ t('Notifications') }}</p>
                     <div v-if="notifications.length > 0" class="gap-3 text-xs flex">
                         <button
                             type="button"
                             class="text-xq-primary cursor-pointer hover:underline"
                             @click="send('/read-all')"
                         >
-                            Mark all read
+                            {{ t('Mark all read') }}
                         </button>
                         <button
                             type="button"
                             class="text-xq-muted-foreground cursor-pointer hover:underline"
                             @click="send('/clear')"
                         >
-                            Clear
+                            {{ t('Clear') }}
                         </button>
                     </div>
                 </div>
@@ -141,13 +146,15 @@ onBeforeUnmount(stopPolling);
                                 <span class="mt-0.5 text-xs text-xq-muted-foreground block">
                                     {{ notification.time }}
                                 </span>
-                                <span v-if="!notification.read" class="sr-only">Unread</span>
+                                <span v-if="!notification.read" class="sr-only">{{
+                                    t('Unread')
+                                }}</span>
                             </span>
                         </button>
                     </li>
                 </ul>
                 <p v-else class="px-3 py-8 text-sm text-xq-muted-foreground text-center">
-                    Nothing yet.
+                    {{ t('Nothing yet.') }}
                 </p>
             </PopoverContent>
         </PopoverPortal>

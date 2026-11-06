@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { t } from '../composables/useMessages';
 import { Link } from '@inertiajs/vue3';
 import { ChevronRight, Menu, Search } from 'lucide-vue-next';
 import type { PanelBreadcrumb } from '../types';
 import { iconButtonClass } from '../ui/classes';
+import XqPanelHook from './XqPanelHook.vue';
 
 defineProps<{ breadcrumbs: PanelBreadcrumb[] }>();
 defineEmits<{ menu: []; search: [] }>();
@@ -20,12 +22,13 @@ const shortcut =
             <button
                 type="button"
                 :class="[iconButtonClass, 'lg:hidden']"
-                aria-label="Open navigation"
+                :aria-label="t('Open navigation')"
                 @click="$emit('menu')"
             >
                 <Menu class="size-4.5" aria-hidden="true" />
             </button>
-            <nav aria-label="Breadcrumb" class="min-w-0">
+            <XqPanelHook name="topbar.start" />
+            <nav :aria-label="t('Breadcrumb')" class="min-w-0">
                 <ol class="gap-1.5 text-sm flex items-center">
                     <li
                         v-for="(crumb, index) in breadcrumbs"
@@ -59,18 +62,19 @@ const shortcut =
             @click="$emit('search')"
         >
             <Search class="size-4" aria-hidden="true" />
-            Search
+            {{ t('Search') }}
             <kbd class="text-xs font-sans ml-auto">{{ shortcut }}</kbd>
         </button>
         <div class="flex items-center justify-end">
             <button
                 type="button"
                 :class="[iconButtonClass, 'md:hidden']"
-                aria-label="Search"
+                :aria-label="t('Search')"
                 @click="$emit('search')"
             >
                 <Search class="size-4" aria-hidden="true" />
             </button>
+            <XqPanelHook name="topbar.end" />
             <slot />
         </div>
     </header>

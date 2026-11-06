@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { XqIcon, cn } from '@xelqun/forms';
 import { Plus } from 'lucide-vue-next';
@@ -24,11 +25,11 @@ defineProps<{ items: PanelQuickCreateItem[]; collapsed?: boolean }>();
                     collapsed ? 'w-8' : 'px-3 flex-1',
                 )
             "
-            aria-label="New"
+            :aria-label="t('New')"
             data-xq-new
         >
             <Plus class="size-4" aria-hidden="true" />
-            <span v-if="!collapsed" aria-hidden="true">New</span>
+            <span v-if="!collapsed" aria-hidden="true">{{ t('New') }}</span>
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
             <DropdownMenuContent

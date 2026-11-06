@@ -1,6 +1,7 @@
 import { onBeforeUnmount, watchEffect } from 'vue';
 import type { Ref } from 'vue';
 import type { PanelShell } from '../types';
+import { setMessages } from './useMessages';
 import { useThemeSync } from './useTheme';
 
 function clearColors(): void {
@@ -26,6 +27,7 @@ export function usePanelDocument(panel: Ref<PanelShell>): void {
         const root = document.documentElement;
 
         clearColors();
+        setMessages(panel.value.messages);
         root.setAttribute('data-xq-panel', '');
         root.style.setProperty('--xq-panel-font', `'${panel.value.theme.font}'`);
 

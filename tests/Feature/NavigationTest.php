@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
+use Xelqun\Panels\Contracts\Plugin;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Navigation\SidebarCard;
@@ -9,6 +10,7 @@ use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Support\Colors\Color;
+use Xelqun\Panels\View\RenderHook;
 
 class FirstPage extends Page
 {
@@ -254,4 +256,64 @@ describe('colors', function () {
             ->and(Color::fromName(null))->toBeNull()
             ->and(Color::options())->toHaveKey('Amber', 'Amber');
     });
+});
+
+describe('plugins', function () {
+    it('registers at once, and refuses the same one twice', function () {
+        $plugin = new class implements Plugin
+        {
+            public function getId(): string
+            {
+                return 'blog';
+            }
+
+            public function register(Panel $panel): void
+            {
+                $panel->pages([FirstPage::class]);
+            }
+
+            public function boot(Panel $panel): void {}
+        };
+
+        $panel = Panel::make()->plugin($plugin);
+
+        expect($panel->getPages())->toBe([FirstPage::class])
+            ->and($panel->getPlugins())->toHaveKey('blog')
+            ->and(fn () => $panel->plugin($plugin))->toThrow(PanelDefinitionException::class);
+    });
+});
+
+describe('render hooks', function () {
+    it('sends a hook to the shell, with its props', function () {
+        auth('admin')->logout();
+        auth('web')->logout();
+        $panel = Panel::make()->id('hooks')->path('hooks')->renderHook(RenderHook::AuthFormAfter, 'acme/legal', fn (): array => ['year' => 2026]);
+        app(Panels::class)->enter($panel);
+
+        expect((array) $panel->toShell()['hooks'])->toBe(['auth-form.after' => [['component' => 'acme/legal', 'props' => ['year' => 2026]]]]);
+    });
+
+    it('keeps a hook inside the panel from a guest', function () {
+        auth('admin')->logout();
+        auth('web')->logout();
+        $panel = Panel::make()->id('hooks')->path('hooks')->renderHook(RenderHook::ContentStart, 'acme/secret', fn () => throw new RuntimeException('Ran for a guest'));
+        app(Panels::class)->enter($panel);
+
+        expect((array) $panel->toShell()['hooks'])->toBe([]);
+    });
+});
+
+it('sends the shell its text, in the app\'s language', function () {
+    app('translator')->addLines(['shell.Search' => 'Buscar'], 'es', 'xelqun-panels');
+    app()->setLocale('es');
+
+    $this->get('/admin')->assertInertia(fn (Assert $page) => $page->where('xelqunPanel.messages.Search', 'Buscar'));
+});
+
+it('can move the navigation to the top', function () {
+    app(Panels::class)->get('admin')->topNavigation();
+
+    $this->get('/admin')->assertInertia(fn (Assert $page) => $page->where('xelqunPanel.topNavigation', true));
+
+    app(Panels::class)->get('admin')->topNavigation(false);
 });

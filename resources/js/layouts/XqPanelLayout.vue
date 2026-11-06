@@ -13,7 +13,10 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import XqPanelNotifications from '../components/XqPanelNotifications.vue';
 import XqPanelSearch from '../components/XqPanelSearch.vue';
 import XqPanelSidebar from '../components/XqPanelSidebar.vue';
+import XqPanelTopNav from '../components/XqPanelTopNav.vue';
 import XqPanelTopbar from '../components/XqPanelTopbar.vue';
+import XqPanelUserMenu from '../components/XqPanelUserMenu.vue';
+import { t } from '../composables/useMessages';
 import { usePanelDocument } from '../composables/usePanelDocument';
 import type { PanelPageData, PanelShell } from '../types';
 
@@ -71,6 +74,7 @@ onBeforeUnmount(() => {
 <template>
     <div class="text-xq-foreground flex h-dvh overflow-hidden bg-xq-shell" data-xq-panel-layout>
         <aside
+            v-if="!panel.topNavigation"
             :class="
                 cn(
                     'lg:block hidden shrink-0 transition-[width] duration-200',
@@ -92,7 +96,7 @@ onBeforeUnmount(() => {
                 <DialogContent
                     class="inset-y-0 left-0 w-72 lg:hidden fixed z-50 bg-xq-shell outline-none"
                 >
-                    <DialogTitle class="sr-only">Navigation</DialogTitle>
+                    <DialogTitle class="sr-only">{{ t('Navigation') }}</DialogTitle>
                     <DialogDescription class="sr-only">{{ panel.brand.name }}</DialogDescription>
                     <XqPanelSidebar
                         :panel="panel"
@@ -116,7 +120,16 @@ onBeforeUnmount(() => {
                     :url="panel.notifications.url"
                     :poll-seconds="panel.notifications.pollSeconds"
                 />
+                <XqPanelUserMenu
+                    v-if="panel.topNavigation && panel.user"
+                    :user="panel.user"
+                    :logout-url="panel.logoutUrl"
+                    :profile-url="panel.profileUrl"
+                    collapsed
+                    class="ml-1 lg:flex hidden"
+                />
             </XqPanelTopbar>
+            <XqPanelTopNav v-if="panel.topNavigation" :navigation="panel.navigation" />
             <main class="min-h-0 flex-1 overflow-y-auto" scroll-region>
                 <slot />
             </main>

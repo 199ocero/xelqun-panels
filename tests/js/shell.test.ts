@@ -8,6 +8,7 @@ import XqPanelNewMenu from '../../resources/js/components/XqPanelNewMenu.vue';
 import XqPanelSearch from '../../resources/js/components/XqPanelSearch.vue';
 import XqPanelSidebar from '../../resources/js/components/XqPanelSidebar.vue';
 import XqPanelSidebarCard from '../../resources/js/components/XqPanelSidebarCard.vue';
+import { setMessages, t } from '../../resources/js/composables/useMessages';
 import { setTheme, useThemeSync } from '../../resources/js/composables/useTheme';
 import type { PanelShell } from '../../resources/js/types';
 
@@ -15,6 +16,7 @@ const { reload, visit } = vi.hoisted(() => ({ reload: vi.fn(), visit: vi.fn() })
 
 vi.mock('@inertiajs/vue3', () => ({
     router: { reload, visit, on: vi.fn(() => vi.fn()) },
+    usePage: () => ({ props: { xelqunPanel: { hooks: {} } } }),
     Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
 }));
 
@@ -33,6 +35,9 @@ const shell: PanelShell = {
     brand: { name: 'Shop' },
     tenant: null,
     theme: { colors: {}, font: 'Inter' },
+    topNavigation: false,
+    hooks: {},
+    messages: {},
     navigation: [
         { label: null, items: [item('Home', { active: true })] },
         { label: 'Catalog', items: [item('Products', { badge: '12' }), item('Categories')] },
@@ -104,6 +109,23 @@ describe('the new button', () => {
 
         expect(wrapper.find('[data-xq-new]').attributes('aria-label')).toBe('New');
         expect(wrapper.text()).toBe('');
+    });
+});
+
+describe('translations', () => {
+    afterEach(() => setMessages({}));
+
+    it("uses the app's language, and falls back to the English", () => {
+        setMessages({ Search: 'Buscar' });
+
+        expect(t('Search')).toBe('Buscar');
+        expect(t('Sign out')).toBe('Sign out');
+    });
+
+    it('fills in placeholders', () => {
+        setMessages({ 'Notifications, :count unread': ':count sin leer' });
+
+        expect(t('Notifications, :count unread', { count: 3 })).toBe('3 sin leer');
     });
 });
 

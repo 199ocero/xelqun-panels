@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { Check, ChevronsUpDown } from 'lucide-vue-next';
 import {
@@ -18,7 +19,7 @@ defineProps<{ tenant: NonNullable<PanelShell['tenant']> }>();
     <DropdownMenuRoot :modal="false">
         <DropdownMenuTrigger
             class="gap-2 mx-1 px-2.5 text-sm font-medium border-xq-border bg-xq-card hover:bg-xq-accent focus-visible:ring-xq-ring h-9 rounded-xq-md flex cursor-pointer items-center justify-between border transition-colors focus-visible:ring-2 focus-visible:outline-none"
-            :aria-label="`Switch from ${tenant.name}`"
+            :aria-label="t('Switch from :name', { name: tenant.name })"
             data-xq-tenant
         >
             <span class="truncate">{{ tenant.name }}</span>

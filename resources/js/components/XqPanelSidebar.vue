@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { t } from '../composables/useMessages';
 import { Link } from '@inertiajs/vue3';
 import { PanelLeft, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
 import type { PanelShell } from '../types';
 import { iconButtonClass } from '../ui/classes';
+import XqPanelHook from './XqPanelHook.vue';
 import XqPanelNavItem from './XqPanelNavItem.vue';
 import XqPanelNewMenu from './XqPanelNewMenu.vue';
 import XqPanelSidebarCard from './XqPanelSidebarCard.vue';
@@ -17,7 +19,7 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
 </script>
 
 <template>
-    <nav aria-label="Main" class="gap-4 p-3 min-h-0 flex h-full flex-col" data-xq-sidebar>
+    <nav :aria-label="t('Main')" class="gap-4 p-3 min-h-0 flex h-full flex-col" data-xq-sidebar>
         <div :class="['gap-2.5 h-9 flex items-center', collapsed ? 'justify-center' : 'px-1']">
             <Link
                 v-if="!collapsed"
@@ -35,13 +37,15 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
             <button
                 type="button"
                 :class="iconButtonClass"
-                :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+                :aria-label="collapsed ? t('Expand sidebar') : t('Collapse sidebar')"
                 :aria-expanded="!collapsed"
                 @click="$emit('collapse')"
             >
                 <PanelLeft class="size-4" aria-hidden="true" />
             </button>
         </div>
+
+        <XqPanelHook name="sidebar.start" />
 
         <XqPanelTenantMenu v-if="panel.tenant && !collapsed" :tenant="panel.tenant" />
 
@@ -57,7 +61,7 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
             <button
                 type="button"
                 :class="iconButtonClass"
-                aria-label="Search"
+                :aria-label="t('Search')"
                 @click="$emit('search')"
             >
                 <Search class="size-4" aria-hidden="true" />
@@ -87,6 +91,8 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
                 />
             </div>
         </div>
+
+        <XqPanelHook name="sidebar.end" />
 
         <XqPanelSidebarCard v-if="panel.sidebarFooter && !collapsed" :card="panel.sidebarFooter" />
 

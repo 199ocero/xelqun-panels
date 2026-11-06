@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { XqForm } from '@xelqun/forms';
+import XqPanelHook from '../components/XqPanelHook.vue';
 import XqPanelAuthLayout from '../layouts/XqPanelAuthLayout.vue';
 import type { PanelAuthPageData } from '../types';
 
@@ -20,6 +21,7 @@ defineProps<{ page: PanelAuthPageData }>();
                 {{ page.description }}
             </p>
         </header>
+        <XqPanelHook name="auth-form.before" />
         <XqForm
             :key="page.action"
             :form="page.form"
@@ -27,6 +29,7 @@ defineProps<{ page: PanelAuthPageData }>();
             :submit-label="page.submitLabel"
             :heading-level="2"
         />
+        <XqPanelHook name="auth-form.after" />
         <nav
             v-if="page.links.length > 0"
             class="gap-x-4 gap-y-1 text-sm flex flex-wrap justify-center"

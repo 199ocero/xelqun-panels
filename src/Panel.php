@@ -19,11 +19,13 @@ use Xelqun\Panels\Auth\ResetPasswordForm;
 use Xelqun\Panels\Contracts\HasAppAuthentication;
 use Xelqun\Panels\Contracts\HasTenants;
 use Xelqun\Panels\Contracts\PanelUser;
+use Xelqun\Panels\Contracts\Plugin;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Navigation\SidebarCard;
 use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Support\Colors\Color;
+use Xelqun\Panels\View\RenderHook;
 use Xelqun\Panels\Widgets\PanelWidget;
 
 /**
@@ -107,6 +109,14 @@ final class Panel
     private bool $hasMultiFactorAuthentication = false;
 
     private bool $requiresMultiFactorAuthentication = false;
+
+    private bool $hasTopNavigation = false;
+
+    /** @var array<string, Plugin> */
+    private array $plugins = [];
+
+    /** @var array<string, array<int, array{component: string, props: array<string, mixed>|Closure}>> */
+    private array $renderHooks = [];
 
     private bool $hasDatabaseNotifications = false;
 
@@ -458,6 +468,69 @@ final class Panel
     }
 
     /**
+     * Put the navigation across the top, in place of the sidebar. Phones keep the drawer.
+     */
+    public function topNavigation(bool $condition = true): self
+    {
+        $this->hasTopNavigation = $condition;
+
+        return $this;
+    }
+
+    public function plugin(Plugin $plugin): self
+    {
+        if (isset($this->plugins[$plugin->getId()])) {
+            throw new PanelDefinitionException("The plugin [{$plugin->getId()}] is on this panel twice.");
+        }
+
+        $this->plugins[$plugin->getId()] = $plugin;
+        $plugin->register($this);
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, Plugin>
+     */
+    public function getPlugins(): array
+    {
+        return $this->plugins;
+    }
+
+    /**
+     * Show a Vue component at a place in the shell. Register it in
+     * createXelqunForms({ components }). Props reach the browser, and hooks outside
+     * the auth pages only render for someone inside the panel.
+     *
+     * @param  array<string, mixed>|Closure(): array<string, mixed>  $props
+     */
+    public function renderHook(RenderHook $hook, string $component, array|Closure $props = []): self
+    {
+        $this->renderHooks[$hook->value][] = ['component' => $component, 'props' => $props];
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, array<int, array{component: string, props: array<string, mixed>}>>
+     */
+    private function getRenderHooks(bool $isInside): array
+    {
+        $hooks = [];
+
+        foreach ($this->renderHooks as $name => $items) {
+            if ($isInside || RenderHook::from($name)->isPublic()) {
+                $hooks[$name] = array_map(fn (array $item): array => [
+                    'component' => $item['component'],
+                    'props' => $item['props'] instanceof Closure ? ($item['props'])() : $item['props'],
+                ], $items);
+            }
+        }
+
+        return $hooks;
+    }
+
+    /**
      * Whether a password alone isn't enough for this user here.
      */
     public function needsChallenge(?Authenticatable $user): bool
@@ -742,6 +815,9 @@ final class Panel
             ] : null,
             'brand' => ['name' => $this->getBrandName()],
             'theme' => ['colors' => (object) $this->getColorVariables(), 'font' => $this->font],
+            'topNavigation' => $this->hasTopNavigation,
+            'hooks' => (object) $this->getRenderHooks($isInside),
+            'messages' => (object) __('xelqun-panels::shell'),
             'navigation' => $isInside ? $this->getNavigation() : [],
             'quickCreate' => $isInside ? $this->getQuickCreateItems() : [],
             'searchUrl' => $isInside ? route($this->routeName('search')) : null,

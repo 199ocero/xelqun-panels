@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { Check, LogOut, Monitor, Moon, Settings2, Sun, UserRound } from 'lucide-vue-next';
 import {
@@ -52,13 +53,13 @@ const initials = computed(() =>
             <p class="text-xs text-xq-muted-foreground truncate">{{ user.email }}</p>
         </div>
         <DropdownMenuRoot :modal="false">
-            <DropdownMenuTrigger :class="iconButtonClass" aria-label="Open user menu">
+            <DropdownMenuTrigger :class="iconButtonClass" :aria-label="t('Open user menu')">
                 <Settings2 class="size-4" aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
                 <DropdownMenuContent :class="menuClass" side="top" align="end" :side-offset="6">
                     <DropdownMenuLabel class="px-2 py-1.5 text-xs text-xq-muted-foreground">
-                        Theme
+                        {{ t('Theme') }}
                     </DropdownMenuLabel>
                     <DropdownMenuItem
                         v-for="theme in themes"
@@ -67,7 +68,7 @@ const initials = computed(() =>
                         @select="setTheme(theme.value)"
                     >
                         <component :is="theme.icon" class="size-4" aria-hidden="true" />
-                        {{ theme.label }}
+                        {{ t(theme.label) }}
                         <Check
                             v-if="choice === theme.value"
                             class="size-4 ml-auto"
@@ -82,11 +83,11 @@ const initials = computed(() =>
                             @select="router.visit(profileUrl!)"
                         >
                             <UserRound class="size-4" aria-hidden="true" />
-                            Profile
+                            {{ t('Profile') }}
                         </DropdownMenuItem>
                         <DropdownMenuItem :class="menuItemClass" @select="router.post(logoutUrl!)">
                             <LogOut class="size-4" aria-hidden="true" />
-                            Sign out
+                            {{ t('Sign out') }}
                         </DropdownMenuItem>
                     </template>
                 </DropdownMenuContent>

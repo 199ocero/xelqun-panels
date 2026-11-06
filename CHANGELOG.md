@@ -16,6 +16,10 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **A notification bell.** `databaseNotifications()`, with `DatabaseNotification::make()->sendToDatabase($user)`.
 - **Two-factor authentication.** `multiFactorAuthentication()` adds authenticator apps and recovery codes, optional or required, with no new dependency.
 - **Tenancy.** `tenant(Team::class)` moves a panel under `/admin/{tenant}`, keeps its resources' models to that tenant in every query, and adds a switcher to the sidebar.
+- **`topNavigation()`** puts the navigation across the top.
+- **Plugins.** `Panel::plugin()` with the `Plugin` contract.
+- **Render hooks.** `Panel::renderHook()` puts a Vue component in the shell.
+- **Translations.** The shell's text comes from `shell.php`, so every part of a panel can be translated.
 - **Infolists.** `Resource::infolist()` with `TextEntry`, `IconEntry` and `ImageEntry`, in place of a disabled form on the view page.
 
 ### Changed

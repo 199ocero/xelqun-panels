@@ -64,6 +64,7 @@ class PanelsServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->verifyEmailsInThePanel();
+        $this->bootPlugins();
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'xelqun-panels');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'xelqun-panels');
@@ -83,6 +84,15 @@ class PanelsServiceProvider extends ServiceProvider
             ], 'xelqun-panels-mfa');
 
             $this->commands([InstallCommand::class, MakePageCommand::class, MakePanelCommand::class, MakeRelationManagerCommand::class, MakeResourceCommand::class]);
+        }
+    }
+
+    private function bootPlugins(): void
+    {
+        foreach ($this->app->make(Panels::class)->all() as $panel) {
+            foreach ($panel->getPlugins() as $plugin) {
+                $plugin->boot($panel);
+            }
         }
     }
 
