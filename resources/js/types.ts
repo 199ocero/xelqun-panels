@@ -35,11 +35,20 @@ export interface PanelShell {
     sidebarFooter: PanelSidebarCard | null;
     user: { name: string; email: string } | null;
     logoutUrl: string | null;
+    profileUrl: string | null;
 }
 
 export type PanelContent =
     | { type: 'table'; schema: TableSchema }
-    | { type: 'actions'; schema: FormSchema };
+    | { type: 'actions'; schema: FormSchema }
+    | {
+          type: 'form';
+          schema: FormSchema;
+          action: string;
+          method: 'post' | 'put' | 'patch';
+          submitLabel: string;
+          revision: string;
+      };
 
 export interface PanelAuthPageData {
     title: string;
@@ -47,6 +56,7 @@ export interface PanelAuthPageData {
     form: FormSchema;
     action: string;
     submitLabel: string;
+    links: Array<{ label: string; url: string; method: 'get' | 'post' }>;
 }
 
 export interface PanelBreadcrumb {

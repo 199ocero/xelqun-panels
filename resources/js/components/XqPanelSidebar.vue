@@ -81,6 +81,7 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
             v-if="panel.user"
             :user="panel.user"
             :logout-url="panel.logoutUrl"
+            :profile-url="panel.profileUrl"
             :collapsed="collapsed"
         />
     </nav>

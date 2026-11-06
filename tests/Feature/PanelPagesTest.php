@@ -47,12 +47,15 @@ it('keeps two panels apart, each on its own guard', function () {
     $this->get('/admin')->assertInertia(fn (Assert $page) => $page->where('xelqunPanel.id', 'admin'));
     expect(auth()->getDefaultDriver())->toBe('admin');
 
+    $this->user->forceFill(['email_verified_at' => now()])->save();
+
     $this->get('/staff')->assertInertia(fn (Assert $page) => $page->where('xelqunPanel.id', 'staff'));
     expect(auth()->getDefaultDriver())->toBe('web');
 });
 
 it('names the app in a panel with no brand of its own', function () {
     config(['app.name' => 'Shop']);
+    $this->user->markEmailAsVerified();
 
     $this->get('/staff')->assertInertia(fn (Assert $page) => $page->where('xelqunPanel.brand.name', 'Shop'));
 });

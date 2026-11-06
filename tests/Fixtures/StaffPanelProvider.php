@@ -10,6 +10,6 @@ class StaffPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel->id('staff')->path('/staff/')->pages([Home::class]);
+        return $panel->id('staff')->path('/staff/')->emailVerification()->pages([Home::class]);
     }
 }

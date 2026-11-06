@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { XqActions } from '@xelqun/forms';
+import { XqActions, XqForm } from '@xelqun/forms';
 import { XqTable } from '@xelqun/tables';
 import XqPanelLayout from '../layouts/XqPanelLayout.vue';
 import type { PanelPageData } from '../types';
@@ -26,6 +26,15 @@ defineProps<{ page: PanelPageData }>();
         </header>
         <template v-for="item in page.content" :key="item.schema.id">
             <XqTable v-if="item.type === 'table'" :table="item.schema" />
+            <XqForm
+                v-else-if="item.type === 'form'"
+                :key="item.revision"
+                :form="item.schema"
+                :action="item.action"
+                :method="item.method"
+                :submit-label="item.submitLabel"
+                class="max-w-2xl"
+            />
             <XqActions v-else :actions="item.schema" />
         </template>
     </div>

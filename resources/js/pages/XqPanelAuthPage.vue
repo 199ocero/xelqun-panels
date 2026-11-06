@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { XqForm } from '@xelqun/forms';
 import XqPanelAuthLayout from '../layouts/XqPanelAuthLayout.vue';
 import type { PanelAuthPageData } from '../types';
@@ -27,5 +27,20 @@ defineProps<{ page: PanelAuthPageData }>();
             :submit-label="page.submitLabel"
             :heading-level="2"
         />
+        <nav
+            v-if="page.links.length > 0"
+            class="gap-x-4 gap-y-1 text-sm flex flex-wrap justify-center"
+        >
+            <Link
+                v-for="link in page.links"
+                :key="link.label"
+                :href="link.url"
+                :method="link.method"
+                :as="link.method === 'post' ? 'button' : 'a'"
+                class="text-xq-primary cursor-pointer hover:underline"
+            >
+                {{ link.label }}
+            </Link>
+        </nav>
     </div>
 </template>

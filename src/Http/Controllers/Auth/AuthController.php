@@ -22,9 +22,19 @@ abstract class AuthController
     }
 
     /**
-     * Always a new form, so nothing the browser typed comes back in the schema.
+     * @return array{label: string, url: string|null, method: string}
      */
-    protected function page(string $title, ?string $description, Form $form, string $action, string $submitLabel): Response
+    protected function link(string $label, ?string $url, string $method = 'get'): array
+    {
+        return ['label' => $label, 'url' => $url, 'method' => $method];
+    }
+
+    /**
+     * Always a new form, so nothing the browser typed comes back in the schema.
+     *
+     * @param  array<int, array{label: string, url: string|null, method: string}>  $links
+     */
+    protected function page(string $title, ?string $description, Form $form, string $action, string $submitLabel, array $links = []): Response
     {
         return Inertia::render('xelqun/PanelAuth', ['page' => [
             'title' => $title,
@@ -32,6 +42,7 @@ abstract class AuthController
             'form' => $form->toSchema(),
             'action' => $action,
             'submitLabel' => $submitLabel,
+            'links' => array_values(array_filter($links, fn (array $link): bool => $link['url'] !== null)),
         ]]);
     }
 }

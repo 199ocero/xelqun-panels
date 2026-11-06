@@ -12,6 +12,6 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel->id('admin')->path('admin')->brandName('Admin')->authGuard('admin')->login()->pages([Home::class, PartlyDenied::class, Reports::class]);
+        return $panel->id('admin')->path('admin')->brandName('Admin')->authGuard('admin')->login()->passwordReset()->registration()->profile()->pages([Home::class, PartlyDenied::class, Reports::class]);
     }
 }

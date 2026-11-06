@@ -1,8 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Xelqun\Panels\Http\Controllers\Auth\EmailVerificationController;
 use Xelqun\Panels\Http\Controllers\Auth\LoginController;
 use Xelqun\Panels\Http\Controllers\Auth\LogoutController;
+use Xelqun\Panels\Http\Controllers\Auth\PasswordResetController;
+use Xelqun\Panels\Http\Controllers\Auth\ProfileController;
+use Xelqun\Panels\Http\Controllers\Auth\RegisterController;
 use Xelqun\Panels\Http\Middleware\Authenticate;
 use Xelqun\Panels\Http\Middleware\EnterPanel;
 use Xelqun\Panels\Panels;
@@ -17,9 +21,34 @@ foreach (app(Panels::class)->all() as $panel) {
                 Route::post('login', [LoginController::class, 'store'])->name('auth.login.store');
             }
 
+            if ($panel->getPasswordResetRequestForm() !== null) {
+                Route::get('forgot-password', [PasswordResetController::class, 'showRequest'])->name('auth.password.request');
+                Route::post('forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:6,1')->name('auth.password.email');
+                Route::get('reset-password/{token}', [PasswordResetController::class, 'showReset'])->name('auth.password.reset');
+                Route::post('reset-password/{token}', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1')->name('auth.password.update');
+            }
+
+            if ($panel->getRegistrationForm() !== null) {
+                Route::get('register', [RegisterController::class, 'show'])->name('auth.register');
+                Route::post('register', [RegisterController::class, 'store'])->middleware('throttle:6,1')->name('auth.register.store');
+            }
+
+            if ($panel->requiresEmailVerification()) {
+                Route::middleware(Authenticate::class.':unverified')->group(function (): void {
+                    Route::get('email/verify', [EmailVerificationController::class, 'prompt'])->name('auth.verification.notice');
+                    Route::post('email/send', [EmailVerificationController::class, 'send'])->middleware('throttle:6,1')->name('auth.verification.send');
+                    Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware(['signed', 'throttle:6,1'])->name('auth.verification.verify');
+                });
+            }
+
             Route::post('logout', LogoutController::class)->name('auth.logout');
 
             Route::middleware(Authenticate::class)->group(function () use ($panel): void {
+                if ($panel->getProfileForm() !== null) {
+                    Route::get('profile', [ProfileController::class, 'show'])->name('auth.profile');
+                    Route::put('profile', [ProfileController::class, 'update'])->name('auth.profile.update');
+                }
+
                 foreach ($panel->getPages() as $page) {
                     Route::get($page::getSlug(), $page)->name($page::getRouteName());
                 }

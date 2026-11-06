@@ -4,8 +4,13 @@ namespace Xelqun\Panels;
 
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Collection;
+use Xelqun\Panels\Auth\EditProfileForm;
 use Xelqun\Panels\Auth\LoginForm;
+use Xelqun\Panels\Auth\RegisterForm;
+use Xelqun\Panels\Auth\RequestPasswordResetForm;
+use Xelqun\Panels\Auth\ResetPasswordForm;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\NavigationItem;
@@ -36,6 +41,22 @@ final class Panel
 
     /** @var class-string<LoginForm>|null */
     private ?string $loginForm = null;
+
+    /** @var class-string<RequestPasswordResetForm>|null */
+    private ?string $passwordResetRequestForm = null;
+
+    /** @var class-string<ResetPasswordForm>|null */
+    private ?string $passwordResetForm = null;
+
+    private ?string $passwordBroker = null;
+
+    /** @var class-string<RegisterForm>|null */
+    private ?string $registrationForm = null;
+
+    private bool $requiresEmailVerification = false;
+
+    /** @var class-string<EditProfileForm>|null */
+    private ?string $profileForm = null;
 
     private ?string $primaryColor = null;
 
@@ -191,6 +212,115 @@ final class Panel
         return $this->loginForm;
     }
 
+    /**
+     * Let users set a new password from an emailed link.
+     *
+     * @param  class-string<RequestPasswordResetForm>  $requestForm
+     * @param  class-string<ResetPasswordForm>  $resetForm
+     */
+    public function passwordReset(string $requestForm = RequestPasswordResetForm::class, string $resetForm = ResetPasswordForm::class): self
+    {
+        $this->passwordResetRequestForm = $requestForm;
+        $this->passwordResetForm = $resetForm;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string<RequestPasswordResetForm>|null
+     */
+    public function getPasswordResetRequestForm(): ?string
+    {
+        return $this->passwordResetRequestForm;
+    }
+
+    /**
+     * @return class-string<ResetPasswordForm>|null
+     */
+    public function getPasswordResetForm(): ?string
+    {
+        return $this->passwordResetForm;
+    }
+
+    /**
+     * Which of config/auth.php's password brokers to use. Null is the default one.
+     */
+    public function authPasswordBroker(?string $broker): self
+    {
+        $this->passwordBroker = $broker;
+
+        return $this;
+    }
+
+    public function getPasswordBroker(): ?string
+    {
+        return $this->passwordBroker;
+    }
+
+    /**
+     * Let anyone create an account. A new user still has to pass canAccessPanel().
+     *
+     * @param  class-string<RegisterForm>  $form
+     */
+    public function registration(string $form = RegisterForm::class): self
+    {
+        $this->registrationForm = $form;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string<RegisterForm>|null
+     */
+    public function getRegistrationForm(): ?string
+    {
+        return $this->registrationForm;
+    }
+
+    /**
+     * Require a verified email address. The user model must implement
+     * MustVerifyEmail, or nobody can get in.
+     */
+    public function emailVerification(): self
+    {
+        $this->requiresEmailVerification = true;
+
+        return $this;
+    }
+
+    public function requiresEmailVerification(): bool
+    {
+        return $this->requiresEmailVerification;
+    }
+
+    /**
+     * Whether this user is past email verification, if this panel asks for it.
+     */
+    public function hasVerifiedEmail(?Authenticatable $user): bool
+    {
+        return ! $this->requiresEmailVerification || ($user instanceof MustVerifyEmail && $user->hasVerifiedEmail());
+    }
+
+    /**
+     * Give users a page to change their own details.
+     *
+     * @param  class-string<EditProfileForm>  $form
+     */
+    public function profile(string $form = EditProfileForm::class): self
+    {
+        $this->profileForm = $form;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string<EditProfileForm>|null
+     */
+    public function getProfileForm(): ?string
+    {
+        return $this->profileForm;
+    }
+
     public function getLoginUrl(): ?string
     {
         return $this->loginForm === null ? null : route($this->routeName('auth.login'));
@@ -313,7 +443,7 @@ final class Panel
     public function toShell(): array
     {
         $user = auth()->user();
-        $isInside = $this->allows($user);
+        $isInside = $this->allows($user) && $this->hasVerifiedEmail($user);
 
         return [
             'id' => $this->id,
@@ -324,6 +454,7 @@ final class Panel
             'sidebarFooter' => $isInside && $this->sidebarFooter !== null ? ($this->sidebarFooter)()?->toArray() : null,
             'user' => $isInside ? ['name' => (string) data_get($user, 'name'), 'email' => (string) data_get($user, 'email')] : null,
             'logoutUrl' => $isInside ? $this->getLogoutUrl() : null,
+            'profileUrl' => $isInside && $this->profileForm !== null ? route($this->routeName('auth.profile')) : null,
         ];
     }
 }

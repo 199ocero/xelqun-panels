@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { Check, LogOut, Monitor, Moon, Settings2, Sun } from 'lucide-vue-next';
+import { Check, LogOut, Monitor, Moon, Settings2, Sun, UserRound } from 'lucide-vue-next';
 import {
     DropdownMenuContent,
     DropdownMenuItem,
@@ -19,6 +19,7 @@ import { iconButtonClass, menuClass, menuItemClass } from '../ui/classes';
 const props = defineProps<{
     user: NonNullable<PanelShell['user']>;
     logoutUrl: string | null;
+    profileUrl: string | null;
     collapsed?: boolean;
 }>();
 const choice = useThemeChoice();
@@ -75,6 +76,14 @@ const initials = computed(() =>
                     </DropdownMenuItem>
                     <template v-if="logoutUrl">
                         <DropdownMenuSeparator class="my-1 bg-xq-border h-px" />
+                        <DropdownMenuItem
+                            v-if="profileUrl"
+                            :class="menuItemClass"
+                            @select="router.visit(profileUrl!)"
+                        >
+                            <UserRound class="size-4" aria-hidden="true" />
+                            Profile
+                        </DropdownMenuItem>
                         <DropdownMenuItem :class="menuItemClass" @select="router.post(logoutUrl!)">
                             <LogOut class="size-4" aria-hidden="true" />
                             Sign out

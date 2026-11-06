@@ -9,6 +9,10 @@ vi.mock('@inertiajs/vue3', () => ({
 }));
 
 const XqActions = { props: ['actions'], template: '<b data-actions>{{ actions.id }}</b>' };
+const XqForm = {
+    props: ['form', 'action', 'method', 'submitLabel'],
+    template: '<form data-form :action="action" :data-method="method">{{ submitLabel }}</form>',
+};
 const XqTable = { props: ['table'], template: '<u data-table>{{ table.id }}</u>' };
 
 function render(page: Partial<PanelPageData>) {
@@ -24,11 +28,29 @@ function render(page: Partial<PanelPageData>) {
                 ...page,
             },
         },
-        global: { stubs: { Head: true, XqActions, XqTable } },
+        global: { stubs: { Head: true, XqActions, XqForm, XqTable } },
     });
 }
 
 describe('XqPanelPage', () => {
+    it('renders a form with where it submits', () => {
+        const content = [
+            {
+                type: 'form',
+                schema: { id: 'profile' },
+                action: '/profile',
+                method: 'put',
+                submitLabel: 'Save',
+                revision: 'a',
+            },
+        ] as PanelContent[];
+        const form = render({ content }).find('[data-form]');
+
+        expect(form.attributes('action')).toBe('/profile');
+        expect(form.attributes('data-method')).toBe('put');
+        expect(form.text()).toBe('Save');
+    });
+
     it('shows its title as the only top-level heading', () => {
         expect(
             render({ title: 'Reports' })

@@ -72,6 +72,12 @@ describe('the login page', function () {
             ->has('page.form.components', 4));
     });
 
+    it('links to the other flows the panel turns on', function () {
+        $this->get('/admin/login')->assertInertia(fn (Assert $page) => $page
+            ->where('page.links.0.url', route('xelqun-panels.admin.auth.password.request'))
+            ->where('page.links.1.url', route('xelqun-panels.admin.auth.register')));
+    });
+
     it('does not exist on a panel without login()', function () {
         $this->get('/staff/login')->assertNotFound();
     });
@@ -243,9 +249,10 @@ describe('signing out', function () {
             ->and(session()->get('inertia.clear_history'))->toBeTrue();
     });
 
-    it('goes home on a panel with no login', function () {
-        $this->post('/staff/logout')->assertRedirect('/');
-    });
+});
+
+it('goes home after signing out of a panel with no login', function () {
+    $this->post('/staff/logout')->assertRedirect('/');
 });
 
 describe('after the page has loaded', function () {

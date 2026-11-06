@@ -33,6 +33,10 @@ final class LoginController extends AuthController
             $this->form(),
             route($panel->routeName('auth.login.store')),
             __('xelqun-panels::auth.login.submit'),
+            [
+                $this->link(__('xelqun-panels::auth.login.forgot'), $panel->getPasswordResetRequestForm() === null ? null : route($panel->routeName('auth.password.request'))),
+                $this->link(__('xelqun-panels::auth.login.register'), $panel->getRegistrationForm() === null ? null : route($panel->routeName('auth.register'))),
+            ],
         );
     }
 
