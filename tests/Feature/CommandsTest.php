@@ -101,3 +101,23 @@ describe('make:xelqun-page', function () {
         $this->artisan('make:xelqun-page', ['name' => 'Reports', '--force' => true])->assertSuccessful();
     });
 });
+
+describe('make:xelqun-resource', function () {
+    it('creates a resource and a policy', function (): void {
+        $this->artisan('make:xelqun-resource', ['model' => 'Product', '--panel' => 'Staff'])
+            ->expectsOutputToContain('Add ProductResource::class')
+            ->assertSuccessful();
+
+        expect(File::get("{$this->appPath}/app/Xelqun/Staff/Resources/ProductResource.php"))
+            ->toContain('namespace App\Xelqun\Staff\Resources;')
+            ->toContain('protected static string $model = Product::class;');
+    });
+
+    it('refuses a bad name, and keeps what is there unless told otherwise', function (): void {
+        $this->artisan('make:xelqun-resource', ['model' => 'not-a-class'])->assertFailed();
+
+        $this->artisan('make:xelqun-resource', ['model' => 'Product'])->assertSuccessful();
+        $this->artisan('make:xelqun-resource', ['model' => 'Product'])->assertFailed();
+        $this->artisan('make:xelqun-resource', ['model' => 'Product', '--force' => true])->assertSuccessful();
+    });
+});

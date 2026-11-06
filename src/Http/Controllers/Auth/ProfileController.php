@@ -8,30 +8,22 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Xelqun\Notifications\Notification;
 use Xelqun\Panels\Auth\EditProfileForm;
+use Xelqun\Panels\Pages\FormContent;
 
 final class ProfileController extends AuthController
 {
     public function show(Request $request): Response
     {
-        $panel = $this->panel();
-        $form = $this->form($request);
-        $schema = $form->toSchema();
+        $title = __('xelqun-panels::auth.profile.heading');
+        $form = new FormContent($this->form($request), route($this->panel()->routeName('auth.profile.update')), 'put', __('xelqun-panels::auth.profile.submit'));
 
         return Inertia::render('xelqun/Panel', ['page' => [
-            'title' => __('xelqun-panels::auth.profile.heading'),
+            'title' => $title,
             'eyebrow' => null,
             'subheading' => null,
-            'breadcrumbs' => [['label' => __('xelqun-panels::auth.profile.heading')]],
+            'breadcrumbs' => [['label' => $title]],
             'headerActions' => null,
-            'content' => [[
-                'type' => 'form',
-                'schema' => $schema,
-                'action' => route($panel->routeName('auth.profile.update')),
-                'method' => 'put',
-                'submitLabel' => __('xelqun-panels::auth.profile.submit'),
-                // Changes after a save, so the password boxes empty, but not after a failed one.
-                'revision' => md5(json_encode([$schema['state'], $form->getRecord()?->getAttribute('updated_at')], JSON_THROW_ON_ERROR)),
-            ]],
+            'content' => [$form->toArray()],
         ]]);
     }
 

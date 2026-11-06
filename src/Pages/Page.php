@@ -41,6 +41,14 @@ abstract class Page
     }
 
     /**
+     * The title of this request's page, which a generic page works out per record.
+     */
+    public function getHeading(): string
+    {
+        return static::getTitle();
+    }
+
+    /**
      * Small text above the title.
      */
     public function getEyebrow(): ?string
@@ -63,7 +71,7 @@ abstract class Page
      */
     public function getBreadcrumbs(): array
     {
-        return [['label' => static::getTitle()]];
+        return [['label' => $this->getHeading()]];
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -119,6 +127,22 @@ abstract class Page
     }
 
     /**
+     * Whether this request may see this page.
+     */
+    public function isAccessible(): bool
+    {
+        return static::canAccess();
+    }
+
+    /**
+     * Why it can't, for a developer. Empty outside debug mode.
+     */
+    protected function getAccessDeniedReason(): string
+    {
+        return '';
+    }
+
+    /**
      * Buttons beside the title. Each one still needs its own authorize().
      *
      * @return array<int, Action|ActionGroup>
@@ -131,7 +155,7 @@ abstract class Page
     /**
      * What the page shows, top to bottom.
      *
-     * @return array<int, Table|ActionSet>
+     * @return array<int, Table|ActionSet|FormContent>
      */
     public function content(): array
     {
@@ -155,7 +179,7 @@ abstract class Page
 
     public function __invoke(): Response
     {
-        abort_unless(static::canAccess(), 403);
+        abort_unless($this->isAccessible(), 403, $this->getAccessDeniedReason());
 
         return Inertia::render($this->getComponent(), [...$this->getProps(), 'page' => $this->toData()]);
     }
@@ -166,14 +190,15 @@ abstract class Page
     private function toData(): array
     {
         return [
-            'title' => static::getTitle(),
+            'title' => $this->getHeading(),
             'eyebrow' => $this->getEyebrow(),
             'subheading' => $this->getSubheading(),
             'breadcrumbs' => $this->getBreadcrumbs(),
             'headerActions' => $this->headerActions() === [] ? null : PageActionSet::for($this)->toSchema(),
-            'content' => array_map(fn (Table|ActionSet $item): array => match (true) {
+            'content' => array_map(fn (Table|ActionSet|FormContent $item): array => match (true) {
                 $item instanceof Table => ['type' => 'table', 'schema' => $item->toSchema()],
                 $item instanceof ActionSet => ['type' => 'actions', 'schema' => $item->toSchema()],
+                $item instanceof FormContent => $item->toArray(),
             }, $this->getVisibleContent()),
         ];
     }
@@ -182,14 +207,16 @@ abstract class Page
      * Only a Table checks itself when it renders, and then it fails the whole
      * page. Part of a page being off limits should just leave that part out.
      *
-     * @return array<int, Table|ActionSet>
+     * @return array<int, Table|ActionSet|FormContent>
      */
     private function getVisibleContent(): array
     {
         $user = auth()->user();
 
-        return array_values(array_filter($this->content(), fn (Table|ActionSet $item): bool => $item instanceof Table
-            ? $item->authorize($user)
-            : $item->authorize($user, $item->getRecord())));
+        return array_values(array_filter($this->content(), fn (Table|ActionSet|FormContent $item): bool => match (true) {
+            $item instanceof Table => $item->authorize($user),
+            $item instanceof ActionSet => $item->authorize($user, $item->getRecord()),
+            $item instanceof FormContent => $item->form->authorize($user, $item->form->getRecord()),
+        }));
     }
 }

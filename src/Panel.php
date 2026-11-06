@@ -65,6 +65,9 @@ final class Panel
     /** @var array<int, class-string<Page>> */
     private array $pages = [];
 
+    /** @var array<int, class-string<Resources\Resource>> */
+    private array $resources = [];
+
     /** @var array<int, string> */
     private array $navigationGroups = [];
 
@@ -359,6 +362,24 @@ final class Panel
     }
 
     /**
+     * @param  array<int, class-string<Resources\Resource>>  $resources
+     */
+    public function resources(array $resources): self
+    {
+        $this->resources = [...$this->resources, ...$resources];
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, class-string<Resources\Resource>>
+     */
+    public function getResources(): array
+    {
+        return $this->resources;
+    }
+
+    /**
      * The order of the sidebar's groups. Ungrouped links come first, and a group
      * not named here comes last.
      *
@@ -394,6 +415,9 @@ final class Panel
         $groups = collect($this->pages)
             ->filter(fn (string $page): bool => $page::shouldRegisterNavigation() && $page::canAccess())
             ->map(fn (string $page): NavigationItem => $page::getNavigationItem($this))
+            ->concat(collect($this->resources)
+                ->filter(fn (string $resource): bool => $resource::can('viewAny'))
+                ->map(fn (string $resource): NavigationItem => $resource::getNavigationItem($this)))
             ->concat($this->navigationItems)
             ->sortBy(fn (NavigationItem $item): int => $item->getSort())
             ->groupBy(fn (NavigationItem $item): string => (string) $item->getGroup());

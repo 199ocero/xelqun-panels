@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Inertia\ServiceProvider as InertiaServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Xelqun\Forms\FormsServiceProvider;
+use Xelqun\Forms\Testing\InteractsWithForms;
 use Xelqun\Panels\PanelsServiceProvider;
 use Xelqun\Panels\Tests\Fixtures\AdminPanelProvider;
 use Xelqun\Panels\Tests\Fixtures\HandleInertia;
@@ -19,6 +20,7 @@ use Xelqun\Tables\Testing\InteractsWithTables;
 
 abstract class TestCase extends Orchestra
 {
+    use InteractsWithForms;
     use InteractsWithTables;
 
     protected function getPackageProviders($app): array
@@ -66,6 +68,16 @@ abstract class TestCase extends Orchestra
 
     protected function defineDatabaseMigrations(): void
     {
+        Schema::create('posts', function (Blueprint $table): void {
+            $table->id();
+            $table->string('title');
+            $table->string('team')->default('red');
+            $table->string('status')->default('draft');
+            $table->json('tags')->nullable();
+            $table->string('cover')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('password_reset_tokens', function (Blueprint $table): void {
             $table->string('email')->primary();
             $table->string('token');

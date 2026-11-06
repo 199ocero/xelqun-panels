@@ -13,6 +13,7 @@ use Xelqun\Forms\Security\FormTokenEncrypter;
 use Xelqun\Panels\Commands\InstallCommand;
 use Xelqun\Panels\Commands\MakePageCommand;
 use Xelqun\Panels\Commands\MakePanelCommand;
+use Xelqun\Panels\Commands\MakeResourceCommand;
 
 class PanelsServiceProvider extends ServiceProvider
 {
@@ -63,7 +64,7 @@ class PanelsServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/lang' => lang_path('vendor/xelqun-panels'),
             ], 'xelqun-panels-lang');
 
-            $this->commands([InstallCommand::class, MakePageCommand::class, MakePanelCommand::class]);
+            $this->commands([InstallCommand::class, MakePageCommand::class, MakePanelCommand::class, MakeResourceCommand::class]);
         }
     }
 

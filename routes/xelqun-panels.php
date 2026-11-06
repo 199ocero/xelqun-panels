@@ -7,6 +7,7 @@ use Xelqun\Panels\Http\Controllers\Auth\LogoutController;
 use Xelqun\Panels\Http\Controllers\Auth\PasswordResetController;
 use Xelqun\Panels\Http\Controllers\Auth\ProfileController;
 use Xelqun\Panels\Http\Controllers\Auth\RegisterController;
+use Xelqun\Panels\Http\Controllers\ResourceRecordController;
 use Xelqun\Panels\Http\Middleware\Authenticate;
 use Xelqun\Panels\Http\Middleware\EnterPanel;
 use Xelqun\Panels\Panels;
@@ -51,6 +52,20 @@ foreach (app(Panels::class)->all() as $panel) {
 
                 foreach ($panel->getPages() as $page) {
                     Route::get($page::getSlug(), $page)->name($page::getRouteName());
+                }
+
+                foreach ($panel->getResources() as $resource) {
+                    $pages = $resource::getPages();
+                    $slug = $resource::getSlug();
+
+                    Route::prefix($slug)->name("resources.{$slug}.")->group(function () use ($pages, $resource): void {
+                        Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
+                        Route::get('create', $pages['create'])->name('create')->defaults('resource', $resource);
+                        Route::post('', [ResourceRecordController::class, 'store'])->name('store')->defaults('resource', $resource);
+                        Route::get('{record}', $pages['view'])->name('view')->defaults('resource', $resource);
+                        Route::get('{record}/edit', $pages['edit'])->name('edit')->defaults('resource', $resource);
+                        Route::put('{record}', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
+                    });
                 }
             });
         });
