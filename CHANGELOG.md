@@ -51,6 +51,8 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 
 ### Fixed
 
+- **Top navigation has a tenant switcher on desktop.** It only lived in the sidebar, which that layout hides.
+- **The top bar matches the page.** It takes the page's background in place of the card color, so the two read as one surface in both themes.
 - **A collapsed sidebar stays usable.** Links show their name in a tooltip, a line separates the groups, the avatar opens the user menu, which was squeezed out, and the tenant switcher stays as a button with the tenant's initial. The whole user row opens it, not just the settings icon.
 - **Saving and running an action no longer flicker.** A save that stays on the page keeps the page, and widgets stay on screen while a reload brings new data, so the entrance doesn't replay.
 - **A new panel works straight away.** `make:xelqun-panel` left out `login()` and any pages, so `/admin` was a 404.

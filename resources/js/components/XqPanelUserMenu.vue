@@ -37,6 +37,7 @@ const props = defineProps<{
     items?: PanelNavigationItem[];
     canChangeTheme?: boolean;
     collapsed?: boolean;
+    menuSide?: 'top' | 'right' | 'bottom';
 }>();
 const choice = useThemeChoice();
 const isMotionOn = useMotion();
@@ -88,9 +89,9 @@ const initials = computed(() =>
             <DropdownMenuPortal>
                 <DropdownMenuContent
                     :class="menuClass"
-                    :side="collapsed ? 'right' : 'top'"
+                    :side="menuSide ?? (collapsed ? 'right' : 'top')"
                     align="end"
-                    :side-offset="collapsed ? 14 : 6"
+                    :side-offset="menuSide !== 'bottom' && collapsed ? 14 : 6"
                 >
                     <XqMenuGlide />
                     <template v-if="collapsed">

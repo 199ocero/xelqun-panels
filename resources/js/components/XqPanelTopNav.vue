@@ -23,7 +23,7 @@ const itemClass =
 <template>
     <nav
         :aria-label="t('Main')"
-        class="gap-1 px-4 py-2 border-xq-border bg-xq-card lg:flex hidden overflow-x-auto border-b"
+        class="gap-1 px-4 py-2 border-xq-border bg-xq-background lg:flex hidden overflow-x-auto border-b"
         data-xq-top-nav
     >
         <template v-for="group in navigation" :key="group.label ?? ''">

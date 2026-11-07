@@ -8,11 +8,13 @@ import {
     DialogPortal,
     DialogRoot,
     DialogTitle,
+    TooltipProvider,
 } from 'reka-ui';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import XqPanelNotifications from '../components/XqPanelNotifications.vue';
 import XqPanelSearch from '../components/XqPanelSearch.vue';
 import XqPanelSidebar from '../components/XqPanelSidebar.vue';
+import XqPanelTenantMenu from '../components/XqPanelTenantMenu.vue';
 import XqPanelTopNav from '../components/XqPanelTopNav.vue';
 import XqPanelTopbar from '../components/XqPanelTopbar.vue';
 import XqPanelUserMenu from '../components/XqPanelUserMenu.vue';
@@ -124,6 +126,13 @@ onBeforeUnmount(() => {
                 @menu="drawerOpen = true"
                 @search="searchOpen = true"
             >
+                <template v-if="panel.topNavigation && panel.tenant" #start>
+                    <div class="lg:grid max-w-48 hidden shrink-0" data-xq-topbar-tenant>
+                        <TooltipProvider>
+                            <XqPanelTenantMenu :tenant="panel.tenant" />
+                        </TooltipProvider>
+                    </div>
+                </template>
                 <XqPanelNotifications
                     v-if="panel.notifications"
                     :url="panel.notifications.url"
@@ -138,6 +147,7 @@ onBeforeUnmount(() => {
                     :items="panel.userMenuItems"
                     :can-change-theme="panel.theme.forced === null"
                     collapsed
+                    menu-side="bottom"
                     class="ml-1 lg:flex hidden"
                 />
             </XqPanelTopbar>

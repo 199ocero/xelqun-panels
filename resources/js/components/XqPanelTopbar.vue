@@ -15,7 +15,7 @@ const shortcut =
 
 <template>
     <header
-        class="gap-3 px-4 h-14 border-xq-border bg-xq-card md:grid md:grid-cols-[1fr_auto_1fr] flex shrink-0 items-center justify-between border-b"
+        class="gap-3 px-4 h-14 border-xq-border bg-xq-background md:grid md:grid-cols-[1fr_auto_1fr] flex shrink-0 items-center justify-between border-b"
         data-xq-topbar
     >
         <div class="gap-2 min-w-0 flex items-center">
@@ -28,6 +28,7 @@ const shortcut =
                 <Menu class="size-4.5" aria-hidden="true" />
             </button>
             <XqPanelHook name="topbar.start" />
+            <slot name="start" />
             <nav :aria-label="t('Breadcrumb')" class="min-w-0">
                 <ol class="gap-1.5 text-sm flex items-center">
                     <li
