@@ -36,6 +36,7 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **Nested resources.** `$parentResource` puts a resource under a record, as in `/posts/1/comments`.
 - **Relation tables on tabs**, when a record has more than one.
 - **Record sub-navigation.** `getRecordSubNavigation()` adds tabs across a record's pages.
+- **`make:xelqun-widget`** makes a chart or stats widget, and **`InteractsWithPanels`** helps tests sign in on a panel.
 - **Infolists.** `Resource::infolist()` with `TextEntry`, `IconEntry` and `ImageEntry`, in place of a disabled form on the view page.
 
 ### Changed

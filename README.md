@@ -112,7 +112,7 @@ class ProductResource extends Resource
 }
 ```
 
-`php artisan make:xelqun-resource Product` creates this and a policy. A panel made with `make:xelqun-panel` picks it up by itself, through `discoverResources(in: app_path('Xelqun/Admin/Resources'), for: 'App\\Xelqun\\Admin\\Resources')`. Otherwise, add it to `resources()`.
+`php artisan make:xelqun-resource Product` creates this and a policy, and `make:xelqun-widget` makes a chart or stats widget. A panel made with `make:xelqun-panel` picks it up by itself, through `discoverResources(in: app_path('Xelqun/Admin/Resources'), for: 'App\\Xelqun\\Admin\\Resources')`. Otherwise, add it to `resources()`.
 
 **Access goes through the model's policy:** `viewAny`, `view`, `create`, `update` and `delete`. With no policy, or no such method, the answer is no. This differs from Filament, which allows by default.
 
@@ -432,6 +432,10 @@ Register the component in `createXelqunForms({ components })`. The places are `S
 
 **Translations.** All text comes from language files. Run `php artisan vendor:publish --tag=xelqun-panels-lang` to change it or add a language. In `shell.php` each key is the English text.
 
+## Testing
+
+`InteractsWithPanels` adds `actingInPanel($user, 'admin')`, which signs in on the panel's guard, and `enterPanel('admin', $tenant)`, for building a table or form to test. Forms' and tables' own test helpers work the same way on panel pages.
+
 ## Current limits
 
 - `%` and `_` in a search act as wildcards.
@@ -441,6 +445,8 @@ Register the component in `createXelqunForms({ components })`. The places are `S
 - A queued verification email gets Laravel's route, not the panel's.
 - Changing a password ends "remember me" on other devices, but not their open sessions. Add Laravel's `AuthenticateSession` middleware for that.
 - SSR isn't tested.
+
+See [how Xelqun compares with Filament](docs/parity.md), page by page.
 
 ## Developing
 

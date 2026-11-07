@@ -153,3 +153,20 @@ describe('make:xelqun-relation-manager', function () {
         $this->artisan('make:xelqun-relation-manager', ['model' => 'Category', 'relationship' => 'products', '--force' => true])->assertSuccessful();
     });
 });
+
+describe('make:xelqun-widget', function () {
+    it('creates a chart, or stats with --stats', function (): void {
+        $this->artisan('make:xelqun-widget', ['name' => 'SalesChart'])->expectsOutputToContain('SalesChart::class')->assertSuccessful();
+        $this->artisan('make:xelqun-widget', ['name' => 'Totals', '--stats' => true, '--panel' => 'Staff'])->assertSuccessful();
+
+        expect(File::get("{$this->appPath}/app/Xelqun/Admin/Widgets/SalesChart.php"))->toContain('extends ChartWidget')
+            ->and(File::get("{$this->appPath}/app/Xelqun/Staff/Widgets/Totals.php"))->toContain('extends StatsOverview');
+    });
+
+    it('refuses a bad name, and keeps what is there unless told otherwise', function (): void {
+        $this->artisan('make:xelqun-widget', ['name' => 'not-a-class'])->assertFailed();
+
+        $this->artisan('make:xelqun-widget', ['name' => 'Totals'])->assertSuccessful();
+        $this->artisan('make:xelqun-widget', ['name' => 'Totals'])->assertFailed();
+    });
+});

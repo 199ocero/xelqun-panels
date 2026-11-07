@@ -1,0 +1,23 @@
+<?php
+
+namespace {{ namespace }};
+
+use Xelqun\Panels\Widgets\ChartWidget;
+
+class {{ class }} extends ChartWidget
+{
+    protected static ?string $heading = '{{ heading }}';
+
+    protected function getType(): string
+    {
+        return 'line';
+    }
+
+    protected function getData(): array
+    {
+        return [
+            'labels' => ['Jan', 'Feb', 'Mar'],
+            'datasets' => [['label' => '{{ heading }}', 'data' => [0, 0, 0]]],
+        ];
+    }
+}

@@ -1,0 +1,16 @@
+<?php
+
+namespace {{ namespace }};
+
+use Xelqun\Panels\Widgets\Stat;
+use Xelqun\Panels\Widgets\StatsOverview;
+
+class {{ class }} extends StatsOverview
+{
+    protected function getStats(): array
+    {
+        return [
+            Stat::make('{{ heading }}', 0),
+        ];
+    }
+}

@@ -15,6 +15,7 @@ use Xelqun\Panels\Commands\MakePageCommand;
 use Xelqun\Panels\Commands\MakePanelCommand;
 use Xelqun\Panels\Commands\MakeRelationManagerCommand;
 use Xelqun\Panels\Commands\MakeResourceCommand;
+use Xelqun\Panels\Commands\MakeWidgetCommand;
 
 class PanelsServiceProvider extends ServiceProvider
 {
@@ -85,7 +86,7 @@ class PanelsServiceProvider extends ServiceProvider
                 __DIR__.'/../database/migrations/add_app_authentication_to_users_table.php.stub' => database_path('migrations/add_app_authentication_to_users_table.php'),
             ], 'xelqun-panels-mfa');
 
-            $this->commands([InstallCommand::class, MakePageCommand::class, MakePanelCommand::class, MakeRelationManagerCommand::class, MakeResourceCommand::class]);
+            $this->commands([InstallCommand::class, MakePageCommand::class, MakePanelCommand::class, MakeRelationManagerCommand::class, MakeResourceCommand::class, MakeWidgetCommand::class]);
         }
     }
 

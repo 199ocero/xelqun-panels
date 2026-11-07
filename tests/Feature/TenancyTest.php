@@ -8,6 +8,7 @@ use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\Resource;
 use Xelqun\Panels\Resources\ResourceTable;
+use Xelqun\Panels\Testing\InteractsWithPanels;
 use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
 use Xelqun\Panels\Tests\Fixtures\Team;
 use Xelqun\Panels\Tests\Fixtures\Tenancy\Folder;
@@ -226,6 +227,27 @@ describe('a tenant\'s profile', function () {
 
         expect($this->green->fresh()->name)->toBe('Green');
     });
+});
+
+it('has a helper for tests that need a panel and a tenant', function () {
+    $helper = new class($this->app)
+    {
+        use InteractsWithPanels;
+
+        public function __construct(private $app) {}
+
+        public function actingAs($user, $guard = null)
+        {
+            $this->app['auth']->guard($guard)->setUser($user);
+
+            return $this;
+        }
+    };
+
+    $helper->actingInPanel($this->user, 'team')->enterPanel('team', $this->red);
+
+    expect(app(Panels::class)->current()->getId())->toBe('team')
+        ->and(app(Panels::class)->tenant()->is($this->red))->toBeTrue();
 });
 
 describe('the shell', function () {
