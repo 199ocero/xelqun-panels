@@ -32,7 +32,7 @@
     --xq-card-foreground: #1c1c1e;
     --xq-popover: #ffffff;
     --xq-popover-foreground: #1c1c1e;
-    --xq-primary: var(--xq-panel-primary, #0071e3);
+    --xq-primary: var(--xq-panel-primary-fill, #0071e3);
     --xq-primary-foreground: var(--xq-panel-primary-foreground, #ffffff);
     --xq-secondary: #f0f0f2;
     --xq-secondary-foreground: #1c1c1e;
@@ -59,7 +59,7 @@
     --xq-chart-8: #e34948;
 }
 
-/* The same steps as the light theme, from the shell up. White text fails on a lighter blue, so the text goes dark. */
+/* The same steps as the light theme, from the shell up. A solid color stays as it is, so a button reads the same in both themes. */
 :root[data-xq-panel].dark {
     color-scheme: dark;
     --xq-shell: oklch(from var(--xq-panel-gray, #52525b) 0.165 calc(c * 0.35) h);
@@ -71,8 +71,6 @@
     --xq-card-foreground: #f4f4f5;
     --xq-popover: oklch(from var(--xq-panel-gray, #52525b) 0.249 calc(c * 0.35) h);
     --xq-popover-foreground: #f4f4f5;
-    --xq-primary: oklch(from var(--xq-panel-primary, #0071e3) 0.74 c h);
-    --xq-primary-foreground: #000000;
     --xq-secondary: #26262a;
     --xq-secondary-foreground: #f4f4f5;
     --xq-muted: oklch(from var(--xq-panel-gray, #52525b) 0.258 calc(c * 0.35) h);
@@ -102,11 +100,22 @@
 }
 
 /*
- * Plain 600 shades miss AA as text on white: green-600 is 3.3:1 and amber-600 is
- * 3.2:1. So what's read as text is capped in lightness, which keeps its hue.
+ * A fill and text are different jobs. Colored text has to read on the page, so
+ * it's capped in lightness on the light theme and lifted on the dark one, keeping
+ * its hue. Plain 600 shades miss AA as text on white: green-600 is 3.3:1.
  */
 :root[data-xq-panel]:not(.dark) .text-xq-primary {
-    color: oklch(from var(--xq-primary) min(l, 0.52) c h);
+    color: oklch(from var(--xq-panel-primary, #0071e3) min(l, 0.52) c h);
+}
+
+:root[data-xq-panel].dark .text-xq-primary {
+    color: oklch(from var(--xq-panel-primary, #0071e3) 0.74 c h);
+}
+
+/* The danger token is lifted for text on the dark theme, so a solid button stays deep, with white text. */
+:root[data-xq-panel].dark .bg-xq-destructive {
+    background-color: oklch(from var(--xq-panel-danger, #dc2626) min(l, 0.52) c h);
+    color: #ffffff;
 }
 
 /* A logo for each theme, with no flash when the theme changes. */

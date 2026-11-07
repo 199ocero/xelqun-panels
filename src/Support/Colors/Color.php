@@ -37,6 +37,21 @@ enum Color: string
     case Pink = '#db2777';
     case Rose = '#e11d48';
 
+    private const float AA_TEXT = 4.5;
+
+    /** Below this it's a gray, whatever its hue says. */
+    private const float MIN_CHROMA = 0.04;
+
+    /** OKLCH hues that go brown when darkened: amber through lime. */
+    private const array BRIGHT_HUES = [50.0, 135.0];
+
+    /** About a Tailwind 400 shade. */
+    private const float BRIGHT_FILL = 0.82;
+
+    private const float DARK_TEXT = 0.28;
+
+    private const float DARK_TEXT_CHROMA = 0.55;
+
     /**
      * Every case by name, for a Select that lets someone choose.
      *
@@ -59,14 +74,35 @@ enum Color: string
     }
 
     /**
-     * Which text reads best on a hex color. One of black and white always clears
-     * WCAG AA's 4.5:1, while a softer dark doesn't on a mid-tone color.
+     * The fill and text for a solid surface in this color, such as a button.
+     *
+     * White on a color reads best, even where WCAG's formula scores black higher,
+     * as it does on a mid-tone green. So the fill deepens until white passes AA,
+     * keeping its hue. Yellows, ambers and limes turn brown that way, so they go
+     * bright instead, with dark text in their own hue. Filament and Radix both
+     * treat them as a special case too.
+     *
+     * @return array{fill: string, text: string}
      */
-    public static function foregroundOn(string $hex): string
+    public static function solidFor(string $hex): array
     {
-        $luminance = self::luminance($hex);
+        [$lightness, $a, $b] = self::toOklab($hex);
+        $hue = rad2deg(atan2($b, $a));
 
-        return 1.05 / ($luminance + 0.05) >= ($luminance + 0.05) / 0.05 ? '#ffffff' : '#000000';
+        if (hypot($a, $b) > self::MIN_CHROMA && $hue >= self::BRIGHT_HUES[0] && $hue <= self::BRIGHT_HUES[1]) {
+            return [
+                'fill' => self::fromOklab(max($lightness, self::BRIGHT_FILL), $a, $b),
+                'text' => self::fromOklab(self::DARK_TEXT, $a * self::DARK_TEXT_CHROMA, $b * self::DARK_TEXT_CHROMA),
+            ];
+        }
+
+        $fill = substr($hex, 0, 7);
+
+        for ($step = $lightness; self::contrast($fill, '#ffffff') < self::AA_TEXT; $step -= 0.01) {
+            $fill = self::fromOklab($step, $a, $b);
+        }
+
+        return ['fill' => $fill, 'text' => '#ffffff'];
     }
 
     /**
@@ -82,11 +118,63 @@ enum Color: string
 
     private static function luminance(string $hex): float
     {
+        [$red, $green, $blue] = self::toLinearRgb($hex);
+
+        return 0.2126 * $red + 0.7152 * $green + 0.0722 * $blue;
+    }
+
+    /**
+     * @return array{0: float, 1: float, 2: float}
+     */
+    private static function toLinearRgb(string $hex): array
+    {
         $digits = ltrim($hex, '#');
         $digits = strlen($digits) < 6 ? implode('', array_map(fn (string $digit): string => $digit.$digit, str_split($digits))) : $digits;
         [$red, $green, $blue] = array_map(hexdec(...), str_split(substr($digits, 0, 6), 2));
 
-        return 0.2126 * self::linear($red) + 0.7152 * self::linear($green) + 0.0722 * self::linear($blue);
+        return [self::linear($red), self::linear($green), self::linear($blue)];
+    }
+
+    /**
+     * OKLab, where lightness can change without the hue drifting.
+     *
+     * @return array{0: float, 1: float, 2: float}
+     */
+    private static function toOklab(string $hex): array
+    {
+        [$red, $green, $blue] = self::toLinearRgb($hex);
+
+        $l = (0.4122214708 * $red + 0.5363325363 * $green + 0.0514459929 * $blue) ** (1 / 3);
+        $m = (0.2119034982 * $red + 0.6806995451 * $green + 0.1073969566 * $blue) ** (1 / 3);
+        $s = (0.0883024619 * $red + 0.2817188376 * $green + 0.6299787005 * $blue) ** (1 / 3);
+
+        return [
+            0.2104542553 * $l + 0.793617785 * $m - 0.0040720468 * $s,
+            1.9779984951 * $l - 2.428592205 * $m + 0.4505937099 * $s,
+            0.0259040371 * $l + 0.7827717662 * $m - 0.808675766 * $s,
+        ];
+    }
+
+    private static function fromOklab(float $lightness, float $a, float $b): string
+    {
+        $l = ($lightness + 0.3963377774 * $a + 0.2158037573 * $b) ** 3;
+        $m = ($lightness - 0.1055613458 * $a - 0.0638541728 * $b) ** 3;
+        $s = ($lightness - 0.0894841775 * $a - 1.291485548 * $b) ** 3;
+
+        return sprintf(
+            '#%02x%02x%02x',
+            self::toChannel(4.0767416621 * $l - 3.3077115913 * $m + 0.2309699292 * $s),
+            self::toChannel(-1.2684380046 * $l + 2.6097574011 * $m - 0.3413193965 * $s),
+            self::toChannel(-0.0041960863 * $l - 0.7034186147 * $m + 1.707614701 * $s),
+        );
+    }
+
+    private static function toChannel(float $linear): int
+    {
+        $value = max(0.0, min(1.0, $linear));
+        $encoded = $value <= 0.0031308 ? 12.92 * $value : 1.055 * $value ** (1 / 2.4) - 0.055;
+
+        return (int) round($encoded * 255);
     }
 
     private static function linear(int|float $channel): float

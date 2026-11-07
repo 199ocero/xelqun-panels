@@ -271,7 +271,9 @@ final class Panel
             $variables["--xq-panel-{$name}"] = $hex;
 
             if ($name === 'primary') {
-                $variables['--xq-panel-primary-foreground'] = Color::foregroundOn($hex);
+                $solid = Color::solidFor($hex);
+                $variables['--xq-panel-primary-fill'] = $solid['fill'];
+                $variables['--xq-panel-primary-foreground'] = $solid['text'];
             }
         }
 

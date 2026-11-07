@@ -199,30 +199,54 @@ describe('colors', function () {
         ]);
     });
 
+    it('sends a solid fill and its text with the primary', function () {
+        expect(Panel::make()->colors(['primary' => Color::Emerald])->getThemeVariables())->toMatchArray([
+            '--xq-panel-primary' => '#059669',
+            '--xq-panel-primary-foreground' => '#ffffff',
+        ])->toHaveKey('--xq-panel-primary-fill');
+    });
+
     it('changes only the colors it names, from a Color or a hex value', function () {
         expect(Panel::make()->colors(['primary' => Color::Amber, 'danger' => '#ff0000'])->getThemeVariables())->toMatchArray([
             '--xq-panel-primary' => '#d97706',
-            '--xq-panel-primary-foreground' => '#000000',
             '--xq-panel-danger' => '#ff0000',
             '--xq-panel-gray' => '#52525b',
         ]);
     });
 
-    it('chooses text that reads on the color', function (string $color, string $text) {
-        expect(Color::foregroundOn($color))->toBe($text);
-    })->with([
-        'dark blue' => ['#0071e3', '#ffffff'],
-        'short form' => ['#fff', '#000000'],
-        'black' => ['#000000', '#ffffff'],
-        'with alpha' => ['#ffff00ff', '#000000'],
-        'yellow' => [Color::Yellow->value, '#000000'],
-    ]);
+    it('keeps white text on most colors, deepening the fill until it passes', function (Color $color) {
+        $solid = Color::solidFor($color->value);
 
-    it('meets WCAG AA for text on every color of the palette, and on any other', function () {
-        $colors = [...array_column(Color::cases(), 'value'), '#777777', '#7f7f7f', '#808080', '#868686'];
+        expect($solid['text'])->toBe('#ffffff')
+            ->and(Color::contrast($solid['fill'], $solid['text']))->toBeGreaterThanOrEqual(4.5);
+    })->with([Color::Emerald, Color::Green, Color::Teal, Color::Cyan, Color::Sky, Color::Orange, Color::Red, Color::Blue, Color::Violet, Color::Zinc]);
+
+    it('leaves a color alone when white already passes', function () {
+        expect(Color::solidFor(Color::Indigo->value)['fill'])->toBe(Color::Indigo->value)
+            ->and(Color::solidFor('#0071e3')['fill'])->toBe('#0071e3');
+    });
+
+    it('never puts black on a saturated color', function () {
+        foreach (Color::cases() as $color) {
+            expect(Color::solidFor($color->value)['text'])->not->toBe('#000000');
+        }
+    });
+
+    it('goes bright with dark text in its own hue for the colors that turn brown', function (Color $color) {
+        $solid = Color::solidFor($color->value);
+
+        expect($solid['text'])->not->toBe('#ffffff')
+            ->and(Color::contrast($solid['fill'], '#ffffff'))->toBeLessThan(2.5)
+            ->and(Color::contrast($solid['fill'], $solid['text']))->toBeGreaterThanOrEqual(7.0);
+    })->with([Color::Amber, Color::Yellow, Color::Lime]);
+
+    it('meets WCAG AA on every color of the palette, and on any other', function () {
+        $colors = [...array_column(Color::cases(), 'value'), '#777777', '#7f7f7f', '#ffffff', '#000000', '#00ff00', '#ffff00', '#00ffff', '#ff00ff', '#ff8800', '#abc', '#ffff00ff'];
 
         foreach ($colors as $color) {
-            expect(Color::contrast($color, Color::foregroundOn($color)))->toBeGreaterThanOrEqual(4.5);
+            $solid = Color::solidFor($color);
+
+            expect(Color::contrast($solid['fill'], $solid['text']))->toBeGreaterThanOrEqual(4.5);
         }
     });
 

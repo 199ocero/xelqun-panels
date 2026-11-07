@@ -400,7 +400,7 @@ $panel->colors([
 
 `Color` holds Tailwind's 26 palettes. Any color you leave out keeps its default: `danger` Red, `gray` Zinc, `info` Blue, `success` Green, `warning` Amber, and a blue `primary`. Those match Filament's, apart from the primary.
 
-Text stays readable whatever you choose. Labels on a filled color are black or white, whichever clears WCAG AA's 4.5:1, and colored text is capped in lightness on the light theme. The dark theme derives a lighter version of each color.
+Text stays readable whatever you choose. A button keeps white text, and its fill deepens just enough for white to clear WCAG AA's 4.5:1, so Emerald stays green and doesn't get black text. Yellow, Amber and Lime turn brown that way, so those go bright, with dark text in their own hue. A hex value gets the same treatment. Colored text is adjusted on its own for each theme.
 
 To let people choose, pass a closure, which runs on every request:
 
