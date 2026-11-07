@@ -133,7 +133,7 @@
     border-radius: 9999px;
 }
 
-:root[data-xq-panel] [data-xq-table] table {
+:root[data-xq-panel] [data-xq-table-scroll] {
     background: var(--xq-card);
 }
 
