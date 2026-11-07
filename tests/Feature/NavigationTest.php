@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Xelqun\Panels\Contracts\Plugin;
@@ -10,6 +11,8 @@ use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Support\Colors\Color;
+use Xelqun\Panels\Tests\Fixtures\Note;
+use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
 use Xelqun\Panels\View\RenderHook;
 
 class FirstPage extends Page
@@ -170,7 +173,7 @@ describe('theme', function () {
     ]);
 
     it('takes every length of hex color', function (string $color) {
-        expect(Panel::make()->colors(['primary' => $color])->getColorVariables()['--xq-panel-primary'])->toBe($color);
+        expect(Panel::make()->colors(['primary' => $color])->getThemeVariables()['--xq-panel-primary'])->toBe($color);
     })->with(['#07e', '#07ef', '#0071e3', '#0071E3ff']);
 
     it('refuses a font that could break out of a style attribute', function () {
@@ -187,7 +190,7 @@ it('sends the page\'s heading parts', function () {
 
 describe('colors', function () {
     it('uses Filament\'s semantic colors until told otherwise', function () {
-        expect(Panel::make()->getColorVariables())->toMatchArray([
+        expect(Panel::make()->getThemeVariables())->toMatchArray([
             '--xq-panel-danger' => Color::Red->value,
             '--xq-panel-gray' => Color::Zinc->value,
             '--xq-panel-info' => Color::Blue->value,
@@ -197,7 +200,7 @@ describe('colors', function () {
     });
 
     it('changes only the colors it names, from a Color or a hex value', function () {
-        expect(Panel::make()->colors(['primary' => Color::Amber, 'danger' => '#ff0000'])->getColorVariables())->toMatchArray([
+        expect(Panel::make()->colors(['primary' => Color::Amber, 'danger' => '#ff0000'])->getThemeVariables())->toMatchArray([
             '--xq-panel-primary' => '#d97706',
             '--xq-panel-primary-foreground' => '#000000',
             '--xq-panel-danger' => '#ff0000',
@@ -234,11 +237,11 @@ describe('colors', function () {
             return ['primary' => $color];
         });
 
-        expect($panel->getColorVariables()['--xq-panel-primary'])->toBe('#e11d48');
+        expect($panel->getThemeVariables()['--xq-panel-primary'])->toBe('#e11d48');
 
         $color = 'red; background: url(evil)';
 
-        expect(fn () => $panel->getColorVariables())->toThrow(PanelDefinitionException::class);
+        expect(fn () => $panel->getThemeVariables())->toThrow(PanelDefinitionException::class);
     });
 
     it('refuses anything else', function (array $colors) {
@@ -316,4 +319,118 @@ it('can move the navigation to the top', function () {
     $this->get('/admin')->assertInertia(fn (Assert $page) => $page->where('xelqunPanel.topNavigation', true));
 
     app(Panels::class)->get('admin')->topNavigation(false);
+});
+
+describe('clusters', function () {
+    it('puts its members behind one link, to the first one', function () {
+        $this->get('/admin')->assertInertia(fn (Assert $page) => $page->where('xelqunPanel.navigation', function ($groups): bool {
+            $items = collect($groups)->flatMap(fn (array $group): array => $group['items'])->keyBy('label');
+
+            return $items->has('Settings')
+                && $items->get('Settings')['url'] === url('/admin/billing')
+                && ! $items->has('Billing')
+                && ! $items->has('Team');
+        }));
+    });
+
+    it('links between the members, and marks the cluster as where you are', function () {
+        $this->get('/admin/billing')->assertInertia(fn (Assert $page) => $page
+            ->where('page.subNavigation.0.label', 'Billing')
+            ->where('page.subNavigation.0.active', true)
+            ->where('page.subNavigation.1.label', 'Team')
+            ->where('xelqunPanel.navigation', fn ($groups): bool => collect($groups)->flatMap(fn (array $group): array => $group['items'])->firstWhere('label', 'Settings')['active']));
+    });
+
+    it('leaves out a member the user can\'t reach', function () {
+        config(['testing.team_settings' => false]);
+
+        $this->get('/admin/billing')->assertInertia(fn (Assert $page) => $page->has('page.subNavigation', 1));
+    });
+
+    it('has no sub navigation outside a cluster', function () {
+        $this->get('/admin')->assertInertia(fn (Assert $page) => $page->where('page.subNavigation', []));
+    });
+});
+
+describe('a singular resource', function () {
+    beforeEach(function () {
+        Gate::policy(Note::class, RelatedPolicy::class);
+        RelatedPolicy::$denied = [];
+    });
+
+    it('starts with a new record, then keeps editing the one record', function () {
+        $this->get('/admin/site')->assertOk();
+
+        $this->put('/admin/site', ['data' => ['name' => 'First']])->assertRedirect('/admin/site');
+        $this->put('/admin/site', ['data' => ['name' => 'Second']])->assertRedirect('/admin/site');
+
+        expect(Note::pluck('name')->all())->toBe(['Second']);
+    });
+
+    it('has no create page or list of its own', function () {
+        $this->get('/admin/site/create')->assertNotFound();
+    });
+
+    it('needs update in the policy', function () {
+        RelatedPolicy::$denied = ['update'];
+
+        $this->get('/admin/site')->assertForbidden();
+        $this->put('/admin/site', ['data' => ['name' => 'Taken']])->assertForbidden();
+
+        expect(Note::count())->toBe(0);
+    });
+});
+
+describe('panel settings', function () {
+    function shellFor(callable $configure): array
+    {
+        $panel = Panel::make()->id('settings')->path('settings');
+        $configure($panel);
+        auth('admin')->logout();
+        auth('web')->logout();
+        app(Panels::class)->enter($panel);
+
+        return $panel->toShell();
+    }
+
+    it('sends the logo, and drops an unsafe one', function () {
+        $shell = shellFor(fn (Panel $panel) => $panel->brandLogo('/logo.svg')->darkModeBrandLogo(fn (): string => 'javascript:alert(1)')->brandLogoHeight('2rem'));
+
+        expect($shell['brand'])->toMatchArray(['logo' => '/logo.svg', 'darkLogo' => null, 'logoHeight' => '2rem']);
+    });
+
+    it('sets the content width on the page', function () {
+        expect(Panel::make()->maxContentWidth('full')->getThemeVariables()['--xq-panel-content-width'])->toBe('100%');
+    });
+
+    it('refuses what would end up in a style attribute unchecked', function (Closure $configure) {
+        expect(fn () => $configure(Panel::make()))->toThrow(PanelDefinitionException::class);
+    })->with([
+        'width' => fn (Panel $panel) => $panel->maxContentWidth('huge; color: red'),
+        'logo height' => fn (Panel $panel) => $panel->brandLogoHeight('2rem; color: red'),
+        'theme' => fn (Panel $panel) => $panel->defaultThemeMode('blue'),
+    ]);
+
+    it('can turn the dark theme off, or make it the only one', function () {
+        expect(Panel::make()->getForcedThemeMode())->toBeNull()
+            ->and(Panel::make()->darkMode(false)->getForcedThemeMode())->toBe('light')
+            ->and(Panel::make()->darkMode(isForced: true)->getForcedThemeMode())->toBe('dark');
+    });
+
+    it('sends a user menu item only to someone inside', function () {
+        $shell = shellFor(fn (Panel $panel) => $panel->userMenuItems([NavigationItem::make('Billing')->url('/billing')]));
+
+        expect($shell['userMenuItems'])->toBe([]);
+    });
+
+    it('can turn search and breadcrumbs off', function () {
+        $shell = shellFor(fn (Panel $panel) => $panel->globalSearch(false)->breadcrumbs(false));
+
+        expect($shell)->toMatchArray(['globalSearch' => false, 'searchUrl' => null, 'breadcrumbs' => false]);
+    });
+
+    it('shows a favicon, and only a safe one', function () {
+        expect(Panel::make()->favicon('/icon.png')->getFavicon())->toBe('/icon.png')
+            ->and(Panel::make()->favicon('javascript:alert(1)')->getFavicon())->toBeNull();
+    });
 });

@@ -9,7 +9,7 @@ import XqPanelSearch from '../../resources/js/components/XqPanelSearch.vue';
 import XqPanelSidebar from '../../resources/js/components/XqPanelSidebar.vue';
 import XqPanelSidebarCard from '../../resources/js/components/XqPanelSidebarCard.vue';
 import { setMessages, t } from '../../resources/js/composables/useMessages';
-import { setTheme, useThemeSync } from '../../resources/js/composables/useTheme';
+import { configureTheme, setTheme, useThemeSync } from '../../resources/js/composables/useTheme';
 import type { PanelShell } from '../../resources/js/types';
 
 const { reload, visit } = vi.hoisted(() => ({ reload: vi.fn(), visit: vi.fn() }));
@@ -32,9 +32,12 @@ const item = (label: string, overrides = {}) => ({
 const shell: PanelShell = {
     id: 'admin',
     url: '/admin',
-    brand: { name: 'Shop' },
+    brand: { name: 'Shop', logo: null, darkLogo: null, logoHeight: '1.75rem' },
     tenant: null,
-    theme: { colors: {}, font: 'Inter' },
+    theme: { colors: {}, font: 'Inter', default: 'system', forced: null },
+    breadcrumbs: true,
+    userMenuItems: [],
+    globalSearch: true,
     topNavigation: false,
     hooks: {},
     messages: {},
@@ -82,6 +85,27 @@ describe('the sidebar', () => {
                 .find('[data-xq-user]')
                 .text(),
         ).toContain('AL');
+    });
+
+    it('shows a logo in place of the name, and one for each theme', () => {
+        const wrapper = mount(XqPanelSidebar, {
+            props: {
+                panel: { ...shell, brand: { ...shell.brand, logo: '/l.svg', darkLogo: '/d.svg' } },
+            },
+        });
+
+        expect(wrapper.findAll('img').map((image) => image.attributes('data-xq-logo'))).toEqual([
+            'light',
+            'dark',
+        ]);
+    });
+
+    it('drops the search button when a panel turns search off', () => {
+        const wrapper = mount(XqPanelSidebar, {
+            props: { panel: { ...shell, globalSearch: false }, collapsed: true },
+        });
+
+        expect(wrapper.find('[aria-label="Search"]').exists()).toBe(false);
     });
 
     it('leaves the user out for a guest', () => {
@@ -585,6 +609,7 @@ describe('the theme', () => {
     });
 
     beforeEach(() => {
+        configureTheme('system', null);
         localStorage.clear();
         document.documentElement.classList.remove('dark');
         window.matchMedia = vi.fn(() => ({
@@ -607,6 +632,23 @@ describe('the theme', () => {
         setTheme('system');
 
         expect(localStorage.getItem('xq-panel-theme')).toBeNull();
+        expect(document.documentElement.classList.contains('dark')).toBe(false);
+    });
+
+    it("starts on the panel's default until someone chooses", () => {
+        configureTheme('dark', null);
+
+        mount(Layout);
+
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+    });
+
+    it('keeps to a forced theme, whatever was saved', () => {
+        localStorage.setItem('xq-panel-theme', 'dark');
+        configureTheme('system', 'light');
+
+        mount(Layout);
+
         expect(document.documentElement.classList.contains('dark')).toBe(false);
     });
 

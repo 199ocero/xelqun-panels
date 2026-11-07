@@ -8,6 +8,7 @@ use Inertia\Response;
 use Xelqun\Actions\Action;
 use Xelqun\Actions\ActionGroup;
 use Xelqun\Actions\ActionSet;
+use Xelqun\Panels\Navigation\Cluster;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
@@ -36,6 +37,17 @@ abstract class Page
     protected static ?string $navigationGroup = null;
 
     protected static int $navigationSort = 0;
+
+    /** @var class-string<Cluster>|null */
+    protected static ?string $cluster = null;
+
+    /**
+     * @return class-string<Cluster>|null
+     */
+    public static function getCluster(): ?string
+    {
+        return static::$cluster;
+    }
 
     public static function getTitle(): string
     {
@@ -175,6 +187,18 @@ abstract class Page
     }
 
     /**
+     * Links between the members of this page's cluster.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getSubNavigation(): array
+    {
+        $cluster = static::getCluster();
+
+        return $cluster === null ? [] : app(Panels::class)->current()->getClusterNavigation($cluster);
+    }
+
+    /**
      * Props for a Vue page of the app. See getComponent().
      *
      * @return array<string, mixed>
@@ -235,6 +259,7 @@ abstract class Page
             'breadcrumbs' => $this->getBreadcrumbs(),
             'hasWidgets' => $this->getWidgets() !== [],
             'tabs' => $this->getTabs(),
+            'subNavigation' => $this->getSubNavigation(),
             'notice' => null,
             'headerActions' => $this->headerActions() === [] ? null : PageActionSet::for($this)->toSchema(),
             'content' => array_map(fn (Table|ActionSet|FormContent $item): array => match (true) {

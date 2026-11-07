@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use Symfony\Component\Finder\SplFileInfo;
+use Xelqun\Forms\Support\SafeUrl;
 use Xelqun\Panels\Auth\EditProfileForm;
 use Xelqun\Panels\Auth\LoginForm;
 use Xelqun\Panels\Auth\RegisterForm;
@@ -21,6 +22,7 @@ use Xelqun\Panels\Contracts\HasTenants;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Contracts\Plugin;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
+use Xelqun\Panels\Navigation\Cluster;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Navigation\SidebarCard;
 use Xelqun\Panels\Pages\Page;
@@ -110,7 +112,35 @@ final class Panel
 
     private bool $requiresMultiFactorAuthentication = false;
 
+    private const array CONTENT_WIDTHS = [
+        'sm' => '24rem', 'md' => '28rem', 'lg' => '32rem', 'xl' => '36rem', '2xl' => '42rem', '3xl' => '48rem',
+        '4xl' => '56rem', '5xl' => '64rem', '6xl' => '72rem', '7xl' => '80rem', 'full' => '100%',
+    ];
+
     private bool $hasTopNavigation = false;
+
+    private string|Closure|null $brandLogo = null;
+
+    private string|Closure|null $darkModeBrandLogo = null;
+
+    private string $brandLogoHeight = '1.75rem';
+
+    private string|Closure|null $favicon = null;
+
+    private string $maxContentWidth = '7xl';
+
+    private bool $hasDarkMode = true;
+
+    private bool $isDarkModeForced = false;
+
+    private string $defaultThemeMode = 'system';
+
+    private bool $hasGlobalSearch = true;
+
+    private bool $hasBreadcrumbs = true;
+
+    /** @var array<int, NavigationItem> */
+    private array $userMenuItems = [];
 
     /** @var array<string, Plugin> */
     private array $plugins = [];
@@ -191,28 +221,28 @@ final class Panel
      * default. Text stays readable in both themes, whichever you pick. A closure
      * runs on every request, so a color can come from a setting.
      *
-     * @param  array<string, mixed>|Closure(): array<string, mixed>  $colors  Each a Color or a hex value, checked by getColorVariables().
+     * @param  array<string, mixed>|Closure(): array<string, mixed>  $colors  Each a Color or a hex value, checked by getThemeVariables().
      */
     public function colors(array|Closure $colors): self
     {
         $this->colors = $colors;
 
         if (is_array($colors)) {
-            $this->getColorVariables();
+            $this->getThemeVariables();
         }
 
         return $this;
     }
 
     /**
-     * What the colors become on <html>. They end up in a style attribute, which is
-     * why nothing but a color is accepted, however they arrived.
+     * What the theme becomes on <html>. It ends up in a style attribute, which is
+     * why nothing but a color is accepted, however it arrived.
      *
      * @return array<string, string>
      */
-    public function getColorVariables(): array
+    public function getThemeVariables(): array
     {
-        $variables = [];
+        $variables = ['--xq-panel-content-width' => self::CONTENT_WIDTHS[$this->maxContentWidth]];
 
         $colors = $this->colors instanceof Closure ? ($this->colors)() : $this->colors;
 
@@ -250,6 +280,137 @@ final class Panel
     public function getFont(): string
     {
         return $this->font;
+    }
+
+    /**
+     * An image in place of the brand name. Use a closure for asset(), as a panel
+     * is declared before there's a request to build the URL from.
+     */
+    public function brandLogo(string|Closure|null $url): self
+    {
+        $this->brandLogo = $url;
+
+        return $this;
+    }
+
+    public function darkModeBrandLogo(string|Closure|null $url): self
+    {
+        $this->darkModeBrandLogo = $url;
+
+        return $this;
+    }
+
+    /**
+     * A CSS length, as in '2rem'.
+     */
+    public function brandLogoHeight(string $height): self
+    {
+        if (preg_match('/^\d+(\.\d+)?(rem|px)$/', $height) !== 1) {
+            throw new PanelDefinitionException("[{$height}] is not a height. Use rem or px, as in '2rem'.");
+        }
+
+        $this->brandLogoHeight = $height;
+
+        return $this;
+    }
+
+    public function favicon(string|Closure|null $url): self
+    {
+        $this->favicon = $url;
+
+        return $this;
+    }
+
+    public function getFavicon(): ?string
+    {
+        return SafeUrl::filter($this->favicon instanceof Closure ? ($this->favicon)() : $this->favicon);
+    }
+
+    /**
+     * How wide a page's content gets: a Tailwind size from sm to 7xl, or full.
+     */
+    public function maxContentWidth(string $width): self
+    {
+        if (! isset(self::CONTENT_WIDTHS[$width])) {
+            throw new PanelDefinitionException("[{$width}] is not a content width. Use sm to 7xl, or full.");
+        }
+
+        $this->maxContentWidth = $width;
+
+        return $this;
+    }
+
+    /**
+     * Turn the dark theme off, or with $isForced, make it the only theme.
+     */
+    public function darkMode(bool $condition = true, bool $isForced = false): self
+    {
+        $this->hasDarkMode = $condition;
+        $this->isDarkModeForced = $condition && $isForced;
+
+        return $this;
+    }
+
+    /**
+     * The theme until someone chooses: light, dark or system.
+     */
+    public function defaultThemeMode(string $mode): self
+    {
+        if (! in_array($mode, ['light', 'dark', 'system'], true)) {
+            throw new PanelDefinitionException("[{$mode}] is not a theme. Use light, dark or system.");
+        }
+
+        $this->defaultThemeMode = $mode;
+
+        return $this;
+    }
+
+    public function getDefaultThemeMode(): string
+    {
+        return $this->defaultThemeMode;
+    }
+
+    /**
+     * The only theme this panel allows, or null to let people choose.
+     */
+    public function getForcedThemeMode(): ?string
+    {
+        return match (true) {
+            ! $this->hasDarkMode => 'light',
+            $this->isDarkModeForced => 'dark',
+            default => null,
+        };
+    }
+
+    public function globalSearch(bool $condition = true): self
+    {
+        $this->hasGlobalSearch = $condition;
+
+        return $this;
+    }
+
+    public function hasGlobalSearch(): bool
+    {
+        return $this->hasGlobalSearch;
+    }
+
+    public function breadcrumbs(bool $condition = true): self
+    {
+        $this->hasBreadcrumbs = $condition;
+
+        return $this;
+    }
+
+    /**
+     * More links in the user menu. Use a closure for a route's URL.
+     *
+     * @param  array<int, NavigationItem>  $items
+     */
+    public function userMenuItems(array $items): self
+    {
+        $this->userMenuItems = [...$this->userMenuItems, ...$items];
+
+        return $this;
     }
 
     /**
@@ -741,13 +902,11 @@ final class Panel
      */
     public function getNavigation(): array
     {
+        $members = $this->getNavigationMembers();
+
         /** @var Collection<string, Collection<int, NavigationItem>> $groups */
-        $groups = collect($this->pages)
-            ->filter(fn (string $page): bool => $page::shouldRegisterNavigation() && $page::canAccess())
-            ->map(fn (string $page): NavigationItem => $page::getNavigationItem($this))
-            ->concat(collect($this->getResources())
-                ->filter(fn (string $resource): bool => $resource::can('viewAny'))
-                ->map(fn (string $resource): NavigationItem => $resource::getNavigationItem($this)))
+        $groups = collect($members[''] ?? [])
+            ->concat(collect($members)->except('')->map(fn (array $items, string $cluster): NavigationItem => $cluster::getNavigationItem($items))->values())
             ->concat($this->navigationItems)
             ->sortBy(fn (NavigationItem $item): int => $item->getSort())
             ->groupBy(fn (NavigationItem $item): string => (string) $item->getGroup());
@@ -763,6 +922,39 @@ final class Panel
                 'items' => $items->map(fn (NavigationItem $item): array => $item->toArray())->values()->all(),
             ])
             ->values()
+            ->all();
+    }
+
+    /**
+     * The tabs between a cluster's members.
+     *
+     * @param  class-string<Cluster>  $cluster
+     * @return array<int, array<string, mixed>>
+     */
+    public function getClusterNavigation(string $cluster): array
+    {
+        return array_map(fn (NavigationItem $item): array => [...$item->toArray(), 'key' => $item->getLabel()], $this->getNavigationMembers()[$cluster] ?? []);
+    }
+
+    /**
+     * What the viewer can reach, by cluster, with '' for everything else.
+     *
+     * @return array<string, array<int, NavigationItem>>
+     */
+    private function getNavigationMembers(): array
+    {
+        $pages = collect($this->pages)
+            ->filter(fn (string $page): bool => $page::shouldRegisterNavigation() && $page::canAccess());
+        $resources = collect($this->getResources())
+            ->filter(fn (string $resource): bool => $resource::can('viewAny'));
+
+        return $pages->concat($resources)
+            ->groupBy(fn (string $member): string => (string) $member::getCluster())
+            ->map(fn (Collection $members): array => $members
+                ->map(fn (string $member): NavigationItem => $member::getNavigationItem($this))
+                ->sortBy(fn (NavigationItem $item): int => $item->getSort())
+                ->values()
+                ->all())
             ->all();
     }
 
@@ -813,14 +1005,27 @@ final class Panel
                     'active' => $option->is($tenant),
                 ])->values()->all(),
             ] : null,
-            'brand' => ['name' => $this->getBrandName()],
-            'theme' => ['colors' => (object) $this->getColorVariables(), 'font' => $this->font],
+            'brand' => [
+                'name' => $this->getBrandName(),
+                'logo' => SafeUrl::filter($this->brandLogo instanceof Closure ? ($this->brandLogo)() : $this->brandLogo),
+                'darkLogo' => SafeUrl::filter($this->darkModeBrandLogo instanceof Closure ? ($this->darkModeBrandLogo)() : $this->darkModeBrandLogo),
+                'logoHeight' => $this->brandLogoHeight,
+            ],
+            'theme' => [
+                'colors' => (object) $this->getThemeVariables(),
+                'font' => $this->font,
+                'default' => $this->defaultThemeMode,
+                'forced' => $this->getForcedThemeMode(),
+            ],
+            'breadcrumbs' => $this->hasBreadcrumbs,
+            'userMenuItems' => $isInside ? array_map(fn (NavigationItem $item): array => $item->toArray(), $this->userMenuItems) : [],
             'topNavigation' => $this->hasTopNavigation,
             'hooks' => (object) $this->getRenderHooks($isInside),
             'messages' => (object) __('xelqun-panels::shell'),
             'navigation' => $isInside ? $this->getNavigation() : [],
             'quickCreate' => $isInside ? $this->getQuickCreateItems() : [],
-            'searchUrl' => $isInside ? route($this->routeName('search')) : null,
+            'searchUrl' => $isInside && $this->hasGlobalSearch ? route($this->routeName('search')) : null,
+            'globalSearch' => $this->hasGlobalSearch,
             'notifications' => $isInside && $this->hasDatabaseNotifications ? [
                 'url' => route($this->routeName('notifications.index')),
                 'pollSeconds' => $this->notificationPollingSeconds,

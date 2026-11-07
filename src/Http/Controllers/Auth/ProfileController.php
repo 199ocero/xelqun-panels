@@ -26,6 +26,7 @@ final class ProfileController extends AuthController
             'breadcrumbs' => [['label' => $title]],
             'hasWidgets' => false,
             'tabs' => [],
+            'subNavigation' => [],
             'headerActions' => $this->canUseTwoFactor($request) ? ProfileActions::make($request->user())->toSchema() : null,
             'notice' => $this->recoveryCodesNotice(),
             'content' => [$form->toArray()],

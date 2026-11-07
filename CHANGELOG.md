@@ -25,13 +25,16 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **Linking existing records.** `AttachAction`, `DetachAction`, `AssociateAction` and `DissociateAction` for relation managers.
 - **Chart widgets.** `ChartWidget` draws line, bar and doughnut charts as SVG, with no chart library.
 - **Widgets on resource lists.** `Resource::getHeaderWidgets()`.
+- **Clusters.** `Cluster` puts pages and resources behind one link, with tabs between them.
+- **One-record resources.** `ManageSingleRecord` edits a single record, with no list.
+- **More panel settings.** `brandLogo()`, `darkModeBrandLogo()`, `brandLogoHeight()`, `favicon()`, `maxContentWidth()`, `darkMode()`, `defaultThemeMode()`, `globalSearch()`, `breadcrumbs()` and `userMenuItems()`.
 - **Infolists.** `Resource::infolist()` with `TextEntry`, `IconEntry` and `ImageEntry`, in place of a disabled form on the view page.
 
 ### Changed
 
 - A signed-out JSON request to a panel gets a 401 instead of a redirect to login.
 - Panels default to Filament's semantic colors: `danger` Red, `gray` Zinc, `info` Blue, `success` Green and `warning` Amber.
-- `colors()` no longer refuses colors other than `primary`, and `getPrimaryColor()` is gone. Use `getColorVariables()`.
+- `colors()` no longer refuses colors other than `primary`, and `getPrimaryColor()` is gone. Use `getThemeVariables()`.
 - With tabs, a resource's table id includes the tab, as in `posts-active-table`.
 
 ### Fixed

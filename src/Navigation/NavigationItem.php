@@ -42,6 +42,21 @@ final class NavigationItem
     /**
      * Use a closure for route(): a panel is declared before routes exist.
      */
+    public function getLabel(): string
+    {
+        return $this->label;
+    }
+
+    public function getUrl(): ?string
+    {
+        return SafeUrl::filter($this->url instanceof Closure ? ($this->url)() : $this->url);
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
     public function url(string|Closure $url): self
     {
         $this->url = $url;
@@ -93,12 +108,11 @@ final class NavigationItem
     public function toArray(): array
     {
         $badge = $this->badge instanceof Closure ? ($this->badge)() : $this->badge;
-        $url = $this->url instanceof Closure ? ($this->url)() : $this->url;
 
         return [
             'label' => $this->label,
             'icon' => $this->icon,
-            'url' => SafeUrl::filter($url),
+            'url' => $this->getUrl(),
             'active' => $this->isActive,
             'badge' => $badge === null ? null : (string) $badge,
         ];

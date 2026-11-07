@@ -65,12 +65,20 @@ export interface PanelSidebarCard {
 export interface PanelShell {
     id: string;
     url: string;
-    brand: { name: string };
+    brand: { name: string; logo: string | null; darkLogo: string | null; logoHeight: string };
     tenant: {
         name: string;
         tenants: Array<{ name: string; url: string; active: boolean }>;
     } | null;
-    theme: { colors: Record<string, string>; font: string };
+    theme: {
+        colors: Record<string, string>;
+        font: string;
+        default: 'light' | 'dark' | 'system';
+        forced: 'light' | 'dark' | null;
+    };
+    breadcrumbs: boolean;
+    userMenuItems: PanelNavigationItem[];
+    globalSearch: boolean;
     topNavigation: boolean;
     hooks: Record<string, Array<{ component: string; props: Record<string, unknown> }>>;
     messages: Record<string, string>;
@@ -155,7 +163,7 @@ export interface PanelTab {
     label: string;
     icon: string | null;
     badge: string | null;
-    url: string;
+    url: string | null;
     active: boolean;
 }
 
@@ -166,6 +174,7 @@ export interface PanelPageData {
     breadcrumbs: PanelBreadcrumb[];
     hasWidgets: boolean;
     tabs: PanelTab[];
+    subNavigation: PanelTab[];
     notice: { title: string; description: string; lines: string[] } | null;
     headerActions: FormSchema | null;
     content: PanelContent[];

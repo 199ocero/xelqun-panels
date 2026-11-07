@@ -138,6 +138,10 @@ public static function recordActions(): array
 
 Each takes the usual action methods, such as `->label()` or `->visible()`. `ReplicateAction` needs `replicate` in the policy.
 
+### One record, no list
+
+For settings and the like, return only `ManageSingleRecord` from `getPages()`. It edits what `getSingularRecord()` returns, which by default is the first record, or a new one until it's saved.
+
 ### Soft deletes
 
 A model with `SoftDeletes` gets this by itself: deleted records leave the list, a filter brings them back, and `RestoreAction`, `ForceDeleteAction` and their bulk versions appear. They need `restore` and `forceDelete` in the policy. If you override `filters()`, add `TrashedFilter::make('trashed')`.
@@ -280,6 +284,12 @@ DatabaseNotification::make()
     ->sendToDatabase($user);
 ```
 
+## Navigation
+
+**Clusters** put several pages and resources behind one sidebar link, with tabs between them. Extend `Cluster`, then set `protected static ?string $cluster = Settings::class;` on each member. The link goes to the first member the user can reach.
+
+**The user menu** takes more links: `userMenuItems([NavigationItem::make('Billing')->url(fn () => route('billing'))])`.
+
 ## Pages
 
 ```php
@@ -363,6 +373,8 @@ $panel->colors(fn (): array => ['primary' => Color::fromName(auth()->user()?->th
 `Color::options()` gives a Select its choices. Anything that isn't a color is refused, because these end up in a style attribute.
 
 `font('DM Sans')` picks a family from Bunny Fonts, loaded after the page so a slow font host can't hold it back. Everything else is a `--xq-*` token, set under `:root[data-xq-panel]`.
+
+`brandLogo()`, `darkModeBrandLogo()`, `brandLogoHeight()` and `favicon()` set the brand. `maxContentWidth('full')` sets how wide pages get. `darkMode(false)` removes the dark theme, `darkMode(isForced: true)` makes it the only one, and `defaultThemeMode('dark')` picks the theme until someone chooses. `globalSearch(false)` and `breadcrumbs(false)` remove those.
 
 `topNavigation()` moves the navigation across the top, in place of the sidebar. Phones keep the drawer.
 

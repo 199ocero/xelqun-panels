@@ -3,18 +3,21 @@
 <html
     lang="{{ str_replace('_', '-', app()->getLocale()) }}"
     data-xq-panel
-    style="--xq-panel-font: '{{ $panel->getFont() }}'; @foreach ($panel->getColorVariables() as $variable => $color) {{ $variable }}: {{ $color }}; @endforeach"
+    style="--xq-panel-font: '{{ $panel->getFont() }}'; @foreach ($panel->getThemeVariables() as $variable => $color) {{ $variable }}: {{ $color }}; @endforeach"
 >
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        @if ($panel->getFavicon())
+            <link rel="icon" href="{{ $panel->getFavicon() }}">
+        @endif
 
         {{-- Before paint, so a dark theme never flashes white. XqPanelLayout keeps this up to date afterwards. --}}
         <script>
             (function () {
                 try {
-                    var saved = localStorage.getItem('xq-panel-theme');
-                    var dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    var theme = @json($panel->getForcedThemeMode()) || localStorage.getItem('xq-panel-theme') || @json($panel->getDefaultThemeMode());
+                    var dark = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                     document.documentElement.classList.toggle('dark', dark);
                 } catch (error) {}
             })();

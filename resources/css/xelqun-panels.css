@@ -104,6 +104,16 @@
     color: oklch(from var(--xq-primary) min(l, 0.52) c h);
 }
 
+/* A logo for each theme, with no flash when the theme changes. */
+[data-xq-logo='dark'],
+:root.dark [data-xq-logo='light'] {
+    display: none;
+}
+
+:root.dark [data-xq-logo='dark'] {
+    display: block;
+}
+
 /* No card shadows or tall corners: hairlines do the work, as buttons do with pills. */
 :root[data-xq-panel] [data-slot='xq-button'] {
     border-radius: 9999px;

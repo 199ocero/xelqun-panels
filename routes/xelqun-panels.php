@@ -17,6 +17,7 @@ use Xelqun\Panels\Http\Middleware\EnterPanel;
 use Xelqun\Panels\Http\Middleware\IdentifyTenant;
 use Xelqun\Panels\Http\Middleware\RequireMultiFactorSetup;
 use Xelqun\Panels\Panels;
+use Xelqun\Panels\Resources\Pages\ManageSingleRecord;
 
 foreach (app(Panels::class)->all() as $panel) {
     Route::prefix($panel->getPath())
@@ -63,8 +64,10 @@ foreach (app(Panels::class)->all() as $panel) {
                 Route::prefix($panel->hasTenancy() ? '{tenant}' : '')
                     ->middleware([...($panel->hasTenancy() ? [IdentifyTenant::class] : []), RequireMultiFactorSetup::class])
                     ->group(function () use ($panel): void {
-                        // The underscore keeps it clear of a page or resource called search.
-                        Route::post('_search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
+                        if ($panel->hasGlobalSearch()) {
+                            // The underscore keeps it clear of a page or resource called search.
+                            Route::post('_search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
+                        }
 
                         if ($panel->hasDatabaseNotifications()) {
                             Route::prefix('_notifications')->middleware('throttle:120,1')->name('notifications.')->group(function (): void {
@@ -90,6 +93,10 @@ foreach (app(Panels::class)->all() as $panel) {
 
                             Route::prefix($slug)->name("resources.{$slug}.")->group(function () use ($pages, $resource): void {
                                 Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
+
+                                if (is_subclass_of($pages['index'], ManageSingleRecord::class) || $pages['index'] === ManageSingleRecord::class) {
+                                    Route::put('', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
+                                }
 
                                 if (isset($pages['create'])) {
                                     Route::get('create', $pages['create'])->name('create')->defaults('resource', $resource);

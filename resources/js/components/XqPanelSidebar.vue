@@ -26,13 +26,30 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
                 :href="panel.url"
                 class="gap-2.5 font-semibold min-w-0 flex flex-1 items-center"
             >
-                <span
-                    aria-hidden="true"
-                    class="text-xs size-6.5 rounded-lg bg-xq-foreground text-xq-background flex shrink-0 items-center justify-center"
-                >
-                    {{ brandInitial }}
-                </span>
-                <span class="truncate">{{ panel.brand.name }}</span>
+                <template v-if="panel.brand.logo">
+                    <img
+                        :src="panel.brand.logo"
+                        :alt="panel.brand.name"
+                        :style="{ height: panel.brand.logoHeight }"
+                        :data-xq-logo="panel.brand.darkLogo ? 'light' : undefined"
+                    />
+                    <img
+                        v-if="panel.brand.darkLogo"
+                        :src="panel.brand.darkLogo"
+                        :alt="panel.brand.name"
+                        :style="{ height: panel.brand.logoHeight }"
+                        data-xq-logo="dark"
+                    />
+                </template>
+                <template v-else>
+                    <span
+                        aria-hidden="true"
+                        class="text-xs size-6.5 rounded-lg bg-xq-foreground text-xq-background flex shrink-0 items-center justify-center"
+                    >
+                        {{ brandInitial }}
+                    </span>
+                    <span class="truncate">{{ panel.brand.name }}</span>
+                </template>
             </Link>
             <button
                 type="button"
@@ -50,7 +67,7 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
         <XqPanelTenantMenu v-if="panel.tenant && !collapsed" :tenant="panel.tenant" />
 
         <div
-            v-if="collapsed || panel.quickCreate.length > 0"
+            v-if="(collapsed && panel.globalSearch) || panel.quickCreate.length > 0"
             :class="['gap-2 flex items-center', collapsed ? 'flex-col' : 'px-1']"
         >
             <XqPanelNewMenu
@@ -59,6 +76,7 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
                 :collapsed="collapsed"
             />
             <button
+                v-if="panel.globalSearch"
                 type="button"
                 :class="iconButtonClass"
                 :aria-label="t('Search')"
@@ -101,6 +119,8 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
             :user="panel.user"
             :logout-url="panel.logoutUrl"
             :profile-url="panel.profileUrl"
+            :items="panel.userMenuItems"
+            :can-change-theme="panel.theme.forced === null"
             :collapsed="collapsed"
         />
     </nav>

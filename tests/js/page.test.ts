@@ -27,6 +27,7 @@ function render(page: Partial<PanelPageData>) {
                 breadcrumbs: [],
                 hasWidgets: false,
                 tabs: [],
+                subNavigation: [],
                 notice: null,
                 headerActions: null,
                 content: [],
@@ -49,6 +50,23 @@ describe('XqPanelPage', () => {
 
         expect(wrapper.find('[data-xq-tabs] [aria-current="page"]').text()).toBe('All');
         expect(wrapper.find('[data-xq-tabs]').text()).toContain('3');
+    });
+
+    it('links between the members of a cluster', () => {
+        const wrapper = render({
+            subNavigation: [
+                {
+                    key: 'Colors',
+                    label: 'Colors',
+                    icon: null,
+                    badge: null,
+                    url: '/c',
+                    active: true,
+                },
+            ],
+        });
+
+        expect(wrapper.find('[data-xq-tabs] [aria-current="page"]').text()).toBe('Colors');
     });
 
     it('shows a notice, such as recovery codes', () => {

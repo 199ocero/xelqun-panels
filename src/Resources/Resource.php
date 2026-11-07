@@ -18,12 +18,15 @@ use Xelqun\Panels\Actions\EditAction;
 use Xelqun\Panels\Actions\ForceDeleteAction;
 use Xelqun\Panels\Actions\RestoreAction;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
+use Xelqun\Panels\Navigation\Cluster;
 use Xelqun\Panels\Navigation\NavigationItem;
+use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\Pages\CreateRecord;
 use Xelqun\Panels\Resources\Pages\EditRecord;
 use Xelqun\Panels\Resources\Pages\ListRecords;
+use Xelqun\Panels\Resources\Pages\ManageSingleRecord;
 use Xelqun\Panels\Resources\Pages\ViewRecord;
 use Xelqun\Panels\Tables\TrashedFilter;
 use Xelqun\Panels\Widgets\PanelWidget;
@@ -60,6 +63,9 @@ abstract class Resource
     protected static ?string $navigationGroup = null;
 
     protected static int $navigationSort = 0;
+
+    /** @var class-string<Cluster>|null */
+    protected static ?string $cluster = null;
 
     /** Turn this off for a model that isn't owned by a tenant. */
     protected static bool $isScopedToTenant = true;
@@ -197,6 +203,24 @@ abstract class Resource
     }
 
     /**
+     * The record a ManageSingleRecord page edits. By default that's the first one,
+     * or a new one until it's saved.
+     */
+    public static function getSingularRecord(): Model
+    {
+        $record = static::getEloquentQuery()->first();
+
+        if ($record !== null) {
+            return $record;
+        }
+
+        $record = new static::$model;
+        static::assignToTenant($record);
+
+        return $record;
+    }
+
+    /**
      * Keep this model to the current tenant, for every query in this request:
      * tables, Select options, widgets, scopedUnique() and your own. It reads the
      * tenant as each query runs, so it does nothing outside a tenant, including
@@ -270,9 +294,10 @@ abstract class Resource
 
     /**
      * Swap a page class here to customize that page, or return only `index` with
-     * ManageRecords to do everything on one page.
+     * ManageRecords to do everything on one page, or ManageSingleRecord for a
+     * resource that's a single record.
      *
-     * @return array{index: class-string<ListRecords>, create?: class-string<CreateRecord>, view?: class-string<ViewRecord>, edit?: class-string<EditRecord>}
+     * @return array{index: class-string<Page>, create?: class-string<CreateRecord>, view?: class-string<ViewRecord>, edit?: class-string<EditRecord>}
      */
     public static function getPages(): array
     {
@@ -498,6 +523,14 @@ abstract class Resource
     public static function getNavigationBadge(): string|int|null
     {
         return null;
+    }
+
+    /**
+     * @return class-string<Cluster>|null
+     */
+    public static function getCluster(): ?string
+    {
+        return static::$cluster;
     }
 
     public static function getNavigationIcon(): ?string

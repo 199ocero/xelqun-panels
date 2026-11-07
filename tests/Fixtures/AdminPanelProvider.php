@@ -4,6 +4,9 @@ namespace Xelqun\Panels\Tests\Fixtures;
 
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\PanelProvider;
+use Xelqun\Panels\Tests\Fixtures\Clusters\Billing;
+use Xelqun\Panels\Tests\Fixtures\Clusters\SiteResource;
+use Xelqun\Panels\Tests\Fixtures\Clusters\Team;
 use Xelqun\Panels\Tests\Fixtures\Pages\Home;
 use Xelqun\Panels\Tests\Fixtures\Pages\PartlyDenied;
 use Xelqun\Panels\Tests\Fixtures\Pages\PostDashboard;
@@ -24,6 +27,6 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel->id('admin')->path('admin')->brandName('Admin')->authGuard('admin')->login()->passwordReset()->registration()->profile()->databaseNotifications()->multiFactorAuthentication()->pages([Home::class, PostDashboard::class, PartlyDenied::class, Reports::class])->resources([PostResource::class, OtherPostResource::class, UnguardedResource::class, NoteResource::class, TaskResource::class])->widgets([PostTiles::class, PendingPosts::class, PostStats::class, HiddenWidget::class, BrokenWidget::class, DeniedList::class]);
+        return $panel->id('admin')->path('admin')->brandName('Admin')->authGuard('admin')->login()->passwordReset()->registration()->profile()->databaseNotifications()->multiFactorAuthentication()->pages([Home::class, PostDashboard::class, PartlyDenied::class, Reports::class, Billing::class, Team::class])->resources([SiteResource::class, PostResource::class, OtherPostResource::class, UnguardedResource::class, NoteResource::class, TaskResource::class])->widgets([PostTiles::class, PendingPosts::class, PostStats::class, HiddenWidget::class, BrokenWidget::class, DeniedList::class]);
     }
 }

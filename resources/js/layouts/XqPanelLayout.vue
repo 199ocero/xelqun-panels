@@ -24,8 +24,10 @@ const COLLAPSED_KEY = 'xq-panel-sidebar-collapsed';
 
 const page = usePage();
 const panel = computed(() => page.props.xelqunPanel as PanelShell);
-const breadcrumbs = computed(
-    () => (page.props.page as PanelPageData | undefined)?.breadcrumbs ?? [],
+const breadcrumbs = computed(() =>
+    panel.value.breadcrumbs
+        ? ((page.props.page as PanelPageData | undefined)?.breadcrumbs ?? [])
+        : [],
 );
 
 const collapsed = ref(false);
@@ -45,7 +47,11 @@ function toggleCollapsed(): void {
 }
 
 function onKeydown(event: KeyboardEvent): void {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    if (
+        panel.value.globalSearch &&
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLowerCase() === 'k'
+    ) {
         event.preventDefault();
         searchOpen.value = true;
     }
@@ -112,6 +118,7 @@ onBeforeUnmount(() => {
         >
             <XqPanelTopbar
                 :breadcrumbs="breadcrumbs"
+                :searchable="panel.globalSearch"
                 @menu="drawerOpen = true"
                 @search="searchOpen = true"
             >
@@ -125,6 +132,8 @@ onBeforeUnmount(() => {
                     :user="panel.user"
                     :logout-url="panel.logoutUrl"
                     :profile-url="panel.profileUrl"
+                    :items="panel.userMenuItems"
+                    :can-change-theme="panel.theme.forced === null"
                     collapsed
                     class="ml-1 lg:flex hidden"
                 />
@@ -136,6 +145,7 @@ onBeforeUnmount(() => {
         </div>
 
         <XqPanelSearch
+            v-if="panel.globalSearch"
             v-model:open="searchOpen"
             :navigation="panel.navigation"
             :search-url="panel.searchUrl"

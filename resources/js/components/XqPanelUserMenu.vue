@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
+import { XqIcon } from '@xelqun/forms';
 import { Check, LogOut, Monitor, Moon, Settings2, Sun, UserRound } from 'lucide-vue-next';
 import {
     DropdownMenuContent,
@@ -14,13 +15,15 @@ import {
 import { computed } from 'vue';
 import { setTheme, useThemeChoice } from '../composables/useTheme';
 import type { ThemeChoice } from '../composables/useTheme';
-import type { PanelShell } from '../types';
+import type { PanelNavigationItem, PanelShell } from '../types';
 import { iconButtonClass, menuClass, menuItemClass } from '../ui/classes';
 
 const props = defineProps<{
     user: NonNullable<PanelShell['user']>;
     logoutUrl: string | null;
     profileUrl: string | null;
+    items?: PanelNavigationItem[];
+    canChangeTheme?: boolean;
     collapsed?: boolean;
 }>();
 const choice = useThemeChoice();
@@ -58,25 +61,44 @@ const initials = computed(() =>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
                 <DropdownMenuContent :class="menuClass" side="top" align="end" :side-offset="6">
-                    <DropdownMenuLabel class="px-2 py-1.5 text-xs text-xq-muted-foreground">
-                        {{ t('Theme') }}
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem
-                        v-for="theme in themes"
-                        :key="theme.value"
-                        :class="menuItemClass"
-                        @select="setTheme(theme.value)"
-                    >
-                        <component :is="theme.icon" class="size-4" aria-hidden="true" />
-                        {{ t(theme.label) }}
-                        <Check
-                            v-if="choice === theme.value"
-                            class="size-4 ml-auto"
-                            aria-hidden="true"
-                        />
-                    </DropdownMenuItem>
+                    <template v-if="canChangeTheme !== false">
+                        <DropdownMenuLabel class="px-2 py-1.5 text-xs text-xq-muted-foreground">
+                            {{ t('Theme') }}
+                        </DropdownMenuLabel>
+                        <DropdownMenuItem
+                            v-for="theme in themes"
+                            :key="theme.value"
+                            :class="menuItemClass"
+                            @select="setTheme(theme.value)"
+                        >
+                            <component :is="theme.icon" class="size-4" aria-hidden="true" />
+                            {{ t(theme.label) }}
+                            <Check
+                                v-if="choice === theme.value"
+                                class="size-4 ml-auto"
+                                aria-hidden="true"
+                            />
+                        </DropdownMenuItem>
+                    </template>
                     <template v-if="logoutUrl">
-                        <DropdownMenuSeparator class="my-1 bg-xq-border h-px" />
+                        <DropdownMenuSeparator
+                            v-if="canChangeTheme !== false"
+                            class="my-1 bg-xq-border h-px"
+                        />
+                        <DropdownMenuItem
+                            v-for="item in items"
+                            :key="item.label"
+                            :class="menuItemClass"
+                            @select="item.url && router.visit(item.url)"
+                        >
+                            <XqIcon
+                                v-if="item.icon"
+                                :name="item.icon"
+                                class="size-4"
+                                aria-hidden="true"
+                            />
+                            {{ item.label }}
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                             v-if="profileUrl"
                             :class="menuItemClass"

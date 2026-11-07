@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Deferred, Head, Link } from '@inertiajs/vue3';
-import { XqActions, XqForm, XqIcon, cn } from '@xelqun/forms';
+import { Deferred, Head } from '@inertiajs/vue3';
+import { XqActions, XqForm } from '@xelqun/forms';
 import { XqTable } from '@xelqun/tables';
-import { t } from '../composables/useMessages';
 import XqPanelHook from '../components/XqPanelHook.vue';
+import XqPanelTabs from '../components/XqPanelTabs.vue';
 import XqPanelWidgets from '../components/widgets/XqPanelWidgets.vue';
 import XqPanelLayout from '../layouts/XqPanelLayout.vue';
 import type { PanelPageData, PanelWidget } from '../types';
@@ -13,9 +13,13 @@ defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
 </script>
 
 <template>
-    <div class="gap-6 px-4 py-6 sm:px-8 sm:py-8 max-w-7xl mx-auto grid" data-xq-page>
+    <div
+        class="gap-6 px-4 py-6 sm:px-8 sm:py-8 mx-auto grid max-w-(--xq-panel-content-width,80rem)"
+        data-xq-page
+    >
         <Head :title="page.title" />
         <XqPanelHook name="content.start" />
+        <XqPanelTabs v-if="page.subNavigation.length > 0" :tabs="page.subNavigation" />
         <header class="gap-4 flex flex-wrap items-start justify-between">
             <div class="min-w-0">
                 <p v-if="page.eyebrow" class="text-sm text-xq-muted-foreground">
@@ -39,36 +43,7 @@ defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
                 <li v-for="line in page.notice.lines" :key="line">{{ line }}</li>
             </ul>
         </section>
-        <nav
-            v-if="page.tabs.length > 0"
-            :aria-label="t('Views')"
-            class="gap-1 border-xq-border -mt-2 flex overflow-x-auto border-b"
-            data-xq-tabs
-        >
-            <Link
-                v-for="tab in page.tabs"
-                :key="tab.key"
-                :href="tab.url"
-                :aria-current="tab.active ? 'page' : undefined"
-                :class="
-                    cn(
-                        'gap-1.5 px-3 py-2 text-sm font-medium flex shrink-0 items-center border-b-2 whitespace-nowrap',
-                        tab.active
-                            ? 'border-xq-primary text-xq-foreground'
-                            : 'text-xq-muted-foreground hover:text-xq-foreground border-transparent',
-                    )
-                "
-            >
-                <XqIcon v-if="tab.icon" :name="tab.icon" class="size-4" aria-hidden="true" />
-                {{ tab.label }}
-                <span
-                    v-if="tab.badge"
-                    class="px-1.5 text-xs bg-xq-muted text-xq-muted-foreground rounded-full"
-                >
-                    {{ tab.badge }}
-                </span>
-            </Link>
-        </nav>
+        <XqPanelTabs v-if="page.tabs.length > 0" :tabs="page.tabs" />
         <Deferred v-if="page.hasWidgets" data="widgets">
             <template #fallback>
                 <div class="gap-4 sm:grid-cols-2 lg:grid-cols-4 grid" data-xq-widgets-loading>

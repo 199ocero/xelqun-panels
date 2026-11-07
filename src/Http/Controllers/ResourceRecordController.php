@@ -22,13 +22,15 @@ final class ResourceRecordController
 
     public function update(Request $request): RedirectResponse
     {
-        return app($this->pages($request)['edit'])->update($request);
+        $pages = $this->pages($request);
+
+        return app($pages['edit'] ?? $pages['index'])->update($request);
     }
 
     /**
      * From the route by name, because a controller's arguments arrive by position.
      *
-     * @return array{index: string, create: class-string<CreateRecord>, view: string, edit: class-string<EditRecord>}
+     * @return array{index: string, create?: class-string<CreateRecord>, view?: string, edit?: class-string<EditRecord>}
      */
     private function pages(Request $request): array
     {

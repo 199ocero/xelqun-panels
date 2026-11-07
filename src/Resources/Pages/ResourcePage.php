@@ -5,6 +5,7 @@ namespace Xelqun\Panels\Resources\Pages;
 use Illuminate\Database\Eloquent\Model;
 use Inertia\Response;
 use Xelqun\Panels\Pages\Page;
+use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\Resource;
 
@@ -69,6 +70,13 @@ abstract class ResourcePage extends Page
         $key = $route->parameter('record');
 
         $this->record = $key === null ? null : $this->resource::findRecord($key);
+    }
+
+    public function getSubNavigation(): array
+    {
+        $cluster = $this->resource::getCluster();
+
+        return $cluster === null ? [] : app(Panels::class)->current()->getClusterNavigation($cluster);
     }
 
     /**

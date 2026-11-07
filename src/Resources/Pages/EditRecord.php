@@ -60,6 +60,6 @@ class EditRecord extends ResourcePage
             ->success()
             ->send();
 
-        return redirect()->to($this->resource::getUrl('edit', ['record' => $this->record]));
+        return redirect()->to($this->resource::getRecordUrl($this->record) ?? $this->resource::getUrl());
     }
 }

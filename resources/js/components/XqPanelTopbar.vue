@@ -6,7 +6,7 @@ import type { PanelBreadcrumb } from '../types';
 import { iconButtonClass } from '../ui/classes';
 import XqPanelHook from './XqPanelHook.vue';
 
-defineProps<{ breadcrumbs: PanelBreadcrumb[] }>();
+defineProps<{ breadcrumbs: PanelBreadcrumb[]; searchable?: boolean }>();
 defineEmits<{ menu: []; search: [] }>();
 
 const shortcut =
@@ -56,6 +56,7 @@ const shortcut =
         </div>
 
         <button
+            v-if="searchable"
             type="button"
             class="gap-2 px-3 text-sm h-9 w-72 bg-xq-muted text-xq-muted-foreground hover:bg-xq-accent focus-visible:ring-xq-ring md:flex hidden cursor-pointer items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none"
             data-xq-search-trigger
@@ -67,6 +68,7 @@ const shortcut =
         </button>
         <div class="flex items-center justify-end">
             <button
+                v-if="searchable"
                 type="button"
                 :class="[iconButtonClass, 'md:hidden']"
                 :aria-label="t('Search')"

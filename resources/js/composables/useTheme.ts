@@ -6,22 +6,27 @@ const STORAGE_KEY = 'xq-panel-theme';
 
 const choice = ref<ThemeChoice>('system');
 
+let defaultChoice: ThemeChoice = 'system';
+let forcedChoice: ThemeChoice | null = null;
+let isSynced = false;
+
 function read(): ThemeChoice {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
 
-        return saved === 'light' || saved === 'dark' ? saved : 'system';
+        return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : defaultChoice;
     } catch {
-        return 'system';
+        return defaultChoice;
     }
 }
 
 function apply(): void {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = forcedChoice ?? choice.value;
 
     document.documentElement.classList.toggle(
         'dark',
-        choice.value === 'dark' || (choice.value === 'system' && prefersDark),
+        theme === 'dark' || (theme === 'system' && prefersDark),
     );
 }
 
@@ -29,7 +34,7 @@ export function setTheme(next: ThemeChoice): void {
     choice.value = next;
 
     try {
-        if (next === 'system') {
+        if (next === defaultChoice) {
             localStorage.removeItem(STORAGE_KEY);
         } else {
             localStorage.setItem(STORAGE_KEY, next);
@@ -39,6 +44,17 @@ export function setTheme(next: ThemeChoice): void {
     }
 
     apply();
+}
+
+/** What the panel allows. A visit to another panel can change it with the layout still mounted. */
+export function configureTheme(fallback: ThemeChoice, forced: ThemeChoice | null): void {
+    defaultChoice = fallback;
+    forcedChoice = forced;
+
+    if (isSynced) {
+        choice.value = read();
+        apply();
+    }
 }
 
 /** The viewer's choice. The root view applies it before paint on a full page load. */
@@ -51,6 +67,7 @@ export function useThemeSync(): void {
     let system: MediaQueryList | undefined;
 
     onMounted(() => {
+        isSynced = true;
         choice.value = read();
         apply();
 
@@ -58,5 +75,8 @@ export function useThemeSync(): void {
         system.addEventListener('change', apply);
     });
 
-    onBeforeUnmount(() => system?.removeEventListener('change', apply));
+    onBeforeUnmount(() => {
+        isSynced = false;
+        system?.removeEventListener('change', apply);
+    });
 }
