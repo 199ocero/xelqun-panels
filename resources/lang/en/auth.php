@@ -10,15 +10,18 @@ return [
     'current_password' => 'Current password',
     'remember' => 'Remember me',
 
+    'quote' => 'Good tools get out of the way, and the work is all that\'s left.',
+
     'sign_out' => 'Sign out',
     'back_to_login' => 'Back to sign in',
 
     'login' => [
-        'heading' => 'Sign in',
+        'heading' => 'Sign in to :brand',
         'description' => 'Enter your details to continue.',
+        'no_account' => 'Don\'t have an account?',
         'submit' => 'Sign in',
         'forgot' => 'Forgot your password?',
-        'register' => 'Create an account',
+        'register' => 'Sign up',
     ],
 
     'forgot' => [
@@ -40,6 +43,7 @@ return [
         'description' => 'It only takes a minute.',
         'submit' => 'Create the account',
         'have_account' => 'Already have an account?',
+        'sign_in' => 'Sign in',
         'done' => 'Your account is created.',
     ],
 

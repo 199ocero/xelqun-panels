@@ -15,6 +15,8 @@ class MultiFactorChallengeForm extends Form
         return [
             TextInput::make('code')
                 ->label(__('xelqun-panels::auth.mfa.code'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.mfa.code'))
                 ->required()
                 ->maxLength(32)
                 ->autocomplete('one-time-code')

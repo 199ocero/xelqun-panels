@@ -21,12 +21,16 @@ class RegisterForm extends Form
         return [
             TextInput::make('name')
                 ->label(__('xelqun-panels::auth.name'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.name'))
                 ->required()
                 ->maxLength(255)
                 ->autocomplete('name')
                 ->autofocus(),
             TextInput::make('email')
                 ->label(__('xelqun-panels::auth.email'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.email'))
                 ->email()
                 ->required()
                 ->maxLength(255)
@@ -34,6 +38,8 @@ class RegisterForm extends Form
                 ->rules([Rule::unique((string) ($this->context['table'] ?? 'users'), 'email')]),
             TextInput::make('password')
                 ->label(__('xelqun-panels::auth.password'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.password'))
                 ->password()
                 ->revealable()
                 ->required()
@@ -42,6 +48,8 @@ class RegisterForm extends Form
                 ->dehydrateStateUsing(fn (string $state): string => Hash::make($state)),
             TextInput::make('password_confirmation')
                 ->label(__('xelqun-panels::auth.confirm_password'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.confirm_password'))
                 ->password()
                 ->required()
                 ->autocomplete('new-password')

@@ -4,6 +4,10 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 
 ## Unreleased
 
+### Changed
+
+- **New sign-in screens.** Login, registration, password reset, email verification, two-factor and new tenant pages are two columns: the form on the page itself, with filled fields and a full-width button, beside a moving gradient in the panel's primary color, with a large quote on it (`auth.quote` in the translations) and a light and dark switch in the corner. The built-in forms use placeholders in place of visible labels. The login heading now names the panel, and its sign up link moved under the heading.
+
 ### Added
 
 - **Global search finds records.** ⌘K searches each resource through `getEloquentQuery()` and its policy. Choose the columns with `getGloballySearchableAttributes()` and what shows under a result with `getGlobalSearchResultDetails()`.

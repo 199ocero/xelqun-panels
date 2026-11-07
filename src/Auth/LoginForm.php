@@ -18,12 +18,16 @@ class LoginForm extends Form
         return [
             TextInput::make('email')
                 ->label(__('xelqun-panels::auth.email'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.email'))
                 ->email()
                 ->required()
                 ->autocomplete('username')
                 ->autofocus(),
             TextInput::make('password')
                 ->label(__('xelqun-panels::auth.password'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.password'))
                 ->password()
                 ->revealable()
                 ->required()

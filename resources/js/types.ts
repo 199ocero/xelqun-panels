@@ -154,10 +154,12 @@ export type PanelContent =
 export interface PanelAuthPageData {
     title: string;
     description: string | null;
+    descriptionLink: { label: string; url: string } | null;
     form: FormSchema;
     action: string;
     submitLabel: string;
     links: Array<{ label: string; url: string; method: 'get' | 'post' }>;
+    quote: string;
 }
 
 export interface PanelBreadcrumb {

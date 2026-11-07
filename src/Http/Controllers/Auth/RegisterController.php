@@ -27,11 +27,12 @@ final class RegisterController extends AuthController
 
         return $this->page(
             __('xelqun-panels::auth.register.heading'),
-            __('xelqun-panels::auth.register.description'),
+            __($panel->getLoginUrl() === null ? 'xelqun-panels::auth.register.description' : 'xelqun-panels::auth.register.have_account'),
             $this->form(),
             route($panel->routeName('auth.register.store')),
             __('xelqun-panels::auth.register.submit'),
-            array_filter([$panel->getLoginUrl() === null ? null : $this->link(__('xelqun-panels::auth.register.have_account'), $panel->getLoginUrl())]),
+            [],
+            $panel->getLoginUrl() === null ? null : $this->link(__('xelqun-panels::auth.register.sign_in'), $panel->getLoginUrl()),
         );
     }
 

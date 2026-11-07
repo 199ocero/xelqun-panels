@@ -15,6 +15,8 @@ class RequestPasswordResetForm extends Form
         return [
             TextInput::make('email')
                 ->label(__('xelqun-panels::auth.email'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.email'))
                 ->email()
                 ->required()
                 ->autocomplete('username')

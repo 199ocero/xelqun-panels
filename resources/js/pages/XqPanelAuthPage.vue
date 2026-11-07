@@ -10,15 +10,19 @@ defineProps<{ page: PanelAuthPageData }>();
 </script>
 
 <template>
-    <div
-        class="max-w-sm gap-6 p-6 sm:p-8 border-xq-border bg-xq-card rounded-xq-xl animate-xq-dialog-in grid w-full border"
-        data-xq-auth-card
-    >
+    <div class="gap-8 animate-xq-dialog-in grid w-full">
         <Head :title="page.title" />
         <header>
-            <h1 class="text-xl font-semibold tracking-tight">{{ page.title }}</h1>
-            <p v-if="page.description" class="mt-1 text-sm text-xq-muted-foreground">
+            <h1 class="text-3xl font-bold tracking-tight text-balance">{{ page.title }}</h1>
+            <p v-if="page.description" class="mt-2 text-sm text-xq-muted-foreground">
                 {{ page.description }}
+                <Link
+                    v-if="page.descriptionLink"
+                    :href="page.descriptionLink.url"
+                    class="text-xq-primary hover:underline"
+                >
+                    {{ page.descriptionLink.label }}
+                </Link>
             </p>
         </header>
         <XqPanelHook name="auth-form.before" />

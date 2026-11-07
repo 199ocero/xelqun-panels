@@ -29,16 +29,18 @@ final class LoginController extends AuthController
             return redirect()->to($panel->getUrl());
         }
 
+        $canRegister = $panel->getRegistrationForm() !== null;
+
         return $this->page(
-            __('xelqun-panels::auth.login.heading'),
-            __('xelqun-panels::auth.login.description'),
+            __('xelqun-panels::auth.login.heading', ['brand' => $panel->getBrandName()]),
+            __($canRegister ? 'xelqun-panels::auth.login.no_account' : 'xelqun-panels::auth.login.description'),
             $this->form(),
             route($panel->routeName('auth.login.store')),
             __('xelqun-panels::auth.login.submit'),
             [
                 $this->link(__('xelqun-panels::auth.login.forgot'), $panel->getPasswordResetRequestForm() === null ? null : route($panel->routeName('auth.password.request'))),
-                $this->link(__('xelqun-panels::auth.login.register'), $panel->getRegistrationForm() === null ? null : route($panel->routeName('auth.register'))),
             ],
+            $canRegister ? $this->link(__('xelqun-panels::auth.login.register'), route($panel->routeName('auth.register'))) : null,
         );
     }
 

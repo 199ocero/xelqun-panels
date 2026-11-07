@@ -118,7 +118,7 @@
     color: #ffffff;
 }
 
-/* A logo for each theme, with no flash when the theme changes. */
+/* A logo or icon for each theme, with no flash when the theme changes. */
 [data-xq-logo='dark'],
 :root.dark [data-xq-logo='light'] {
     display: none;
@@ -135,6 +135,100 @@
 
 :root[data-xq-panel] [data-xq-table-scroll] {
     background: var(--xq-card);
+}
+
+/* The sign-in screens have no card, so controls are filled on the shell. Tokens carry it to every field type. */
+[data-xq-panel-auth] {
+    --xq-card: var(--xq-nav-hover);
+    --xq-input: transparent;
+}
+
+[data-xq-panel-auth] [data-xq-path] .h-9 {
+    --tw-shadow: 0 0 #0000;
+    height: 3.25rem;
+    font-size: 1rem;
+}
+
+[data-xq-panel-auth] [data-slot='xq-button'][type='submit'] {
+    width: 100%;
+    height: 3rem;
+    border-radius: var(--radius-xq-md);
+    font-size: 1rem;
+}
+
+/* Soft shapes drifting in the panel's own color. Only transforms move, so it stays cheap to draw. */
+[data-xq-auth-gradient] {
+    background: oklch(from var(--xq-panel-primary, #0071e3) 0.32 min(c, 0.12) h);
+}
+
+[data-xq-auth-gradient] > span {
+    position: absolute;
+    width: 100%;
+    aspect-ratio: 1;
+    filter: blur(48px);
+    animation: xq-auth-drift 24s ease-in-out infinite alternate;
+    will-change: transform;
+}
+
+[data-xq-auth-gradient] > span:nth-child(1) {
+    top: -30%;
+    left: -30%;
+    background: radial-gradient(
+        closest-side,
+        oklch(from var(--xq-panel-primary, #0071e3) 0.65 c h),
+        transparent
+    );
+}
+
+[data-xq-auth-gradient] > span:nth-child(2) {
+    right: -35%;
+    bottom: -30%;
+    background: radial-gradient(
+        closest-side,
+        oklch(from var(--xq-panel-primary, #0071e3) 0.75 c calc(h - 30)),
+        transparent
+    );
+    animation-duration: 31s;
+    animation-direction: alternate-reverse;
+}
+
+[data-xq-auth-gradient] > span:nth-child(3) {
+    top: 20%;
+    left: 5%;
+    background: radial-gradient(
+        closest-side,
+        oklch(from var(--xq-panel-primary, #0071e3) 0.55 c calc(h + 25)),
+        transparent
+    );
+    animation-duration: 38s;
+}
+
+/* A bright shape can drift behind the quote, so the corner it sits in stays dark. */
+[data-xq-auth-gradient]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgb(0 0 0 / 50%), transparent 65%);
+}
+
+@keyframes xq-auth-drift {
+    50% {
+        transform: translate(28%, 18%) scale(1.25);
+    }
+
+    100% {
+        transform: translate(-12%, 34%) scale(0.9);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-xq-auth-gradient] > span {
+        animation: none;
+    }
+}
+
+:root[data-xq-motion-off] [data-xq-auth-gradient] > span {
+    animation: none;
 }
 
 /*

@@ -76,7 +76,8 @@ describe('the login page', function () {
     it('links to the other flows the panel turns on', function () {
         $this->get('/admin/login')->assertInertia(fn (Assert $page) => $page
             ->where('page.links.0.url', route('xelqun-panels.admin.auth.password.request'))
-            ->where('page.links.1.url', route('xelqun-panels.admin.auth.register')));
+            ->where('page.description', __('xelqun-panels::auth.login.no_account'))
+            ->where('page.descriptionLink.url', route('xelqun-panels.admin.auth.register')));
     });
 
     it('does not exist on a panel without login()', function () {

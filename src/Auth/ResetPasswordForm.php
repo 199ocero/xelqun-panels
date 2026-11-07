@@ -16,12 +16,16 @@ class ResetPasswordForm extends Form
         return [
             TextInput::make('email')
                 ->label(__('xelqun-panels::auth.email'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.email'))
                 ->email()
                 ->required()
                 ->autocomplete('username')
                 ->default($this->context['email'] ?? null),
             TextInput::make('password')
                 ->label(__('xelqun-panels::auth.new_password'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.new_password'))
                 ->password()
                 ->revealable()
                 ->required()
@@ -30,6 +34,8 @@ class ResetPasswordForm extends Form
                 ->rules([Password::defaults()]),
             TextInput::make('password_confirmation')
                 ->label(__('xelqun-panels::auth.confirm_password'))
+                ->hiddenLabel()
+                ->placeholder(__('xelqun-panels::auth.confirm_password'))
                 ->password()
                 ->required()
                 ->autocomplete('new-password')

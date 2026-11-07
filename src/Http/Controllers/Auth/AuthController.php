@@ -55,17 +55,20 @@ abstract class AuthController
     /**
      * Always a new form, so nothing the browser typed comes back in the schema.
      *
-     * @param  array<int, array{label: string, url: string|null, method: string}>  $links
+     * @param  array<int, array{label: string, url: string|null, method: string}>  $links  Under the form.
+     * @param  array{label: string, url: string|null, method: string}|null  $descriptionLink  Right after the description.
      */
-    protected function page(string $title, ?string $description, Form $form, string $action, string $submitLabel, array $links = []): Response
+    protected function page(string $title, ?string $description, Form $form, string $action, string $submitLabel, array $links = [], ?array $descriptionLink = null): Response
     {
         return Inertia::render('xelqun/PanelAuth', ['page' => [
             'title' => $title,
             'description' => $description,
+            'descriptionLink' => $descriptionLink,
             'form' => $form->toSchema(),
             'action' => $action,
             'submitLabel' => $submitLabel,
             'links' => array_values(array_filter($links, fn (array $link): bool => $link['url'] !== null)),
+            'quote' => __('xelqun-panels::auth.quote'),
         ]]);
     }
 }
