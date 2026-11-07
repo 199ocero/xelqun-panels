@@ -24,7 +24,10 @@ defineProps<{ tenant: NonNullable<PanelShell['tenant']> }>();
             data-xq-tenant
         >
             <span class="truncate">{{ tenant.name }}</span>
-            <ChevronsUpDown class="size-4 text-xq-muted-foreground shrink-0" aria-hidden="true" />
+            <ChevronsUpDown
+                class="size-4 text-xq-muted-foreground shrink-0 transition-transform duration-(--xq-duration-base) ease-(--xq-ease-spring) group-data-[state=open]:scale-90"
+                aria-hidden="true"
+            />
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
             <DropdownMenuContent

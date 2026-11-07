@@ -66,7 +66,13 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
                 :aria-expanded="!collapsed"
                 @click="$emit('collapse')"
             >
-                <PanelLeft class="size-4" aria-hidden="true" />
+                <PanelLeft
+                    :class="[
+                        'size-4 transition-[rotate] duration-(--xq-duration-slow) ease-(--xq-ease-out)',
+                        collapsed && 'rotate-180',
+                    ]"
+                    aria-hidden="true"
+                />
             </button>
         </div>
 

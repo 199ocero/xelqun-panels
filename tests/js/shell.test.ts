@@ -1,3 +1,4 @@
+import { createXelqunForms } from '@xelqun/forms';
 import type { SchemaNode } from '@xelqun/forms';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -134,6 +135,32 @@ describe('the new button', () => {
 
         expect(wrapper.find('[data-xq-new]').attributes('aria-label')).toBe('New');
         expect(wrapper.text()).toBe('');
+    });
+});
+
+describe('sidebar interactions', () => {
+    it('presses a link, and lifts its icon on hover', () => {
+        const wrapper = mount(XqPanelSidebar, {
+            props: {
+                panel: {
+                    ...shell,
+                    navigation: [{ label: null, items: [item('Home', { icon: 'check' })] }],
+                },
+            },
+            global: { plugins: [createXelqunForms()] },
+        });
+        const link = wrapper.find('[data-xq-nav-item]');
+
+        expect(link.classes()).toContain('active:scale-[0.98]');
+        expect(link.find('svg').classes()).toContain('group-hover:scale-110');
+    });
+
+    it('turns the collapse icon when the sidebar folds', () => {
+        const icon = (collapsed: boolean) =>
+            mount(XqPanelSidebar, { props: { panel: shell, collapsed } }).find('button svg');
+
+        expect(icon(false).classes()).not.toContain('rotate-180');
+        expect(icon(true).classes()).toContain('rotate-180');
     });
 });
 
