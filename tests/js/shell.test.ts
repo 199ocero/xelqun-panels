@@ -136,6 +136,46 @@ describe('the new button', () => {
     });
 });
 
+describe('the active pill', () => {
+    const pill = (wrapper: ReturnType<typeof mount>) => wrapper.find('[data-xq-nav-active]');
+
+    it('shows behind the current page, with no slide on arrival', async () => {
+        const wrapper = mount(XqPanelSidebar, { props: { panel: shell } });
+
+        await nextTick();
+
+        expect(pill(wrapper).attributes('style')).toContain('opacity: 1');
+        expect(pill(wrapper).classes().join(' ')).not.toContain('[transform');
+    });
+
+    it('slides when the page changes', async () => {
+        const wrapper = mount(XqPanelSidebar, { props: { panel: shell } });
+
+        await nextTick();
+        await wrapper.setProps({
+            panel: {
+                ...shell,
+                navigation: [
+                    { label: null, items: [item('Home')] },
+                    { label: 'Catalog', items: [item('Products', { active: true })] },
+                ],
+            },
+        });
+
+        expect(pill(wrapper).classes().join(' ')).toContain('[transform');
+    });
+
+    it("hides on a page that isn't in the sidebar", async () => {
+        const wrapper = mount(XqPanelSidebar, {
+            props: { panel: { ...shell, navigation: [{ label: null, items: [item('Home')] }] } },
+        });
+
+        await nextTick();
+
+        expect(pill(wrapper).attributes('style')).toContain('opacity: 0');
+    });
+});
+
 describe('the gliding highlight', () => {
     const glide = (wrapper: ReturnType<typeof mount>) => wrapper.find('[data-xq-nav-glide]');
 
@@ -770,6 +810,22 @@ describe('the theme', () => {
         mount(Layout);
 
         expect(document.documentElement.classList.contains('dark')).toBe(false);
+    });
+
+    it('crossfades the page where the browser can, and not for reduced motion', () => {
+        const startViewTransition = vi.fn((change: () => void) => change());
+
+        vi.stubGlobal('document', Object.assign(document, { startViewTransition }));
+        setTheme('dark');
+        expect(startViewTransition).toHaveBeenCalledTimes(1);
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+
+        window.matchMedia = vi.fn(() => ({ matches: true })) as unknown as typeof window.matchMedia;
+        setTheme('light');
+        expect(startViewTransition).toHaveBeenCalledTimes(1);
+
+        Reflect.deleteProperty(document, 'startViewTransition');
+        vi.unstubAllGlobals();
     });
 
     it('still switches after leaving the panel and coming back', () => {

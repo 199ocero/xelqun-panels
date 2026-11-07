@@ -28,7 +28,10 @@ defineProps<{ items: PanelQuickCreateItem[]; collapsed?: boolean }>();
             :aria-label="t('New')"
             data-xq-new
         >
-            <Plus class="size-4" aria-hidden="true" />
+            <Plus
+                class="size-4 transition-transform duration-(--xq-duration-slow) ease-(--xq-ease-spring) group-data-[state=open]:rotate-135"
+                aria-hidden="true"
+            />
             <span v-if="!collapsed" aria-hidden="true">{{ t('New') }}</span>
         </DropdownMenuTrigger>
         <DropdownMenuPortal>

@@ -47,7 +47,11 @@ const shortcut =
                         >
                             {{ crumb.label }}
                         </Link>
-                        <span v-else class="font-medium truncate" aria-current="page">
+                        <span
+                            v-else
+                            class="font-medium animate-xq-fade-in truncate"
+                            aria-current="page"
+                        >
                             {{ crumb.label }}
                         </span>
                     </li>
@@ -58,7 +62,7 @@ const shortcut =
         <button
             v-if="searchable"
             type="button"
-            class="gap-2 px-3 text-sm h-9 w-72 bg-xq-muted text-xq-muted-foreground hover:bg-xq-accent focus-visible:ring-xq-ring md:flex hidden cursor-pointer items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            class="gap-2 px-3 text-sm h-9 w-72 bg-xq-muted text-xq-muted-foreground hover:bg-xq-accent focus-visible:ring-xq-ring md:flex hidden cursor-pointer items-center rounded-full transition-[background-color,scale] duration-(--xq-duration-fast) focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98]"
             data-xq-search-trigger
             @click="$emit('search')"
         >

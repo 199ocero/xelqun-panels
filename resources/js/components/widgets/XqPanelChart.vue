@@ -105,6 +105,7 @@ const bars = computed(() => {
             series,
             x: center(index) - group / 2 + series * (barWidth.value + SLICE_GAP),
             y: Math.min(y(value), y(0)),
+            isNegative: value < 0,
             height: Math.abs(y(value) - y(0)),
         })),
     );
@@ -209,7 +210,7 @@ onBeforeUnmount(() => observer?.disconnect());
             aria-hidden="true"
             @mouseleave="hovered = null"
         >
-            <g transform="rotate(-90 120 100)">
+            <g transform="rotate(-90 120 100)" data-xq-chart-ring>
                 <circle
                     v-for="slice in slices"
                     :key="slice.index"
@@ -283,6 +284,10 @@ onBeforeUnmount(() => observer?.disconnect());
                     :height="bar.height"
                     rx="2"
                     :fill="color(bar.series)"
+                    :style="{
+                        '--xq-order': Math.min(bar.index, 12),
+                        transformOrigin: bar.isNegative ? '50% 0' : '50% 100%',
+                    }"
                     data-xq-chart-bar
                 />
             </template>
@@ -305,6 +310,7 @@ onBeforeUnmount(() => observer?.disconnect());
                     stroke-width="2"
                     stroke-linecap="round"
                     stroke-linejoin="round"
+                    path-length="1"
                     data-xq-chart-line
                 />
                 <template v-if="hovered !== null">

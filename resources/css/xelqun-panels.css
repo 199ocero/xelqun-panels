@@ -10,6 +10,11 @@
 @source "../js";
 
 @theme inline {
+    --animate-xq-badge-pop: xq-badge-pop var(--xq-duration-slow) var(--xq-ease-spring);
+    --animate-xq-drawer-in: xq-drawer-in var(--xq-duration-slow) var(--xq-ease-out);
+    --animate-xq-drawer-out: xq-drawer-out var(--xq-duration-base) var(--xq-ease-in) forwards;
+    --animate-xq-digit-in: xq-digit-in var(--xq-duration-slow) var(--xq-ease-spring) both;
+    --animate-xq-skeleton: xq-skeleton 1.4s linear infinite;
     --color-xq-shell: var(--xq-shell);
     --color-xq-nav-hover: var(--xq-nav-hover);
     --color-xq-nav-active: var(--xq-nav-active);
@@ -121,4 +126,139 @@
 
 :root[data-xq-panel] [data-xq-table] table {
     background: var(--xq-card);
+}
+
+/*
+ * A page arrives in a short ripple, top to bottom. It plays on a visit, and not on
+ * a reload of the same page, because Inertia only remounts it for a visit.
+ */
+[data-xq-page] > *,
+[data-xq-widget],
+[data-xq-stats] > article {
+    animation: xq-rise-in var(--xq-duration-slow) var(--xq-ease-out) both;
+    animation-delay: calc(var(--xq-stagger) * var(--xq-order, 0));
+}
+
+[data-xq-page] > :nth-child(2),
+[data-xq-widget]:nth-child(2),
+[data-xq-stats] > article:nth-child(2) {
+    --xq-order: 1;
+}
+
+[data-xq-page] > :nth-child(3),
+[data-xq-widget]:nth-child(3),
+[data-xq-stats] > article:nth-child(3) {
+    --xq-order: 2;
+}
+
+[data-xq-page] > :nth-child(4),
+[data-xq-widget]:nth-child(4),
+[data-xq-stats] > article:nth-child(4) {
+    --xq-order: 3;
+}
+
+[data-xq-page] > :nth-child(n + 5),
+[data-xq-widget]:nth-child(n + 5) {
+    --xq-order: 4;
+}
+
+/* Cards lift a little under the pointer, and only where there's a pointer. */
+@media (hover: hover) {
+    [data-xq-stats] > article,
+    [data-xq-tiles] > * {
+        transition:
+            translate var(--xq-duration-base) var(--xq-ease-out),
+            box-shadow var(--xq-duration-base) var(--xq-ease-out);
+    }
+
+    [data-xq-stats] > article:hover,
+    [data-xq-tiles] > :hover {
+        translate: 0 -2px;
+        box-shadow: 0 6px 20px -12px rgb(0 0 0 / 25%);
+    }
+}
+
+/* Charts draw themselves once, as they arrive. */
+[data-xq-chart-line] {
+    stroke-dasharray: 1;
+    animation: xq-chart-draw calc(var(--xq-duration-slow) * 3) var(--xq-ease-out) both;
+}
+
+[data-xq-chart-bar] {
+    transform-box: fill-box;
+    animation: xq-chart-grow calc(var(--xq-duration-slow) * 2) var(--xq-ease-out) both;
+    animation-delay: calc(var(--xq-stagger) * var(--xq-order, 0));
+}
+
+[data-xq-chart-ring] {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: xq-chart-sweep calc(var(--xq-duration-slow) * 2) var(--xq-ease-out) both;
+}
+
+.xq-skeleton {
+    background: linear-gradient(
+        100deg,
+        var(--xq-muted) 40%,
+        var(--xq-accent) 50%,
+        var(--xq-muted) 60%
+    );
+    background-size: 200% 100%;
+}
+
+@keyframes xq-badge-pop {
+    from {
+        opacity: 0;
+        scale: 0.4;
+    }
+}
+
+@keyframes xq-drawer-in {
+    from {
+        translate: -100% 0;
+    }
+}
+
+@keyframes xq-drawer-out {
+    to {
+        translate: -100% 0;
+    }
+}
+
+@keyframes xq-digit-in {
+    from {
+        opacity: 0;
+        translate: 0 0.4em;
+        filter: blur(2px);
+    }
+}
+
+@keyframes xq-skeleton {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes xq-chart-draw {
+    from {
+        stroke-dashoffset: 1;
+    }
+
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes xq-chart-grow {
+    from {
+        scale: 1 0;
+    }
+}
+
+@keyframes xq-chart-sweep {
+    from {
+        opacity: 0;
+        rotate: -40deg;
+        scale: 0.92;
+    }
 }

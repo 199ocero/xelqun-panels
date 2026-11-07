@@ -43,7 +43,18 @@ export function setTheme(next: ThemeChoice): void {
         // Storage can be blocked. The choice still holds for this visit.
     }
 
-    apply();
+    crossfade(apply);
+}
+
+/** The browser fades the whole page across, where it can. */
+function crossfade(change: () => void): void {
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if ('startViewTransition' in document && !isReduced) {
+        document.startViewTransition(change);
+    } else {
+        change();
+    }
 }
 
 /** What the panel allows. A visit to another panel can change it with the layout still mounted. */

@@ -106,8 +106,9 @@ onBeforeUnmount(() => {
             <Bell class="size-4.5" aria-hidden="true" />
             <span
                 v-if="unread > 0"
+                :key="unread"
                 aria-hidden="true"
-                class="-top-0.5 -right-0.5 min-w-4 px-1 text-xs font-medium bg-xq-primary text-xq-primary-foreground h-4 leading-4 absolute rounded-full"
+                class="-top-0.5 -right-0.5 min-w-4 px-1 text-xs font-medium bg-xq-primary text-xq-primary-foreground h-4 leading-4 absolute animate-xq-badge-pop rounded-full"
             >
                 {{ unread > 9 ? '9+' : unread }}
             </span>
@@ -153,7 +154,7 @@ onBeforeUnmount(() => {
                                 aria-hidden="true"
                                 :class="
                                     cn(
-                                        'mt-1.5 size-2 shrink-0 rounded-full',
+                                        'mt-1.5 size-2 shrink-0 rounded-full transition-colors duration-(--xq-duration-base)',
                                         notification.read ? 'bg-transparent' : 'bg-current',
                                         textToneClasses[notification.status ?? 'primary'],
                                     )

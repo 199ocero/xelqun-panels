@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { createXelqunForms } from '@xelqun/forms';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
+import XqPanelNumber from '../../resources/js/components/widgets/XqPanelNumber.vue';
 import XqPanelChart from '../../resources/js/components/widgets/XqPanelChart.vue';
 import XqPanelListWidget from '../../resources/js/components/widgets/XqPanelListWidget.vue';
 import XqPanelStats from '../../resources/js/components/widgets/XqPanelStats.vue';
@@ -232,6 +233,25 @@ describe('the widget grid', () => {
         await flushPromises();
 
         expect(wrapper.find('[data-hello]').text()).toBe('Hi');
+    });
+});
+
+describe('XqPanelNumber', () => {
+    it('keeps the whole value for a screen reader, and animates each character', () => {
+        const wrapper = mount(XqPanelNumber, { props: { value: '$1,204' } });
+
+        expect(wrapper.attributes('aria-label')).toBe('$1,204');
+        expect(wrapper.text()).toBe('$1,204');
+        expect(wrapper.findAll('[aria-hidden] > span')).toHaveLength(6);
+    });
+
+    it('starts over when the value changes', async () => {
+        const wrapper = mount(XqPanelNumber, { props: { value: '12' } });
+        const before = wrapper.find('[aria-hidden]').element;
+
+        await wrapper.setProps({ value: '13' });
+
+        expect(wrapper.find('[aria-hidden]').element).not.toBe(before);
     });
 });
 

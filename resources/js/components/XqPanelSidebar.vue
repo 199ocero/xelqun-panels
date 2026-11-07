@@ -2,8 +2,8 @@
 import { t } from '../composables/useMessages';
 import { Link } from '@inertiajs/vue3';
 import { PanelLeft, Search } from 'lucide-vue-next';
-import { computed } from 'vue';
-import { useGlidingHover } from '../composables/useGlidingHover';
+import { computed, ref } from 'vue';
+import { useActivePill, useGlidingHover } from '../composables/useGlidingHover';
 import type { PanelShell } from '../types';
 import { iconButtonClass } from '../ui/classes';
 import XqPanelHook from './XqPanelHook.vue';
@@ -16,7 +16,12 @@ import XqPanelUserMenu from './XqPanelUserMenu.vue';
 const props = defineProps<{ panel: PanelShell; collapsed?: boolean }>();
 defineEmits<{ collapse: []; search: [] }>();
 
+const list = ref<HTMLElement>();
 const { glideClass, glideStyle, glideTo, hideGlide } = useGlidingHover();
+const { activeClass, activeStyle } = useActivePill(list, () => [
+    props.panel.navigation,
+    props.collapsed,
+]);
 
 const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase());
 </script>
@@ -90,12 +95,19 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
         </div>
 
         <div
+            ref="list"
             class="gap-5 min-h-0 relative flex flex-1 flex-col overflow-y-auto"
             @mouseover="glideTo"
             @focusin="glideTo"
             @mouseleave="hideGlide"
             @focusout="hideGlide"
         >
+            <span
+                aria-hidden="true"
+                :class="activeClass"
+                :style="activeStyle"
+                data-xq-nav-active
+            ></span>
             <span
                 aria-hidden="true"
                 :class="glideClass"

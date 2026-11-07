@@ -17,9 +17,7 @@ defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
             cn(
                 'gap-2.5 px-2.5 text-sm h-9 rounded-xq-sm relative flex items-center transition-colors',
                 'focus-visible:ring-xq-ring focus-visible:ring-2 focus-visible:outline-none',
-                item.active
-                    ? 'font-medium text-xq-foreground bg-xq-nav-active'
-                    : 'text-xq-foreground/80',
+                item.active ? 'font-medium text-xq-foreground' : 'text-xq-foreground/80',
                 collapsed && 'px-0 justify-center',
             )
         "

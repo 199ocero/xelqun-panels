@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { XqIcon } from '@xelqun/forms';
 import type { PanelStat } from '../../types';
+import XqPanelNumber from './XqPanelNumber.vue';
 
 defineProps<{ stats: PanelStat[] }>();
 
@@ -39,7 +40,10 @@ function points(values: number[]): string {
                 </span>
                 <h3 class="text-sm text-xq-muted-foreground">{{ stat.label }}</h3>
             </div>
-            <p class="text-3xl font-semibold tracking-tight tabular-nums">{{ stat.value }}</p>
+            <XqPanelNumber
+                :value="stat.value"
+                class="text-3xl font-semibold tracking-tight tabular-nums"
+            />
             <p v-if="stat.description" class="text-sm text-xq-muted-foreground">
                 {{ stat.description }}
             </p>

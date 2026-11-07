@@ -62,7 +62,7 @@ const hiddenRelations = computed(() =>
                     <div
                         v-for="placeholder in 4"
                         :key="placeholder"
-                        class="h-36 bg-xq-muted animate-pulse rounded-xq-lg"
+                        class="h-36 xq-skeleton rounded-xq-lg animate-xq-skeleton"
                     ></div>
                 </div>
             </template>

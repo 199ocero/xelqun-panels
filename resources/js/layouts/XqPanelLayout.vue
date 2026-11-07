@@ -83,7 +83,7 @@ onBeforeUnmount(() => {
             v-if="!panel.topNavigation"
             :class="
                 cn(
-                    'lg:block hidden shrink-0 transition-[width] duration-200',
+                    'lg:block hidden shrink-0 transition-[width] duration-(--xq-duration-slow) ease-(--xq-ease-out)',
                     collapsed ? 'w-16' : 'w-70',
                 )
             "
@@ -98,9 +98,11 @@ onBeforeUnmount(() => {
 
         <DialogRoot v-model:open="drawerOpen">
             <DialogPortal>
-                <DialogOverlay class="inset-0 bg-black/40 lg:hidden fixed z-40" />
+                <DialogOverlay
+                    class="inset-0 bg-black/40 lg:hidden data-[state=open]:animate-xq-fade-in data-[state=closed]:animate-xq-fade-out fixed z-40"
+                />
                 <DialogContent
-                    class="inset-y-0 left-0 w-72 lg:hidden fixed z-50 bg-xq-shell outline-none"
+                    class="inset-y-0 left-0 w-72 lg:hidden fixed z-50 bg-xq-shell outline-none data-[state=closed]:animate-xq-drawer-out data-[state=open]:animate-xq-drawer-in"
                 >
                     <DialogTitle class="sr-only">{{ t('Navigation') }}</DialogTitle>
                     <DialogDescription class="sr-only">{{ panel.brand.name }}</DialogDescription>

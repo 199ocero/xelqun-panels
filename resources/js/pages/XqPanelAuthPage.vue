@@ -11,7 +11,7 @@ defineProps<{ page: PanelAuthPageData }>();
 
 <template>
     <div
-        class="max-w-sm gap-6 p-6 sm:p-8 border-xq-border bg-xq-card rounded-xq-xl grid w-full border"
+        class="max-w-sm gap-6 p-6 sm:p-8 border-xq-border bg-xq-card rounded-xq-xl animate-xq-dialog-in grid w-full border"
         data-xq-auth-card
     >
         <Head :title="page.title" />

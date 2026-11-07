@@ -126,9 +126,11 @@ function go(result: PanelSearchResult | undefined): void {
 <template>
     <DialogRoot v-model:open="open">
         <DialogPortal>
-            <DialogOverlay class="inset-0 bg-black/40 fixed z-50" />
+            <DialogOverlay
+                class="inset-0 bg-black/40 data-[state=open]:animate-xq-fade-in data-[state=closed]:animate-xq-fade-out fixed z-50"
+            />
             <DialogContent
-                class="max-w-lg rounded-xq-xl border-xq-border bg-xq-popover text-xq-popover-foreground shadow-xl fixed top-[15vh] left-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 overflow-hidden border outline-none"
+                class="max-w-lg rounded-xq-xl border-xq-border bg-xq-popover text-xq-popover-foreground shadow-xl data-[state=open]:animate-xq-dialog-in data-[state=closed]:animate-xq-dialog-out fixed top-[15vh] left-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 overflow-hidden border outline-none"
                 data-xq-search
             >
                 <DialogTitle class="sr-only">{{ t('Search') }}</DialogTitle>
@@ -155,13 +157,20 @@ function go(result: PanelSearchResult | undefined): void {
                             {{ group.label }}
                         </p>
                         <ul>
-                            <li v-for="result in group.results" :key="result.url">
+                            <li
+                                v-for="result in group.results"
+                                :key="result.url"
+                                class="animate-xq-rise-in"
+                                :style="{
+                                    animationDelay: `calc(var(--xq-stagger) * ${Math.min(results.indexOf(result), 6)})`,
+                                }"
+                            >
                                 <button
                                     type="button"
                                     tabindex="-1"
                                     :class="
                                         cn(
-                                            'gap-2.5 px-2.5 py-2 text-sm rounded-xq-sm flex w-full cursor-pointer items-center text-left',
+                                            'gap-2.5 px-2.5 py-2 text-sm rounded-xq-sm flex w-full cursor-pointer items-center text-left transition-colors duration-(--xq-duration-fast)',
                                             results.indexOf(result) === highlighted &&
                                                 'bg-xq-accent',
                                         )
