@@ -75,11 +75,42 @@ abstract class RelationManager
     public static function configureTable(Table $table): void {}
 
     /**
+     * A nested related resource's page for a row, where it has one.
+     */
+    public static function getRecordUrl(Model $owner, Model $record): ?string
+    {
+        $resource = static::$relatedResource;
+
+        if ($resource === null || ! $resource::isNested()) {
+            return null;
+        }
+
+        $page = match (true) {
+            $resource::hasPage('edit') && $resource::can('update', $record) => 'edit',
+            $resource::hasPage('view') && $resource::can('view', $record) => 'view',
+            default => null,
+        };
+
+        return $page === null ? null : $resource::getUrl($page, ['parentRecord' => $owner, 'record' => $record]);
+    }
+
+    /**
      * @return array<int, Action|ActionGroup>
      */
     public static function headerActions(Model $owner): array
     {
         $label = static::getModelLabel($owner);
+        $nested = static::$relatedResource !== null && static::$relatedResource::isNested() ? static::$relatedResource : null;
+
+        if ($nested !== null) {
+            return [
+                Action::make('create')
+                    ->label(__('xelqun-panels::resources.new', ['label' => $label]))
+                    ->icon('plus')
+                    ->authorize('create')
+                    ->url(fn (): string => $nested::getUrl('create', ['parentRecord' => $owner])),
+            ];
+        }
 
         return [
             Action::make('create')

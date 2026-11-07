@@ -1,15 +1,27 @@
 <script setup lang="ts">
 import { Deferred, Head } from '@inertiajs/vue3';
-import { XqActions, XqForm } from '@xelqun/forms';
+import { XqActions, XqForm, cn } from '@xelqun/forms';
 import { XqTable } from '@xelqun/tables';
 import XqPanelHook from '../components/XqPanelHook.vue';
 import XqPanelTabs from '../components/XqPanelTabs.vue';
+import { computed, ref } from 'vue';
 import XqPanelWidgets from '../components/widgets/XqPanelWidgets.vue';
 import XqPanelLayout from '../layouts/XqPanelLayout.vue';
 import type { PanelPageData, PanelWidget } from '../types';
 
 defineOptions({ layout: XqPanelLayout });
-defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
+const props = defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
+
+/** Relation tables take turns, so a record with several stays one page tall. */
+const relationTables = computed(() =>
+    props.page.content.filter((item) => item.type === 'table' && item.heading),
+);
+const activeRelation = ref(0);
+const hiddenRelations = computed(() =>
+    relationTables.value.length > 1
+        ? relationTables.value.filter((_, index) => index !== activeRelation.value)
+        : [],
+);
 </script>
 
 <template>
@@ -57,8 +69,37 @@ defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
             <XqPanelWidgets v-if="widgets" :widgets="widgets" />
         </Deferred>
         <template v-for="item in page.content" :key="item.schema.id">
-            <section v-if="item.type === 'table' && item.heading" class="gap-3 grid">
-                <h2 class="text-lg font-semibold">{{ item.heading }}</h2>
+            <section
+                v-if="item.type === 'table' && item.heading"
+                v-show="!hiddenRelations.includes(item)"
+                class="gap-3 grid"
+            >
+                <div
+                    v-if="relationTables.length > 1"
+                    role="tablist"
+                    class="gap-1 border-xq-border flex overflow-x-auto border-b"
+                    data-xq-relation-tabs
+                >
+                    <button
+                        v-for="(relation, index) in relationTables"
+                        :key="relation.schema.id"
+                        type="button"
+                        role="tab"
+                        :aria-selected="relation === item"
+                        :class="
+                            cn(
+                                'px-3 py-2 text-sm font-medium cursor-pointer border-b-2 whitespace-nowrap',
+                                relation === item
+                                    ? 'border-xq-primary'
+                                    : 'text-xq-muted-foreground hover:text-xq-foreground border-transparent',
+                            )
+                        "
+                        @click="activeRelation = index"
+                    >
+                        {{ relation.type === 'table' ? relation.heading : '' }}
+                    </button>
+                </div>
+                <h2 v-else class="text-lg font-semibold">{{ item.heading }}</h2>
                 <XqTable :table="item.schema" />
             </section>
             <XqTable v-else-if="item.type === 'table'" :table="item.schema" />

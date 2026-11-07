@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -67,6 +69,19 @@ abstract class Resource
 
     /** @var class-string<Cluster>|null */
     protected static ?string $cluster = null;
+
+    /**
+     * Make this resource live under a record of another one, as in
+     * /posts/1/comments. It leaves the sidebar and search, and only reaches the
+     * parent's related records. A relation manager with $relatedResource set to
+     * it links to its pages.
+     *
+     * @var class-string<\Xelqun\Panels\Resources\Resource>|null
+     */
+    protected static ?string $parentResource = null;
+
+    /** The relationship on the parent. By default, this resource's plural model name. */
+    protected static ?string $parentRelationship = null;
 
     /** Turn this off for a model that isn't owned by a tenant. */
     protected static bool $isScopedToTenant = true;
@@ -238,7 +253,47 @@ abstract class Resource
         // Records of every tenant would otherwise show. Nothing reaches here like this today, so this is the backstop.
         abort_if(static::$isScopedToTenant && $panels->current()?->hasTenancy() && $panels->tenant() === null, 404);
 
-        return static::$model::query();
+        return static::isNested()
+            ? static::getParentRelation()->getQuery()->select((new static::$model)->qualifyColumn('*'))
+            : static::$model::query();
+    }
+
+    public static function isNested(): bool
+    {
+        return static::$parentResource !== null;
+    }
+
+    /**
+     * @return class-string<\Xelqun\Panels\Resources\Resource>|null
+     */
+    public static function getParentResource(): ?string
+    {
+        return static::$parentResource;
+    }
+
+    /**
+     * Found through the parent resource every time, so a parent out of reach takes
+     * its children with it. Refused the same as a parent that doesn't exist.
+     */
+    public static function getParentRecord(): Model
+    {
+        $key = app(Panels::class)->parentKey();
+
+        abort_if($key === null, 404);
+
+        $parent = static::$parentResource::findRecord($key);
+
+        abort_unless(static::$parentResource::can('view', $parent), 404);
+
+        return $parent;
+    }
+
+    /**
+     * @return Relation<Model, Model, mixed>
+     */
+    public static function getParentRelation(): Relation
+    {
+        return static::getParentRecord()->{static::$parentRelationship ?? Str::camel(Str::plural(class_basename(static::$model)))}();
     }
 
     /**
@@ -298,6 +353,14 @@ abstract class Resource
      */
     public static function assignToTenant(Model $record): void
     {
+        if (static::isNested()) {
+            $relation = static::getParentRelation();
+
+            if ($relation instanceof HasOneOrMany) {
+                $record->setAttribute($relation->getForeignKeyName(), $relation->getParentKey());
+            }
+        }
+
         $tenant = app(Panels::class)->tenant();
 
         if ($tenant === null || ! static::$isScopedToTenant) {
@@ -544,7 +607,8 @@ abstract class Resource
 
     /**
      * Models become their primary key, because records are found by it and a
-     * model's custom route key would point somewhere else.
+     * model's custom route key would point somewhere else. A nested resource
+     * outside its parent's pages needs `parentRecord`.
      *
      * @param  array<string, mixed>  $parameters
      */
@@ -553,10 +617,24 @@ abstract class Resource
         $panel ??= app(Panels::class)->current();
         $slug = static::getSlug();
 
+        if (static::isNested()) {
+            $parameters['parentRecord'] ??= app(Panels::class)->parentKey();
+        }
+
         return route($panel->routeName("resources.{$slug}.{$page}"), array_map(
             fn (mixed $value): mixed => $value instanceof Model ? $value->getKey() : $value,
             $parameters,
         ));
+    }
+
+    /**
+     * Tabs across a record's pages, such as view, edit and a nested list.
+     *
+     * @return array<int, NavigationItem>
+     */
+    public static function getRecordSubNavigation(Model $record): array
+    {
+        return [];
     }
 
     public static function getNavigationBadge(): string|int|null

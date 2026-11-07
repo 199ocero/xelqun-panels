@@ -103,7 +103,9 @@ foreach (app(Panels::class)->all() as $panel) {
                             $pages = $resource::getPages();
                             $slug = $resource::getSlug();
 
-                            Route::prefix($slug)->name("resources.{$slug}.")->group(function () use ($pages, $resource): void {
+                            $parent = $resource::getParentResource();
+
+                            Route::prefix($parent === null ? $slug : $parent::getSlug()."/{parentRecord}/{$slug}")->name("resources.{$slug}.")->group(function () use ($pages, $resource): void {
                                 Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
                                 Route::get('_export', ExportController::class)->middleware('throttle:10,1')->name('export')->defaults('resource', $resource);
 

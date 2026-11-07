@@ -19,7 +19,7 @@ class ListRecords extends ResourcePage
 
     public function getBreadcrumbs(): array
     {
-        return [['label' => $this->getHeading()]];
+        return [...$this->getParentBreadcrumbs(), ['label' => $this->getHeading()]];
     }
 
     public function isAccessible(): bool

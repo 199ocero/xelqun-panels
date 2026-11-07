@@ -4,6 +4,7 @@ namespace Xelqun\Panels\Resources\Pages;
 
 use Illuminate\Database\Eloquent\Model;
 use Inertia\Response;
+use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\RelationTable;
@@ -74,9 +75,34 @@ abstract class ResourcePage extends Page
 
     public function getSubNavigation(): array
     {
+        if ($this->record?->exists && ($items = $this->resource::getRecordSubNavigation($this->record)) !== []) {
+            return array_map(fn (NavigationItem $item): array => [...$item->toArray(), 'key' => $item->getLabel()], $items);
+        }
+
         $cluster = $this->resource::getCluster();
 
         return $cluster === null ? [] : app(Panels::class)->current()->getClusterNavigation($cluster);
+    }
+
+    /**
+     * The way back up through a nested resource's parent.
+     *
+     * @return array<int, array{label: string, url?: string}>
+     */
+    protected function getParentBreadcrumbs(): array
+    {
+        $parentResource = $this->resource::getParentResource();
+
+        if ($parentResource === null) {
+            return [];
+        }
+
+        $parent = $this->resource::getParentRecord();
+
+        return [
+            ['label' => $parentResource::getNavigationLabel(), 'url' => $parentResource::getUrl()],
+            ['label' => $parentResource::getRecordTitle($parent), 'url' => $parentResource::getRecordUrl($parent) ?? $parentResource::getUrl()],
+        ];
     }
 
     /**
@@ -106,6 +132,7 @@ abstract class ResourcePage extends Page
     public function getBreadcrumbs(): array
     {
         return [
+            ...$this->getParentBreadcrumbs(),
             ['label' => $this->resource::getNavigationLabel(), 'url' => $this->resource::getUrl()],
             ['label' => $this->getHeading()],
         ];

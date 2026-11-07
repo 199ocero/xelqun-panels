@@ -17,7 +17,7 @@ final class GlobalSearchController
         $input = $request->validate(['q' => ['required', 'string', 'max:100']]);
 
         $groups = collect($panels->current()->getResources())
-            ->filter(fn (string $resource): bool => $resource::can('viewAny'))
+            ->filter(fn (string $resource): bool => ! $resource::isNested() && $resource::can('viewAny'))
             ->map(fn (string $resource): array => [
                 'label' => $resource::getNavigationLabel(),
                 'icon' => $resource::getNavigationIcon(),

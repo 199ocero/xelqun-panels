@@ -940,7 +940,7 @@ final class Panel
     public function getQuickCreateItems(): array
     {
         return collect($this->getResources())
-            ->filter(fn (string $resource): bool => $resource::hasPage('create') && $resource::can('create'))
+            ->filter(fn (string $resource): bool => ! $resource::isNested() && $resource::hasPage('create') && $resource::can('create'))
             ->map(fn (string $resource): array => [
                 'label' => Str::ucfirst($resource::getModelLabel()),
                 'icon' => $resource::getNavigationIcon(),
@@ -1046,7 +1046,7 @@ final class Panel
         $pages = collect($this->pages)
             ->filter(fn (string $page): bool => $page::shouldRegisterNavigation() && $page::canAccess());
         $resources = collect($this->getResources())
-            ->filter(fn (string $resource): bool => $resource::can('viewAny'));
+            ->filter(fn (string $resource): bool => ! $resource::isNested() && $resource::can('viewAny'));
 
         return $pages->concat($resources)
             ->groupBy(fn (string $member): string => (string) $member::getCluster())

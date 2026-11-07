@@ -80,6 +80,24 @@ describe('XqPanelPage', () => {
         ]);
     });
 
+    it('puts several relation tables on tabs, one at a time', async () => {
+        const wrapper = render({
+            content: [
+                { type: 'table', schema: { id: 'items' }, heading: 'Items' },
+                { type: 'table', schema: { id: 'tags' }, heading: 'Tags' },
+            ] as unknown as PanelContent[],
+        });
+        const sections = wrapper.findAll('section');
+
+        expect(sections[0].isVisible()).toBe(true);
+        expect(sections[1].attributes('style')).toContain('display: none');
+
+        await sections[0].findAll('[role="tab"]')[1].trigger('click');
+
+        expect(sections[0].attributes('style')).toContain('display: none');
+        expect(sections[1].attributes('style') ?? '').not.toContain('display: none');
+    });
+
     it('names a relation table with a heading', () => {
         const wrapper = render({
             content: [

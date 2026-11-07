@@ -188,6 +188,25 @@ public static function headerActions(Model $owner): array
 
 Access goes through the related model's policy and the parent's `view`. Changing anything also takes the parent's `update`, and the view page is read-only. It works for has-many, morph-many and many-to-many, where a new record is attached to the parent.
 
+With two or more, the tables sit on tabs under the record.
+
+### Nested resources
+
+When related records need pages of their own, nest the resource under its parent, as in `/posts/1/comments/5/edit`:
+
+```php
+class CommentResource extends Resource
+{
+    protected static string $model = Comment::class;
+    protected static ?string $parentResource = PostResource::class;
+    protected static ?string $parentRelationship = 'comments'; // the default is this model's plural
+}
+```
+
+It leaves the sidebar, the New menu and search, and only reaches the parent's related records. A parent out of reach is a 404 for everything under it, and new records join the parent whatever the browser sends. To get there, point a relation manager's `$relatedResource` at it, and its rows and New button link to the nested pages.
+
+`getRecordSubNavigation()` on a resource adds tabs across a record's pages.
+
 ### One-page resources
 
 For a model with a few fields, keep everything on the list page, with create and edit in modals. `make:xelqun-resource Tag --simple` sets this up:

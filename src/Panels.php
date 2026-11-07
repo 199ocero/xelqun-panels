@@ -23,6 +23,8 @@ final class Panels
 
     private const string TENANT = 'xelqun-panels.tenant';
 
+    private const string PARENT = 'xelqun-panels.parent';
+
     /** @var array<string, Panel> */
     private array $panels = [];
 
@@ -95,6 +97,24 @@ final class Panels
         foreach ($panel->getResources() as $resource) {
             $resource::scopeToTenants($panel);
         }
+    }
+
+    /**
+     * The key of the parent record, on a page of a nested resource.
+     */
+    public function parentKey(): ?string
+    {
+        $key = request()->attributes->get(self::PARENT) ?? request()->route()?->parameter('parentRecord');
+
+        return $key === null ? null : (string) $key;
+    }
+
+    /**
+     * A token brings the parent back on the requests with none in their URL.
+     */
+    public function enterParent(string $key): void
+    {
+        request()->attributes->set(self::PARENT, $key);
     }
 
     /**

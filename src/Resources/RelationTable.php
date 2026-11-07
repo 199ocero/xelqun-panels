@@ -84,6 +84,11 @@ final class RelationTable extends Table
         return $this->canChange() ? $this->getManager()::bulkActions($this->getOwner()) : [];
     }
 
+    public function recordUrl(Model $record): ?string
+    {
+        return $this->getManager()::getRecordUrl($this->getOwner(), $record);
+    }
+
     private function canChange(): bool
     {
         return ! ($this->context['readOnly'] ?? true) && $this->getResource()::can('update', $this->getOwner());

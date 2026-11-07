@@ -29,13 +29,13 @@ class PanelsServiceProvider extends ServiceProvider
             $panels = $this->app->make(Panels::class);
 
             $tokens->scopeUsing(
-                fn (): ?string => $panels->current() === null ? null : implode(':', array_filter([$panels->current()->getId(), $panels->tenant()?->getKey()])),
+                fn (): ?string => $panels->current() === null ? null : rtrim(implode(':', [$panels->current()->getId(), $panels->tenant()?->getKey(), $panels->parentKey()]), ':'),
                 function (?string $scope) use ($panels): void {
                     if ($scope === null) {
                         return;
                     }
 
-                    [$id, $tenantKey] = array_pad(explode(':', $scope, 2), 2, null);
+                    [$id, $tenantKey, $parentKey] = array_pad(explode(':', $scope, 3), 3, '');
                     $panel = $panels->get($id) ?? throw InvalidFormToken::make('the token belongs to an unknown panel');
                     $panels->enter($panel);
                     $user = auth()->user();
@@ -45,17 +45,19 @@ class PanelsServiceProvider extends ServiceProvider
                         throw InvalidFormToken::make('this user can no longer enter the panel');
                     }
 
-                    if (! $panel->hasTenancy()) {
-                        return;
+                    if ($panel->hasTenancy()) {
+                        $tenant = $tenantKey === '' ? null : (new ($panel->getTenantModel()))->newQuery()->find($tenantKey);
+
+                        if ($tenant === null || ($user !== null && ! $panel->canAccessTenant($user, $tenant))) {
+                            throw InvalidFormToken::make('this user can no longer reach the tenant');
+                        }
+
+                        $panels->enterTenant($tenant);
                     }
 
-                    $tenant = $tenantKey === null ? null : (new ($panel->getTenantModel()))->newQuery()->find($tenantKey);
-
-                    if ($tenant === null || ($user !== null && ! $panel->canAccessTenant($user, $tenant))) {
-                        throw InvalidFormToken::make('this user can no longer reach the tenant');
+                    if ($parentKey !== '') {
+                        $panels->enterParent($parentKey);
                     }
-
-                    $panels->enterTenant($tenant);
                 },
             );
         });

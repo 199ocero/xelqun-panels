@@ -16,7 +16,9 @@ use Xelqun\Panels\Tests\Fixtures\Note;
 use Xelqun\Panels\Tests\Fixtures\Post;
 use Xelqun\Panels\Tests\Fixtures\Resources\CommentsRelationManager;
 use Xelqun\Panels\Tests\Fixtures\Resources\LabelsRelationManager;
+use Xelqun\Panels\Tests\Fixtures\Resources\NestedCommentsManager;
 use Xelqun\Panels\Tests\Fixtures\Resources\NoteResource;
+use Xelqun\Panels\Tests\Fixtures\Resources\PostCommentResource;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostResource;
 use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
@@ -326,5 +328,93 @@ describe('infolists', function () {
     it('keeps the disabled form for a resource with no infolist', function () {
         $this->get("/admin/posts/{$this->post->id}")->assertInertia(fn (Assert $page) => $page
             ->where('page.content.0.schema.components.0.type', 'text-input'));
+    });
+});
+
+describe('nested resources', function () {
+    beforeEach(function () {
+        $this->other = Post::create(['title' => 'Other']);
+        $this->othersComment = $this->other->comments()->create(['body' => 'Not mine']);
+        $this->blue = Post::create(['title' => 'Blue', 'team' => 'blue']);
+        $this->bluesComment = $this->blue->comments()->create(['body' => 'Blue comment']);
+    });
+
+    it('lists only the parent\'s records', function () {
+        $this->get("/admin/posts/{$this->post->id}/post-comments")->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('page.content.0.schema.rows', 1)
+            ->where('page.content.0.schema.rows.0.cells.body.state', 'First'));
+    });
+
+    it('leads back up through the parent', function () {
+        $this->get("/admin/posts/{$this->post->id}/post-comments/{$this->comment->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->where('page.breadcrumbs.0.label', 'Posts')
+            ->where('page.breadcrumbs.1.label', 'Mine')
+            ->where('page.breadcrumbs.2.label', 'Comments'));
+    });
+
+    it('can\'t open a record through another parent', function (string $path) {
+        $this->get("/admin/posts/{$this->post->id}/post-comments/{$this->othersComment->id}{$path}")->assertNotFound();
+    })->with(['view' => '', 'edit' => '/edit']);
+
+    it('can\'t save a record through another parent', function () {
+        $this->put("/admin/posts/{$this->post->id}/post-comments/{$this->othersComment->id}", ['data' => ['body' => 'Taken']])->assertNotFound();
+
+        expect($this->othersComment->fresh()->body)->toBe('Not mine');
+    });
+
+    it('takes its children with a parent out of reach', function () {
+        $this->get("/admin/posts/{$this->blue->id}/post-comments")->assertNotFound();
+        $this->get("/admin/posts/{$this->blue->id}/post-comments/{$this->bluesComment->id}/edit")->assertNotFound();
+    });
+
+    it('needs view on the parent', function () {
+        PostPolicy::$denied = ['view'];
+
+        $this->get("/admin/posts/{$this->post->id}/post-comments")->assertNotFound();
+    });
+
+    it('puts a new record under the parent, whatever the browser sends', function () {
+        $this->post("/admin/posts/{$this->post->id}/post-comments", ['data' => ['body' => 'New', 'post_id' => $this->other->id]])->assertRedirect();
+
+        expect(Comment::where('body', 'New')->sole()->post_id)->toBe($this->post->id);
+    });
+
+    it('stays out of the sidebar, the new menu and search', function () {
+        $this->get('/admin/posts')->assertInertia(fn (Assert $page) => $page
+            ->where('xelqunPanel.navigation', fn ($groups): bool => collect($groups)->flatMap(fn (array $group): array => $group['items'])->pluck('label')->doesntContain('Comments'))
+            ->where('xelqunPanel.quickCreate', fn ($items): bool => collect($items)->pluck('label')->doesntContain('Comment')));
+
+        $this->postJson('/admin/_search', ['q' => 'First'])->assertOk();
+    });
+
+    it('keeps a token to its parent, on requests with no parent in the URL', function () {
+        request()->attributes->set('xelqun-panels.parent', (string) $this->post->id);
+        $table = ResourceTable::for(PostCommentResource::class);
+
+        $this->queryTable($table)->assertOk()->assertJsonCount(1, 'rows')->assertJsonPath('rows.0.cells.body.state', 'First');
+
+        $this->runTableAction($table, 'delete', $this->othersComment->id)->assertNotFound();
+
+        expect($this->othersComment->fresh())->not->toBeNull();
+    });
+
+    it('stops a token once its parent is out of reach', function () {
+        request()->attributes->set('xelqun-panels.parent', (string) $this->post->id);
+        $table = ResourceTable::for(PostCommentResource::class);
+
+        $this->post->update(['team' => 'blue']);
+
+        $this->queryTable($table)->assertNotFound();
+    });
+
+    it('offers tabs across a record\'s pages', function () {
+        $this->get("/admin/posts/{$this->post->id}/post-comments/{$this->comment->id}")->assertInertia(fn (Assert $page) => $page
+            ->where('page.subNavigation.0.label', 'Details'));
+    });
+
+    it('links a relation manager\'s rows to the nested pages', function () {
+        $table = RelationTable::for(PostResource::class, NestedCommentsManager::class, $this->post, false);
+
+        $this->queryTable($table)->assertJsonPath('rows.0.url', url("/admin/posts/{$this->post->id}/post-comments/{$this->comment->id}/edit"));
     });
 });
