@@ -20,8 +20,6 @@ jobs:
                   php-version: ${{ matrix.php }}
                   extensions: gd, intl, sqlite3, pdo_sqlite
                   coverage: none
-            # shortcut: tests against main because panels needs unreleased forms and tables. Drop this once they're tagged.
-            - run: composer require xelqun/forms:dev-main xelqun/tables:dev-main --no-update --no-interaction
             - run: composer install --no-interaction --prefer-dist
             - run: vendor/bin/pint --test
             - run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
@@ -36,8 +34,6 @@ jobs:
               with:
                   node-version: 22
             - run: npm ci
-            # shortcut: the same as the Composer step above. Drop this once forms and tables are published.
-            - run: npm install --no-save github:199ocero/xelqun-forms#main github:199ocero/xelqun-tables#main
             - run: npx vp check
             - run: npx vue-tsc --noEmit
             - run: npx vp test
