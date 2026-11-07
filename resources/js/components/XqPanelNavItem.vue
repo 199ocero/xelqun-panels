@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import { XqIcon, cn } from '@xelqun/forms';
 import { TooltipContent, TooltipPortal, TooltipRoot, TooltipTrigger } from 'reka-ui';
 import type { PanelNavigationItem } from '../types';
+import { sidebarTooltipClass } from '../ui/classes';
 
 defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
 </script>
@@ -43,7 +44,7 @@ defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
             <TooltipContent
                 side="right"
                 :side-offset="14"
-                class="gap-2 px-2 py-1 text-xs font-medium shadow-md rounded-xq-sm bg-xq-foreground text-xq-background data-[state=closed]:animate-xq-pop-out data-[state=delayed-open]:animate-xq-pop-in data-[state=instant-open]:animate-xq-pop-in z-50 flex origin-(--reka-tooltip-content-transform-origin) items-center"
+                :class="sidebarTooltipClass"
                 data-xq-nav-tooltip
             >
                 {{ item.label }}

@@ -302,7 +302,15 @@ describe('the tenant switcher', () => {
 
         expect(switcher({ ...shell, tenant }).text()).toBe('Red team');
         expect(switcher(shell).exists()).toBe(false);
-        expect(switcher({ ...shell, tenant }, true).exists()).toBe(false);
+    });
+
+    it('stays on a collapsed sidebar, shrunk to an initial', () => {
+        const switcher = mount(XqPanelSidebar, {
+            props: { panel: { ...shell, tenant }, collapsed: true },
+        }).find('[data-xq-tenant]');
+
+        expect(switcher.text()).toBe('R');
+        expect(switcher.attributes('aria-label')).toContain('Red team');
     });
 });
 
