@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { XqIcon, cn } from '@xelqun/forms';
+import { XqIcon, XqMenuGlide, cn } from '@xelqun/forms';
 import type { PanelTile } from '../../types';
 import { toneClasses } from './tones';
 import XqPanelWidgetCard from './XqPanelWidgetCard.vue';
@@ -10,23 +10,25 @@ defineProps<{ tiles: PanelTile[]; heading: string | null; seeAllUrl: string | nu
 
 <template>
     <XqPanelWidgetCard :heading="heading" :count="tiles.length" :see-all-url="seeAllUrl">
-        <div class="gap-3 px-5 pb-5 pt-2 sm:grid-cols-3 grid grid-cols-2" data-xq-tiles>
+        <div class="gap-3 px-5 pb-5 pt-2 sm:grid-cols-3 relative grid grid-cols-2" data-xq-tiles>
+            <XqMenuGlide hover-items="a" class="rounded-xq-md bg-xq-foreground/6" />
             <component
                 :is="tile.url ? Link : 'div'"
                 v-for="tile in tiles"
                 :key="tile.label"
                 :href="tile.url ?? undefined"
-                :class="
-                    cn(
-                        'gap-2 p-3 bg-xq-muted rounded-xq-md grid',
-                        tile.url && 'hover:bg-xq-accent transition-colors',
-                    )
-                "
+                class="group gap-2 p-3 bg-xq-muted rounded-xq-md grid"
             >
                 <XqIcon
                     v-if="tile.icon"
                     :name="tile.icon"
-                    class="size-5 text-xq-muted-foreground"
+                    :class="
+                        cn(
+                            'size-5 text-xq-muted-foreground',
+                            tile.url &&
+                                'group-hover:text-xq-foreground transition-[scale,color] duration-(--xq-duration-base) ease-(--xq-ease-spring) group-hover:scale-110',
+                        )
+                    "
                     aria-hidden="true"
                 />
                 <p class="text-sm font-medium truncate">{{ tile.label }}</p>

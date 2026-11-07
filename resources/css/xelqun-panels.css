@@ -166,41 +166,25 @@
 
 [data-xq-page] > :nth-child(2),
 [data-xq-widget]:nth-child(2),
-[data-xq-stats] > article:nth-child(2) {
+[data-xq-stats] > article:nth-of-type(2) {
     --xq-order: 1;
 }
 
 [data-xq-page] > :nth-child(3),
 [data-xq-widget]:nth-child(3),
-[data-xq-stats] > article:nth-child(3) {
+[data-xq-stats] > article:nth-of-type(3) {
     --xq-order: 2;
 }
 
 [data-xq-page] > :nth-child(4),
 [data-xq-widget]:nth-child(4),
-[data-xq-stats] > article:nth-child(4) {
+[data-xq-stats] > article:nth-of-type(4) {
     --xq-order: 3;
 }
 
 [data-xq-page] > :nth-child(n + 5),
 [data-xq-widget]:nth-child(n + 5) {
     --xq-order: 4;
-}
-
-/* Cards lift a little under the pointer, and only where there's a pointer. */
-@media (hover: hover) {
-    :root:not([data-xq-motion-off]) [data-xq-stats] > article,
-    :root:not([data-xq-motion-off]) [data-xq-tiles] > * {
-        transition:
-            translate var(--xq-duration-base) var(--xq-ease-out),
-            box-shadow var(--xq-duration-base) var(--xq-ease-out);
-    }
-
-    :root:not([data-xq-motion-off]) [data-xq-stats] > article:hover,
-    :root:not([data-xq-motion-off]) [data-xq-tiles] > :hover {
-        translate: 0 -2px;
-        box-shadow: 0 6px 20px -12px rgb(0 0 0 / 25%);
-    }
 }
 
 /* Charts draw themselves once, as they arrive. */

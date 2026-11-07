@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { XqIcon } from '@xelqun/forms';
+import { XqIcon, XqMenuGlide } from '@xelqun/forms';
 import type { PanelStat } from '../../types';
 import XqPanelNumber from './XqPanelNumber.vue';
 
@@ -25,7 +25,8 @@ function points(values: number[]): string {
 </script>
 
 <template>
-    <div class="gap-4 sm:grid-cols-2 lg:grid-cols-4 grid" data-xq-stats>
+    <div class="gap-4 sm:grid-cols-2 lg:grid-cols-4 relative grid" data-xq-stats>
+        <XqMenuGlide hover-items="article" class="rounded-xq-lg bg-xq-foreground/4 z-10" />
         <article
             v-for="stat in stats"
             :key="stat.label"
