@@ -2,12 +2,9 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
-## Unreleased
+## 0.2.0 - 2026-11-07
 
-### Changed
-
-- **Needs `xelqun/forms` 0.7 and `xelqun/tables` 0.5.**
-- **New sign-in screens.** Login, registration, password reset, email verification, two-factor and new tenant pages are two columns: the form on the page itself, with filled fields and a full-width button, beside a moving gradient in the panel's primary color, with a large quote on it (`auth.quote` in the translations) and a light and dark switch in the corner. The built-in forms use placeholders in place of visible labels. The login heading now names the panel, and its sign up link moved under the heading.
+This release needs `xelqun/forms` 0.7 and `xelqun/tables` 0.5.
 
 ### Added
 
@@ -48,6 +45,7 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 
 ### Changed
 
+- **New sign-in screens.** Login, registration, password reset, email verification, two-factor and new tenant pages are two columns: the form on the page itself, with filled fields and a full-width button, beside a moving gradient in the panel's primary color, with a large quote on it (`auth.quote` in the translations) and a light and dark switch in the corner. The built-in forms use placeholders in place of visible labels. The login heading now names the panel, and its sign up link moved under the heading.
 - A signed-out JSON request to a panel gets a 401 instead of a redirect to login.
 - Panels default to Filament's semantic colors: `danger` Red, `gray` Zinc, `info` Blue, `success` Green and `warning` Amber.
 - Two-factor is checked on every panel page and token, not just the panel's login form, so signing in through the app's own login can't get around it. A remember-me login is asked for a code again once its session ends.
