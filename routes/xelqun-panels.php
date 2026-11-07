@@ -23,6 +23,7 @@ use Xelqun\Panels\Resources\Pages\ManageSingleRecord;
 
 foreach (app(Panels::class)->all() as $panel) {
     Route::prefix($panel->getPath())
+        ->domain($panel->getDomain())
         ->middleware(['web', EnterPanel::class.':'.$panel->getId()])
         ->name($panel->routeName(''))
         ->group(function () use ($panel): void {

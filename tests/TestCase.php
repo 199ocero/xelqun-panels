@@ -12,6 +12,7 @@ use Xelqun\Forms\FormsServiceProvider;
 use Xelqun\Forms\Testing\InteractsWithForms;
 use Xelqun\Panels\PanelsServiceProvider;
 use Xelqun\Panels\Tests\Fixtures\AdminPanelProvider;
+use Xelqun\Panels\Tests\Fixtures\DomainPanelProvider;
 use Xelqun\Panels\Tests\Fixtures\HandleInertia;
 use Xelqun\Panels\Tests\Fixtures\StaffPanelProvider;
 use Xelqun\Panels\Tests\Fixtures\TeamPanelProvider;
@@ -32,6 +33,7 @@ abstract class TestCase extends Orchestra
             TablesServiceProvider::class,
             PanelsServiceProvider::class,
             AdminPanelProvider::class,
+            DomainPanelProvider::class,
             StaffPanelProvider::class,
             TeamPanelProvider::class,
         ];

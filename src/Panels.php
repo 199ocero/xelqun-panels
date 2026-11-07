@@ -41,7 +41,7 @@ final class Panels
         }
 
         foreach ($this->panels as $other) {
-            if ($other->getPath() === $panel->getPath()) {
+            if ($other->getPath() === $panel->getPath() && $other->getDomain() === $panel->getDomain()) {
                 throw new PanelDefinitionException("The panels [{$other->getId()}] and [{$id}] have the same path.");
             }
         }

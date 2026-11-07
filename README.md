@@ -61,6 +61,8 @@ class ProductResource extends Resource
 
 That's a signed-in admin with a dashboard and list, create, edit and view pages for products.
 
+To put a panel on its own host, add `->domain('admin.example.com')`. With `->path('')` it sits at the root of that domain. Without a domain, a panel answers on every host.
+
 ## Features
 
 - **Write PHP, not Vue.** Normal panels need no frontend code, and you can add your own Vue page when you want one.

@@ -61,6 +61,8 @@ final class Panel
 
     private string $path = '';
 
+    private ?string $domain = null;
+
     private ?string $brandName = null;
 
     private string $authGuard;
@@ -213,9 +215,35 @@ final class Panel
         return $this->path;
     }
 
+    /**
+     * Answer only on this host, as in demo.example.com. Without it, a panel answers on every host.
+     */
+    public function domain(?string $domain): self
+    {
+        $this->domain = $domain === null ? null : str_replace(['http://', 'https://'], '', $domain);
+
+        return $this;
+    }
+
+    public function getDomain(): ?string
+    {
+        return $this->domain;
+    }
+
     public function getUrl(): string
     {
-        return url($this->path);
+        return $this->urlTo($this->path);
+    }
+
+    private function urlTo(string $path): string
+    {
+        if ($this->domain === null) {
+            return url($path);
+        }
+
+        $port = parse_url(url('/'), PHP_URL_PORT);
+
+        return rtrim(url()->formatScheme().$this->domain.($port === null ? '' : ":{$port}").'/'.$path, '/');
     }
 
     public function brandName(string $name): self
@@ -681,7 +709,7 @@ final class Panel
 
     public function getTenantUrl(Model $tenant): string
     {
-        return url($this->path.'/'.$tenant->getAttribute($this->getTenantSlugAttribute()));
+        return $this->urlTo($this->path.'/'.$tenant->getAttribute($this->getTenantSlugAttribute()));
     }
 
     /**

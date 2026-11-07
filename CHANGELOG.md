@@ -2,6 +2,12 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+### Added
+
+- **`Panel::domain()`** puts a panel on its own host, as in `->domain('admin.example.com')`. Panels on different domains can share a path, and `path('')` puts one at the root of its domain.
+
 ## 0.2.0 - 2026-11-07
 
 This release needs `xelqun/forms` 0.7 and `xelqun/tables` 0.5.
