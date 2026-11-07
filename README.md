@@ -1,22 +1,18 @@
-# Xelqun Panels
+<p align="center">
+    <img src="https://raw.githubusercontent.com/199ocero/xelqun-panels/main/.github/art/banner.png" alt="Xelqun Panels: PHP-defined admin panels for Laravel, Inertia and Vue" width="100%">
+</p>
 
-Describe an admin panel in PHP and get navigation, authentication, CRUD pages and dashboards, rendered in Vue, in light and dark themes.
+<p align="center">
+    <a href="https://packagist.org/packages/xelqun/panels"><img src="https://img.shields.io/packagist/v/xelqun/panels?label=packagist&color=414fd2" alt="Packagist version"></a>
+    <a href="https://www.npmjs.com/package/@xelqun/panels"><img src="https://img.shields.io/npm/v/@xelqun/panels?label=npm&color=414fd2" alt="npm version"></a>
+    <a href="https://packagist.org/packages/xelqun/panels/stats"><img src="https://img.shields.io/packagist/dt/xelqun/panels?color=414fd2" alt="Total downloads"></a>
+</p>
+
+Describe an admin panel in PHP and generic Vue components render it, with navigation, authentication, CRUD pages and dashboards. Normal panels need no Vue at all.
 
 > **Pre-alpha:** the API will change. Requires Laravel 13, Inertia 3, Vue 3.5, Tailwind 4, [`xelqun/forms`](https://github.com/199ocero/xelqun-forms) and [`xelqun/tables`](https://github.com/199ocero/xelqun-tables).
 
-## Installation
-
-```bash
-composer require xelqun/panels
-php artisan xelqun-panels:install
-php artisan make:xelqun-panel Admin
-```
-
-The installer adds the npm package, two small page files in `resources/js/pages/xelqun`, the styles, and `panelsPlugin()` in your Inertia entry file. The new panel has a login page and a dashboard at `/admin`.
-
-Then add `PanelUser` to your user model, as shown under [Access](#access). Nobody can sign in until you do.
-
-## A panel
+## Example
 
 ```php
 class AdminPanelProvider extends PanelProvider
@@ -27,11 +23,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('Acme')
-            ->colors(['primary' => '#0071e3'])
+            ->colors(['primary' => Color::Blue])
             ->login()
             ->passwordReset()
-            ->emailVerification()
-            ->registration()
             ->profile()
             ->resources([ProductResource::class])
             ->pages([Dashboard::class])
@@ -39,7 +33,69 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups(['Catalog', 'Sales']);
     }
 }
+
+class ProductResource extends Resource
+{
+    protected static string $model = Product::class;
+    protected static ?string $recordTitleAttribute = 'name';
+    protected static ?string $navigationIcon = 'package';
+    protected static ?string $navigationGroup = 'Catalog';
+
+    public static function form(): array
+    {
+        return [
+            TextInput::make('name')->required(),
+            TextInput::make('price')->numeric()->required(),
+        ];
+    }
+
+    public static function columns(): array
+    {
+        return [
+            TextColumn::make('name')->searchable()->sortable(),
+            TextColumn::make('price')->money('USD')->sortable(),
+        ];
+    }
+}
 ```
+
+That's a signed-in admin with a dashboard and list, create, edit and view pages for products.
+
+## Features
+
+- **Write PHP, not Vue.** Normal panels need no frontend code, and you can add your own Vue page when you want one.
+- **One class per model.** A resource gives you CRUD pages, filters, actions, soft deletes, CSV export and import, relation managers and nested resources.
+- **Closed by default.** Nobody gets in until `canAccessPanel()` says so, and with no policy the answer is no. The check runs on every request, so taking away access works at once, even on an open page.
+- **Authentication built in.** Login, registration, password reset, email verification and profiles, plus two-factor by authenticator app or email. Fortify isn't needed.
+- **Multi-tenancy.** Split a panel between teams or shops. Records stay in their tenant for every query, and the tenant never comes from the browser.
+- **Dashboards.** Stats, lists, tiles, tables and line, bar and doughnut charts, with no chart library. Widgets load after the page, so it paints at once.
+- **Global search and notifications.** ⌘K finds pages and records, and a bell shows database notifications, by polling or broadcast.
+- **Theming.** Pick from Tailwind's palettes with `Color`, in light and dark themes, and text stays readable whatever you choose. Animations are on by default, and anyone can turn them off.
+- **Made to extend.** Plugins, render hooks, custom pages and translations.
+
+## Installation
+
+Panels is built on forms and tables, and its installer sets up all three:
+
+```bash
+composer require xelqun/panels
+php artisan xelqun-panels:install
+php artisan make:xelqun-panel Admin
+```
+
+The installer adds the matching npm package, two small page files in `resources/js/pages/xelqun`, the styles, and `panelsPlugin()` in your Inertia entry file. The new panel has a login page and a dashboard at `/admin`.
+
+Then add `PanelUser` to your user model, as shown under [Access](#access). Nobody can sign in until you do.
+
+## Usage
+
+```bash
+php artisan make:xelqun-resource Product
+```
+
+This creates a resource and a policy for the model. A panel made with `make:xelqun-panel` picks the resource up by itself, and it joins the sidebar and the New button. Set `$recordTitleAttribute` to add it to search. Fill in `form()` and `columns()`, then the policy, because a resource shows nothing until the policy allows it.
+
+`make:xelqun-page`, `make:xelqun-widget` and `make:xelqun-relation-manager` create the other pieces.
 
 ## Access
 
@@ -112,7 +168,7 @@ class ProductResource extends Resource
 }
 ```
 
-`php artisan make:xelqun-resource Product` creates this and a policy, and `make:xelqun-widget` makes a chart or stats widget. A panel made with `make:xelqun-panel` picks it up by itself, through `discoverResources(in: app_path('Xelqun/Admin/Resources'), for: 'App\\Xelqun\\Admin\\Resources')`. Otherwise, add it to `resources()`.
+`php artisan make:xelqun-resource Product` creates this and a policy. A panel made with `make:xelqun-panel` picks it up by itself, through `discoverResources(in: app_path('Xelqun/Admin/Resources'), for: 'App\\Xelqun\\Admin\\Resources')`. Otherwise, add it to `resources()`.
 
 **Access goes through the model's policy:** `viewAny`, `view`, `create`, `update` and `delete`. With no policy, or no such method, the answer is no. This differs from Filament, which allows by default.
 
@@ -301,7 +357,7 @@ Each resource's model needs a relationship to the tenant, named after it (`team(
 
 Inside a tenant, those models stay in it for every query of the request: tables, search, Select options, widgets, `scopedUnique()`, `scopedExists()` and your own code. New records join the tenant on their own, and it never comes from the browser. A tenant the user isn't in is a 404, and taking someone out takes effect at once, even on an open page.
 
-A sidebar switcher moves between tenants. Notifications belong to the user, not the tenant.
+A switcher moves between tenants, in the sidebar or, with `topNavigation()`, the top bar. Notifications belong to the user, not the tenant.
 
 `tenantRegistration(RegisterTeam::class)` lets a user start a tenant, and is where someone with no tenants lands. `tenantProfile(EditTeam::class)` adds a page to change one, which needs `update` in the tenant's policy. Both take a `Form` class. The registration form has to add the user in its `afterSave()`.
 
@@ -438,6 +494,15 @@ Register the component in `createXelqunForms({ components })`. The places are `S
 
 `InteractsWithPanels` adds `actingInPanel($user, 'admin')`, which signs in on the panel's guard, and `enterPanel('admin', $tenant)`, for building a table or form to test. Forms' and tables' own test helpers work the same way on panel pages.
 
+## Before going to production
+
+- **Check `canAccessPanel()`.** It decides who gets in, in every environment.
+- **Write a policy for every model.** With no policy, or no such method, the answer is no, and a method that returns `true` lets everyone with panel access through.
+- **Scope `getEloquentQuery()` to what the viewer may see.** Every page, action and form request stays inside it, so this is your main line of defence.
+- **Give each action its own `authorize()`.** An action does nothing without one.
+- **Set up trusted proxies behind a proxy.** Otherwise Laravel doesn't see the request as secure, and the browser's history isn't encrypted.
+- **Schedule `php artisan xelqun-forms:prune-uploads`.** Temporary uploads stay on disk until it runs.
+
 ## Current limits
 
 - `%` and `_` in a search act as wildcards.
@@ -456,7 +521,7 @@ To test against unreleased sibling changes, make a gitignored `composer.local.js
 
 ## Inspiration
 
-Xelqun Panels is heavily inspired by [Filament](https://filamentphp.com), bringing its PHP-first way of building admin panels to Inertia and Vue.
+Xelqun Panels is heavily inspired by [Filament](https://filamentphp.com). I'm a big fan of Filament and have built several packages for it, and this project brings its PHP-first way of building admin panels to Inertia and Vue.
 
 ## License
 
