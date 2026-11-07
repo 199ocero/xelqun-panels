@@ -72,6 +72,16 @@ final class ResourceTable extends Table
         return parent::getSelectableKeys($state);
     }
 
+    /**
+     * Rows move among the ones the viewer can see, not hidden trashed ones.
+     */
+    public function getReorderQuery(): Builder
+    {
+        $this->hidesTrashed = $this->hasTrashedFilter();
+
+        return $this->query();
+    }
+
     private function hasTrashedFilter(): bool
     {
         return collect($this->getFilters())->contains(fn (BaseFilter $filter): bool => $filter instanceof TrashedFilter);

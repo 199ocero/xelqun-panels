@@ -8,6 +8,7 @@ use Xelqun\Forms\Components\FileUpload;
 use Xelqun\Forms\Components\Repeater;
 use Xelqun\Forms\Components\TextInput;
 use Xelqun\Forms\Layouts\Section;
+use Xelqun\Panels\Actions\ExportAction;
 use Xelqun\Panels\Infolists\IconEntry;
 use Xelqun\Panels\Infolists\TextEntry;
 use Xelqun\Panels\Resources\Resource;
@@ -35,6 +36,11 @@ class PostResource extends Resource
 
     /** @var array<int, class-string<PanelWidget>> */
     public static array $headerWidgets = [];
+
+    public static function getHeaderActions(): array
+    {
+        return [ExportAction::for(static::class)];
+    }
 
     public static function getHeaderWidgets(): array
     {

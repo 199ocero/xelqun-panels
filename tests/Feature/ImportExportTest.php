@@ -2,13 +2,16 @@
 
 use Illuminate\Support\Facades\Gate;
 use Xelqun\Panels\Actions\ImportAction;
+use Xelqun\Panels\Http\Controllers\ExportController;
 use Xelqun\Panels\Panels;
+use Xelqun\Panels\Tests\Fixtures\Note;
 use Xelqun\Panels\Tests\Fixtures\Post;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostResource;
 use Xelqun\Panels\Tests\Fixtures\Resources\TaskPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\TaskResource;
 use Xelqun\Panels\Tests\Fixtures\Task;
+use Xelqun\Panels\Tests\Fixtures\User;
 
 class ExposedImport extends ImportAction
 {
@@ -74,6 +77,33 @@ describe('exporting', function () {
         Task::create(['title' => 'Sluggy', 'slug' => 'a']);
 
         expect($this->get('/admin/tasks/_export?tab=sluggy')->streamedContent())->toContain('Sluggy')->not->toContain('Plain');
+    });
+
+    it('never writes a hidden column', function () {
+        Task::create(['title' => 'One', 'slug' => 'secret-slug']);
+
+        expect($this->get('/admin/tasks/_export')->streamedContent())->not->toContain('secret-slug');
+    });
+
+    it('writes an empty value as empty, and a record as its key', function () {
+        $user = User::create(['name' => 'Bea', 'email' => 'bea@example.com', 'password' => 'x', 'email_verified_at' => null]);
+        $post = Post::create(['title' => 'Mine', 'user_id' => $user->id])->load('author');
+        $neutralize = new ReflectionMethod(ExportController::class, 'neutralize');
+
+        expect($neutralize->invoke(null, $post->cover))->toBe('')
+            ->and($neutralize->invoke(null, $post->author))->toBe((string) $user->id);
+    });
+
+    it('has no export for a resource that doesn\'t offer one', function () {
+        Gate::policy(Note::class, TaskPolicy::class);
+
+        $this->get('/admin/notes/_export')->assertNotFound();
+    });
+
+    it('starts on the first tab, as the list does', function () {
+        Task::create(['title' => 'Plain']);
+
+        expect($this->get('/admin/tasks/_export')->streamedContent())->toContain('Plain');
     });
 
     it('needs viewAny', function () {

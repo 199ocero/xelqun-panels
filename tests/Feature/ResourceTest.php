@@ -85,11 +85,11 @@ describe('the list page', function () {
     });
 
     it('offers New only to someone who can create', function () {
-        expect(pageProps($this->get('/admin/posts'))['headerActions']['components'][0]['hidden'])->toBeFalse();
+        expect(pageProps($this->get('/admin/posts'))['headerActions']['components'][1]['hidden'])->toBeFalse();
 
         PostPolicy::$denied = ['create'];
 
-        expect(pageProps($this->get('/admin/posts'))['headerActions']['components'][0]['hidden'])->toBeTrue();
+        expect(pageProps($this->get('/admin/posts'))['headerActions']['components'][1]['hidden'])->toBeTrue();
     });
 
     it('appears in the sidebar for someone who can list', function () {

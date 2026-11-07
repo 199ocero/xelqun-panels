@@ -15,6 +15,7 @@ use Xelqun\Panels\Tests\Fixtures\Label;
 use Xelqun\Panels\Tests\Fixtures\Note;
 use Xelqun\Panels\Tests\Fixtures\Post;
 use Xelqun\Panels\Tests\Fixtures\Resources\CommentsRelationManager;
+use Xelqun\Panels\Tests\Fixtures\Resources\EditableCommentsManager;
 use Xelqun\Panels\Tests\Fixtures\Resources\LabelsRelationManager;
 use Xelqun\Panels\Tests\Fixtures\Resources\NestedCommentsManager;
 use Xelqun\Panels\Tests\Fixtures\Resources\NoteResource;
@@ -22,6 +23,7 @@ use Xelqun\Panels\Tests\Fixtures\Resources\PostCommentResource;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostResource;
 use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
+use Xelqun\Panels\Tests\Fixtures\Resources\ScopedLabelsManager;
 
 beforeEach(function () {
     Gate::policy(Post::class, PostPolicy::class);
@@ -125,6 +127,24 @@ describe('relation managers', function () {
         'delete' => ['delete', 'delete', 'row'],
     ]);
 
+    it('won\'t save a cell or move a row on a read-only table', function () {
+        $table = RelationTable::for(PostResource::class, EditableCommentsManager::class, $this->post, true);
+
+        expect($table->findEditableColumn('body'))->toBeNull()
+            ->and($table->canReorder())->toBeFalse();
+
+        $editable = RelationTable::for(PostResource::class, EditableCommentsManager::class, $this->post, false);
+
+        expect($editable->findEditableColumn('body'))->not->toBeNull();
+    });
+
+    it('won\'t save a cell without update on the parent', function () {
+        $table = RelationTable::for(PostResource::class, EditableCommentsManager::class, $this->post, false);
+        PostPolicy::$denied = ['update'];
+
+        expect($table->findEditableColumn('body'))->toBeNull();
+    });
+
     it('leaves the table off the page without the related model\'s viewAny', function () {
         RelatedPolicy::$denied = ['viewAny'];
 
@@ -140,6 +160,17 @@ describe('relation managers', function () {
         $this->runTableAction($table, 'attach', null, ['record' => $free->id])->assertOk();
 
         expect($this->post->labels()->pluck('name')->all())->toBe(['Attached', 'Free']);
+    });
+
+    it('can\'t link past the related resource\'s query', function () {
+        $table = RelationTable::for(PostResource::class, ScopedLabelsManager::class, $this->post, false);
+        $secret = Label::create(['name' => 'Secret']);
+        $open = Label::create(['name' => 'Open']);
+
+        $this->runTableAction($table, 'attach', null, ['record' => $secret->id])->assertStatus(422);
+        $this->runTableAction($table, 'attach', null, ['record' => $open->id])->assertOk();
+
+        expect($this->post->labels()->pluck('name')->all())->toBe(['Open']);
     });
 
     it('can\'t attach what the list didn\'t offer', function () {

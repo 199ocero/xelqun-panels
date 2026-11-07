@@ -31,7 +31,7 @@ const tone = computed(() => cell.value.color ?? 'gray');
             <span
                 aria-hidden="true"
                 class="size-5 border-xq-border rounded-xq-sm border"
-                :style="{ background: String(cell.state) }"
+                :style="{ backgroundColor: String(cell.state) }"
             ></span>
             {{ cell.state }}
         </span>

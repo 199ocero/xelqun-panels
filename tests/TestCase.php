@@ -120,6 +120,13 @@ abstract class TestCase extends Orchestra
         Schema::create('projects', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('team_id');
+            $table->foreignId('client_id')->nullable();
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::create('clients', function (Blueprint $table): void {
+            $table->id();
             $table->string('name');
             $table->timestamps();
         });

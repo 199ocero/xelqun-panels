@@ -84,6 +84,13 @@ describe('actions', function () {
         expect($this->task->fresh())->not->toBeNull();
     });
 
+    it('only deletes for good what\'s already deleted, even in a selection', function () {
+        $this->runBulkTableAction(ResourceTable::for(TaskResource::class), 'forceDelete', [$this->task->id, $this->trashed->id])->assertOk();
+
+        expect($this->task->fresh())->not->toBeNull()
+            ->and(Task::withTrashed()->find($this->trashed->id))->toBeNull();
+    });
+
     it('works on a selection', function () {
         $this->runBulkTableAction(ResourceTable::for(TaskResource::class), 'restore', [$this->trashed->id])->assertOk();
 

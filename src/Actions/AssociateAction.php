@@ -37,9 +37,7 @@ class AssociateAction extends Action
      */
     protected static function available(string $manager, Model $owner): Builder
     {
-        $relation = static::relation($manager, $owner);
-
-        return $relation->getRelated()->newQuery()->whereNull($relation->getForeignKeyName());
+        return $manager::getLinkableQuery($owner)->whereNull(static::relation($manager, $owner)->getForeignKeyName());
     }
 
     /**

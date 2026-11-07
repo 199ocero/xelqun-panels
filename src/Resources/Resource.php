@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Gate;
@@ -153,6 +154,7 @@ abstract class Resource
     public static function getExportColumns(): array
     {
         return collect(static::columns())
+            ->reject(fn (Column $column): bool => $column->isHidden())
             ->mapWithKeys(fn (Column $column): array => [$column->getLabel() => $column->getName()])
             ->all();
     }
@@ -241,7 +243,7 @@ abstract class Resource
                     ->authorize('forceDelete')
                     ->requiresConfirmation()
                     ->successNotificationTitle(__('xelqun-panels::resources.deleted_many'))
-                    ->action(fn (Collection $records) => $records->each->forceDelete()),
+                    ->action(fn (Collection $records) => $records->filter(static::isTrashed(...))->each->forceDelete()),
             ]),
         ];
     }
@@ -367,6 +369,10 @@ abstract class Resource
         if (static::isNested()) {
             $relation = static::getParentRelation();
 
+            if ($relation instanceof MorphOneOrMany) {
+                $record->setAttribute($relation->getMorphType(), $relation->getMorphClass());
+            }
+
             if ($relation instanceof HasOneOrMany) {
                 $record->setAttribute($relation->getForeignKeyName(), $relation->getParentKey());
             }
@@ -387,6 +393,14 @@ abstract class Resource
 
     public static function attachToTenant(Model $record): void
     {
+        if (static::isNested()) {
+            $relation = static::getParentRelation();
+
+            if ($relation instanceof BelongsToMany) {
+                $relation->attach($record);
+            }
+        }
+
         $tenant = app(Panels::class)->tenant();
 
         if ($tenant === null || ! static::$isScopedToTenant) {

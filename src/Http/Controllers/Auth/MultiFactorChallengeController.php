@@ -52,7 +52,8 @@ final class MultiFactorChallengeController extends AuthController
         }
 
         $data = MultiFactorChallengeForm::make()->validate($request);
-        $rateLimitKey = "xelqun-panels:challenge:{$panel->getId()}:{$pending['id']}|{$request->ip()}";
+        // Per user, with no IP in it, or changing IP would give an attacker fresh guesses.
+        $rateLimitKey = "xelqun-panels:challenge:{$panel->getId()}:{$pending['id']}";
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, self::MAX_ATTEMPTS)) {
             throw ValidationException::withMessages([
@@ -74,8 +75,22 @@ final class MultiFactorChallengeController extends AuthController
         $request->session()->forget($this->sessionKey());
         $guard->login($user, $pending['remember']);
         $request->session()->regenerate();
+        $panel->markChallengePassed($user);
 
         return redirect()->intended($panel->getUrl());
+    }
+
+    /**
+     * Someone already signed in, through another way in, who hasn't passed the
+     * second step here. A challenge in progress keeps its code.
+     */
+    public function resume(Request $request, Authenticatable $user): RedirectResponse
+    {
+        if ($this->pending($request) !== null) {
+            return redirect()->route($this->panel()->routeName('auth.challenge'));
+        }
+
+        return $this->begin($request, $user, false);
     }
 
     /**

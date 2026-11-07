@@ -38,9 +38,7 @@ class AttachAction extends Action
      */
     protected static function available(string $manager, Model $owner): Builder
     {
-        $relation = static::relation($manager, $owner);
-
-        return $relation->getRelated()->newQuery()->whereKeyNot($relation->allRelatedIds());
+        return $manager::getLinkableQuery($owner)->whereKeyNot(static::relation($manager, $owner)->allRelatedIds());
     }
 
     /**

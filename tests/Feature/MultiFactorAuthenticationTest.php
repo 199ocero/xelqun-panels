@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
@@ -14,6 +15,10 @@ use Xelqun\Panels\Auth\Totp;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
+use Xelqun\Panels\Resources\ResourceTable;
+use Xelqun\Panels\Tests\Fixtures\Resources\TaskPolicy;
+use Xelqun\Panels\Tests\Fixtures\Resources\TaskResource;
+use Xelqun\Panels\Tests\Fixtures\Task;
 use Xelqun\Panels\Tests\Fixtures\User;
 
 const RFC_SECRET = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
@@ -29,6 +34,14 @@ function mfaUser(): User
 function passPassword(): TestResponse
 {
     return test()->post('/admin/login', ['data' => ['email' => 'ada@example.com', 'password' => 'secret']]);
+}
+
+final class PostResourceToken
+{
+    public static function make(): string
+    {
+        return ResourceTable::for(TaskResource::class)->makeToken();
+    }
 }
 
 function currentCode(): string
@@ -142,6 +155,20 @@ describe('signing in', function () {
         $this->assertGuest('admin');
     });
 
+    it('keeps counting guesses from a new address', function () {
+        passPassword();
+
+        foreach (range(1, 5) as $attempt) {
+            $this->withServerVariables(['REMOTE_ADDR' => "10.0.0.{$attempt}"]);
+            answerChallenge('000000');
+        }
+
+        $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.99']);
+        answerChallenge(currentCode())->assertSessionHasErrors('data.code');
+
+        $this->assertGuest('admin');
+    });
+
     it('stops guessing after 5 tries', function () {
         passPassword();
 
@@ -183,6 +210,62 @@ describe('signing in', function () {
         expect($this->user->fresh()->toArray())->not->toHaveKeys(['app_authentication_secret', 'app_authentication_recovery_codes'])
             ->and(DB::table('users')->value('app_authentication_secret'))->not->toBe(RFC_SECRET)
             ->and(DB::table('users')->value('app_authentication_recovery_codes'))->not->toContain('abcde-12345');
+    });
+});
+
+describe('signing in another way', function () {
+    beforeEach(function () {
+        $this->user = mfaUser();
+        $this->actingAs($this->user, 'admin');
+    });
+
+    it('still asks for the code on the panel', function () {
+        $this->get('/admin')->assertRedirect('/admin/two-factor');
+    });
+
+    it('shows nothing of the panel until then', function () {
+        $this->get('/admin');
+
+        $this->get('/admin/two-factor')->assertInertia(fn (Assert $page) => $page
+            ->where('xelqunPanel.navigation', [])
+            ->where('xelqunPanel.user', null));
+    });
+
+    it('answers JSON plainly', function () {
+        $this->postJson('/admin/_search', ['q' => 'x'])->assertUnauthorized();
+    });
+
+    it('lets them in once the code passes, for that session', function () {
+        $this->get('/admin');
+
+        answerChallenge(currentCode())->assertRedirect('/admin');
+
+        $this->get('/admin')->assertOk();
+    });
+
+    it('refuses a token until the code passes', function () {
+        Gate::policy(Task::class, TaskPolicy::class);
+        TaskPolicy::$denied = [];
+        $panels = app(Panels::class);
+        $panels->enter($panels->get('admin'));
+        $token = PostResourceToken::make();
+
+        $this->postJson(route('xelqun.tables.query'), ['token' => $token, 'query' => []])->assertForbidden();
+
+        $panels->get('admin')->markChallengePassed($this->user);
+
+        $this->postJson(route('xelqun.tables.query'), ['token' => $token, 'query' => []])->assertOk();
+    });
+
+    it('keeps the session that just turned it on', function () {
+        $this->user->saveAppAuthentication(null);
+        app(Panels::class)->enter(app(Panels::class)->get('admin'));
+        runProfileAction($this->user, 'enable', ['code' => '000000']);
+        $secret = session('xelqun-panels.pending-secret');
+
+        runProfileAction($this->user, 'enable', ['code' => Totp::codeAt($secret, (int) floor(now()->getTimestamp() / 30))])->assertOk();
+
+        $this->get('/admin/profile')->assertOk();
     });
 });
 
@@ -230,6 +313,7 @@ describe('the profile page', function () {
 
     it('needs the password to turn it off, or to make new codes', function (string $action) {
         $this->user->saveAppAuthentication(RFC_SECRET, ['old']);
+        app(Panels::class)->get('admin')->markChallengePassed($this->user);
 
         runProfileAction($this->user, $action, ['current_password' => 'wrong'])->assertUnprocessable();
         expect($this->user->fresh()->getAppAuthenticationSecret())->toBe(RFC_SECRET);
@@ -345,6 +429,7 @@ describe('requiring it', function () {
         $this->get('/admin/profile')->assertOk();
 
         $this->user->saveAppAuthentication(RFC_SECRET, []);
+        app(Panels::class)->get('admin')->markChallengePassed($this->user);
 
         $this->get('/admin')->assertOk();
     });

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use LogicException;
+use Xelqun\Tables\Columns\Column;
+use Xelqun\Tables\Columns\Contracts\Editable;
 use Xelqun\Tables\Table;
 
 /**
@@ -82,6 +84,19 @@ final class RelationTable extends Table
     public function bulkActions(): array
     {
         return $this->canChange() ? $this->getManager()::bulkActions($this->getOwner()) : [];
+    }
+
+    /**
+     * A cell is a change too, so the same rule as actions applies.
+     */
+    public function findEditableColumn(string $name): (Column&Editable)|null
+    {
+        return $this->canChange() ? parent::findEditableColumn($name) : null;
+    }
+
+    public function canReorder(): bool
+    {
+        return $this->canChange() && parent::canReorder();
     }
 
     public function recordUrl(Model $record): ?string

@@ -5,6 +5,7 @@ namespace Xelqun\Panels\Tests\Fixtures\Resources;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Xelqun\Forms\Components\TextInput;
+use Xelqun\Panels\Actions\ExportAction;
 use Xelqun\Panels\Actions\ReplicateAction;
 use Xelqun\Panels\Resources\Resource;
 use Xelqun\Panels\Resources\Tab;
@@ -24,7 +25,12 @@ class TaskResource extends Resource
 
     public static function columns(): array
     {
-        return [TextColumn::make('title')];
+        return [TextColumn::make('title'), TextColumn::make('slug')->hidden()];
+    }
+
+    public static function getHeaderActions(): array
+    {
+        return [ExportAction::for(static::class)];
     }
 
     public static function getTabs(): array

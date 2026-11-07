@@ -43,6 +43,7 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 
 - A signed-out JSON request to a panel gets a 401 instead of a redirect to login.
 - Panels default to Filament's semantic colors: `danger` Red, `gray` Zinc, `info` Blue, `success` Green and `warning` Amber.
+- Two-factor is checked on every panel page and token, not just the panel's login form, so signing in through the app's own login can't get around it. A remember-me login is asked for a code again once its session ends.
 - `colors()` no longer refuses colors other than `primary`, and `getPrimaryColor()` is gone. Use `getThemeVariables()`.
 - With tabs, a resource's table id includes the tab, as in `posts-active-table`.
 

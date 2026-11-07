@@ -2,9 +2,15 @@
 
 namespace Xelqun\Panels\Http\Controllers;
 
+use BackedEnum;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Stringable;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use UnitEnum;
+use Xelqun\Panels\Actions\ExportAction;
 use Xelqun\Panels\Resources\Resource;
 
 /**
@@ -22,9 +28,13 @@ final class ExportController
         abort_unless(is_string($resource) && is_subclass_of($resource, Resource::class), 404);
         abort_unless($resource::can('viewAny'), 403);
 
+        // Only a resource that offers the button has this.
+        abort_unless(collect($resource::getHeaderActions())->contains(fn (mixed $action): bool => $action instanceof ExportAction), 404);
+
         $columns = $resource::getExportColumns();
+        $tabs = $resource::getTabs();
         $tabKey = $request->query('tab');
-        $tab = is_string($tabKey) ? ($resource::getTabs()[$tabKey] ?? null) : null;
+        $tab = is_string($tabKey) && isset($tabs[$tabKey]) ? $tabs[$tabKey] : ($tabs[array_key_first($tabs)] ?? null);
         $query = $tab === null ? $resource::getEloquentQuery() : $tab->applyTo($resource::getEloquentQuery());
 
         return response()->streamDownload(function () use ($columns, $query): void {
@@ -51,7 +61,14 @@ final class ExportController
      */
     private static function neutralize(mixed $value): string
     {
-        $text = is_scalar($value) || $value instanceof \Stringable ? (string) $value : (string) json_encode($value);
+        $value = match (true) {
+            $value instanceof Model => $value->getKey(),
+            $value instanceof Collection => $value->map(fn (mixed $item): mixed => $item instanceof Model ? $item->getKey() : $item)->implode(', '),
+            $value instanceof BackedEnum => $value->value,
+            $value instanceof UnitEnum => $value->name,
+            default => $value,
+        };
+        $text = $value === null || is_scalar($value) || $value instanceof Stringable ? (string) $value : (string) json_encode($value);
 
         return preg_match('/^[=+\-@\t\r]/', $text) === 1 ? "'{$text}" : $text;
     }

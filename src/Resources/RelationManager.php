@@ -2,6 +2,7 @@
 
 namespace Xelqun\Panels\Resources;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -16,6 +17,7 @@ use Xelqun\Forms\Components\Component;
 use Xelqun\Forms\Eloquent\ModelPersister;
 use Xelqun\Forms\Form;
 use Xelqun\Forms\Uploads\UploadBatch;
+use Xelqun\Panels\Panels;
 use Xelqun\Tables\Actions\BulkAction;
 use Xelqun\Tables\Columns\Column;
 use Xelqun\Tables\Filters\BaseFilter;
@@ -187,6 +189,36 @@ abstract class RelationManager
         return $owner->{static::$relationship}();
     }
 
+    /**
+     * Where to look for records to link. A resource's query is the security
+     * boundary, so a related model with a resource goes through it.
+     *
+     * shortcut: a related model with no resource in the panel isn't kept to the tenant here. Give it a resource if its rows belong to a tenant.
+     *
+     * @return Builder<Model>
+     */
+    public static function getLinkableQuery(Model $owner): Builder
+    {
+        $resource = static::findRelatedResource($owner);
+
+        return $resource === null || $resource::isNested()
+            ? static::getRelation($owner)->getRelated()->newQuery()
+            : $resource::getEloquentQuery();
+    }
+
+    /**
+     * @return class-string<\Xelqun\Panels\Resources\Resource>|null
+     */
+    protected static function findRelatedResource(Model $owner): ?string
+    {
+        $model = static::getRelation($owner)->getRelated()::class;
+
+        // $relatedResource may only be lending its form to another model.
+        return collect([static::$relatedResource, ...(app(Panels::class)->current()?->getResources() ?? [])])
+            ->filter()
+            ->first(fn (string $resource): bool => $resource::getModel() === $model);
+    }
+
     public static function canViewFor(Model $owner): bool
     {
         return Gate::allows('viewAny', static::getRelation($owner)->getRelated()::class);
@@ -203,10 +235,21 @@ abstract class RelationManager
     protected static function createRecord(Model $owner, array $data): Model
     {
         $relation = static::getRelation($owner);
-        $record = static::saveRecord($relation instanceof HasOneOrMany ? $relation->make() : $relation->getRelated()->newInstance(), $data);
+        $resource = static::findRelatedResource($owner);
+        $record = $relation instanceof HasOneOrMany ? $relation->make() : $relation->getRelated()->newInstance();
+
+        if ($resource !== null && ! $resource::isNested()) {
+            $resource::assignToTenant($record);
+        }
+
+        static::saveRecord($record, $data);
 
         if ($relation instanceof BelongsToMany) {
             $relation->attach($record);
+        }
+
+        if ($resource !== null && ! $resource::isNested()) {
+            $resource::attachToTenant($record);
         }
 
         return $record;

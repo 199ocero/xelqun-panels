@@ -7,6 +7,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Xelqun\Panels\Contracts\PanelUser;
+use Xelqun\Panels\Http\Controllers\Auth\MultiFactorChallengeController;
 use Xelqun\Panels\Panels;
 
 /**
@@ -47,6 +48,12 @@ final class Authenticate
             abort_unless($user instanceof MustVerifyEmail, 403, config('app.debug') ? __('xelqun-panels::auth.cannot_verify', ['model' => $user::class]) : '');
 
             return redirect()->route($panel->routeName('auth.verification.notice'));
+        }
+
+        if (! $panel->hasPassedChallenge($user)) {
+            abort_if($request->wantsJson(), 401);
+
+            return app(MultiFactorChallengeController::class)->resume($request, $user);
         }
 
         return $next($request);

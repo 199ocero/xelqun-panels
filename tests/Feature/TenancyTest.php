@@ -6,15 +6,20 @@ use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Panels;
+use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\Resource;
 use Xelqun\Panels\Resources\ResourceTable;
 use Xelqun\Panels\Testing\InteractsWithPanels;
 use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
 use Xelqun\Panels\Tests\Fixtures\Team;
+use Xelqun\Panels\Tests\Fixtures\Tenancy\Client;
+use Xelqun\Panels\Tests\Fixtures\Tenancy\ClientProjectsManager;
+use Xelqun\Panels\Tests\Fixtures\Tenancy\ClientResource;
 use Xelqun\Panels\Tests\Fixtures\Tenancy\Folder;
 use Xelqun\Panels\Tests\Fixtures\Tenancy\FolderResource;
 use Xelqun\Panels\Tests\Fixtures\Tenancy\Project;
 use Xelqun\Panels\Tests\Fixtures\Tenancy\ProjectResource;
+use Xelqun\Panels\Tests\Fixtures\Tenancy\TeamForm;
 
 class RelationlessResource extends Resource
 {
@@ -48,6 +53,7 @@ function saveProject(Team $team, array $data, string $method = 'post', ?Project 
 beforeEach(function () {
     Gate::policy(Project::class, RelatedPolicy::class);
     Gate::policy(Folder::class, RelatedPolicy::class);
+    Gate::policy(Client::class, RelatedPolicy::class);
     RelatedPolicy::$denied = [];
 
     $this->user = $this->signIn();
@@ -177,11 +183,19 @@ describe('tokens', function () {
         expect($this->blueProject->fresh())->not->toBeNull();
     });
 
-    it('are refused without a tenant on a panel that needs one', function () {
+    it('reach no records without a tenant on a panel that needs one', function () {
         $panels = app(Panels::class);
         $panels->enter($panels->get('team'));
 
-        $this->queryTable(ResourceTable::for(FolderResource::class))->assertForbidden();
+        $this->queryTable(ResourceTable::for(FolderResource::class))->assertNotFound();
+    });
+
+    it('work outside a tenant, for forms that sit there', function () {
+        $panels = app(Panels::class);
+        $panels->enter($panels->get('team'));
+        $form = TeamForm::make();
+
+        $this->updateForm($form, ['data.name' => 'Green'])->assertOk();
     });
 });
 
@@ -200,6 +214,29 @@ describe('starting a tenant', function () {
         auth('admin')->logout();
 
         $this->get('/team/new-tenant')->assertRedirect('/team/login');
+    });
+});
+
+describe('relation managers in a tenant', function () {
+    it('puts a new related record in the tenant', function () {
+        inTeam($this->red);
+        $owner = Client::create(['name' => 'Acme']);
+        $table = RelationTable::for(ClientResource::class, ClientProjectsManager::class, $owner, false);
+
+        $this->runTableAction($table, 'create', null, ['name' => 'Fresh'])->assertOk();
+
+        expect(Project::withoutGlobalScopes()->where('name', 'Fresh')->sole()->team_id)->toBe($this->red->id);
+    });
+
+    it('only offers records of the tenant to link', function () {
+        inTeam($this->red);
+        $owner = Client::create(['name' => 'Acme']);
+        $this->blueProject->update(['client_id' => null]);
+        $table = RelationTable::for(ClientResource::class, ClientProjectsManager::class, $owner, false);
+
+        $this->runTableAction($table, 'associate', null, ['record' => $this->blueProject->id])->assertStatus(422);
+
+        expect(Project::withoutGlobalScopes()->find($this->blueProject->id)->client_id)->toBeNull();
     });
 });
 

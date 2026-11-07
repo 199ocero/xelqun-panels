@@ -80,7 +80,7 @@ $panel->multiFactorAuthentication(isRequired: true);    // nobody gets past the 
 
 Add the columns with `php artisan vendor:publish --tag=xelqun-panels-mfa`, then put `HasAppAuthentication` and the `InteractsWithAppAuthentication` trait on your user model. People turn it on from the profile page.
 
-It's the standard 30 second, 6 digit TOTP that any authenticator app reads, with 8 recovery codes. A code works once, guesses are limited to 5 a minute, and the right password alone never makes a session. Secrets are encrypted, and only hashes of recovery codes are kept.
+It's the standard 30 second, 6 digit TOTP that any authenticator app reads, with 8 recovery codes. A code works once, guesses are limited to 5 a minute, and the right password alone never gets anyone in. It's checked on every page and token of the panel, so signing in through your app's own login can't get around it, and a remember-me login is asked for a code again in a new session. Secrets are encrypted, and only hashes of recovery codes are kept.
 
 Setup gives a link and a key to type, with no QR code, because that would need a new dependency.
 

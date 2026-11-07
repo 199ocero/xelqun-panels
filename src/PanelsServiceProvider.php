@@ -42,12 +42,13 @@ class PanelsServiceProvider extends ServiceProvider
                     $user = auth()->user();
 
                     // A guest is fine here, because the token's user is compared next.
-                    if ($user !== null && ! ($panel->allows($user) && $panel->hasVerifiedEmail($user))) {
+                    if ($user !== null && ! ($panel->allows($user) && $panel->hasVerifiedEmail($user) && $panel->hasPassedChallenge($user))) {
                         throw InvalidFormToken::make('this user can no longer enter the panel');
                     }
 
-                    if ($panel->hasTenancy()) {
-                        $tenant = $tenantKey === '' ? null : (new ($panel->getTenantModel()))->newQuery()->find($tenantKey);
+                    // No tenant is fine, for what sits outside one, like starting a tenant. Resources refuse without one.
+                    if ($panel->hasTenancy() && $tenantKey !== '') {
+                        $tenant = (new ($panel->getTenantModel()))->newQuery()->find($tenantKey);
 
                         if ($tenant === null || ($user !== null && ! $panel->canAccessTenant($user, $tenant))) {
                             throw InvalidFormToken::make('this user can no longer reach the tenant');

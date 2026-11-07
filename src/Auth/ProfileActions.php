@@ -93,6 +93,8 @@ final class ProfileActions extends ActionSet
 
                 session()->forget(self::PENDING_SECRET);
                 $this->saveWithNewCodes($secret);
+                // They just proved it, so this session stays signed in.
+                app(Panels::class)->current()->markChallengePassed($user);
             });
     }
 
@@ -133,7 +135,10 @@ final class ProfileActions extends ActionSet
             ->schema(fn (): array => [$this->passwordField()])
             ->successNotificationTitle(__($isOn ? 'xelqun-panels::auth.mfa.email_disabled' : 'xelqun-panels::auth.mfa.email_enabled'))
             ->successRedirectUrl(fn (): string => $this->profileUrl())
-            ->action(fn () => $record->saveEmailAuthentication(! $isOn));
+            ->action(function () use ($isOn, $record): void {
+                $record->saveEmailAuthentication(! $isOn);
+                app(Panels::class)->current()->markChallengePassed($record);
+            });
     }
 
     private function passwordField(): TextInput

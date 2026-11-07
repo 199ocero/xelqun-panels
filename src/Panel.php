@@ -779,6 +779,26 @@ final class Panel
     }
 
     /**
+     * Whether this session has passed the second step. It's checked on every page
+     * and token, not just at this panel's login form, so signing in another way,
+     * through the app's own login or a remember-me cookie, doesn't get around it.
+     */
+    public function hasPassedChallenge(?Authenticatable $user): bool
+    {
+        return ! $this->needsChallenge($user) || session($this->getChallengeSessionKey()) === $user?->getAuthIdentifier();
+    }
+
+    public function markChallengePassed(Authenticatable $user): void
+    {
+        session()->put($this->getChallengeSessionKey(), $user->getAuthIdentifier());
+    }
+
+    private function getChallengeSessionKey(): string
+    {
+        return "xelqun-panels.passed-challenge.{$this->id}";
+    }
+
+    /**
      * Whether this user has to set up an authenticator before going any further.
      */
     public function mustSetUpMultiFactorAuthentication(?Authenticatable $user): bool
@@ -1092,7 +1112,7 @@ final class Panel
         $tenant = app(Panels::class)->tenant();
 
         // Without its tenant a panel with tenants has no links to give, as on the email prompt.
-        $isInside = $this->allows($user) && $this->hasVerifiedEmail($user) && (! $this->hasTenancy() || $tenant !== null);
+        $isInside = $this->allows($user) && $this->hasVerifiedEmail($user) && $this->hasPassedChallenge($user) && (! $this->hasTenancy() || $tenant !== null);
 
         return [
             'id' => $this->id,
