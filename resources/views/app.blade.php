@@ -19,6 +19,9 @@
                     var theme = @json($panel->getForcedThemeMode()) || localStorage.getItem('xq-panel-theme') || @json($panel->getDefaultThemeMode());
                     var dark = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                     document.documentElement.classList.toggle('dark', dark);
+
+                    var motion = localStorage.getItem('xq-panel-motion');
+                    document.documentElement.toggleAttribute('data-xq-motion-off', motion ? motion === 'off' : ! @json($panel->hasAnimations()));
                 } catch (error) {}
             })();
         </script>

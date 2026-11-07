@@ -27,6 +27,7 @@ return [
     'System' => 'System',
     'Profile' => 'Profile',
     'Sign out' => 'Sign out',
+    'Animations' => 'Animations',
     'Notifications' => 'Notifications',
     'Notifications, :count unread' => 'Notifications, :count unread',
     'Mark all read' => 'Mark all read',

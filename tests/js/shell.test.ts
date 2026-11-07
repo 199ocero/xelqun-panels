@@ -9,6 +9,7 @@ import XqPanelSearch from '../../resources/js/components/XqPanelSearch.vue';
 import XqPanelSidebar from '../../resources/js/components/XqPanelSidebar.vue';
 import XqPanelSidebarCard from '../../resources/js/components/XqPanelSidebarCard.vue';
 import { setMessages, t } from '../../resources/js/composables/useMessages';
+import { clearMotion, configureMotion, setMotion } from '../../resources/js/composables/useMotion';
 import { configureTheme, setTheme, useThemeSync } from '../../resources/js/composables/useTheme';
 import type { PanelShell } from '../../resources/js/types';
 
@@ -34,7 +35,7 @@ const shell: PanelShell = {
     url: '/admin',
     brand: { name: 'Shop', logo: null, darkLogo: null, logoHeight: '1.75rem' },
     tenant: null,
-    theme: { colors: {}, font: 'Inter', default: 'system', forced: null },
+    theme: { colors: {}, font: 'Inter', default: 'system', forced: null, animations: true },
     breadcrumbs: true,
     userMenuItems: [],
     globalSearch: true,
@@ -759,6 +760,65 @@ describe('the bell', () => {
     });
 });
 
+describe('turning animations off', () => {
+    const isOff = () => document.documentElement.hasAttribute('data-xq-motion-off');
+
+    beforeEach(() => localStorage.clear());
+
+    afterEach(() => clearMotion());
+
+    it('starts on', () => {
+        configureMotion(true);
+
+        expect(isOff()).toBe(false);
+    });
+
+    it("follows the panel's default until someone chooses", () => {
+        configureMotion(false);
+
+        expect(isOff()).toBe(true);
+    });
+
+    it("keeps someone's choice, over the panel's default", () => {
+        configureMotion(true);
+        setMotion(false);
+        expect(isOff()).toBe(true);
+        expect(localStorage.getItem('xq-panel-motion')).toBe('off');
+
+        configureMotion(true);
+        expect(isOff()).toBe(true);
+
+        setMotion(true);
+        configureMotion(false);
+        expect(isOff()).toBe(false);
+    });
+
+    it('leaves pages outside the panel alone', () => {
+        configureMotion(false);
+        clearMotion();
+
+        expect(isOff()).toBe(false);
+    });
+
+    it('skips the theme crossfade too', () => {
+        const startViewTransition = vi.fn((change: () => void) => change());
+
+        window.matchMedia = vi.fn(() => ({
+            matches: false,
+        })) as unknown as typeof window.matchMedia;
+        vi.stubGlobal('document', Object.assign(document, { startViewTransition }));
+        configureMotion(true);
+        setMotion(false);
+
+        setTheme('dark');
+
+        expect(startViewTransition).not.toHaveBeenCalled();
+        setTheme('system');
+        Reflect.deleteProperty(document, 'startViewTransition');
+        vi.unstubAllGlobals();
+    });
+});
+
 describe('the theme', () => {
     const Layout = defineComponent({
         setup() {
@@ -770,6 +830,7 @@ describe('the theme', () => {
 
     beforeEach(() => {
         configureTheme('system', null);
+        configureMotion(true);
         localStorage.clear();
         document.documentElement.classList.remove('dark');
         window.matchMedia = vi.fn(() => ({

@@ -77,6 +77,7 @@ export interface PanelShell {
         font: string;
         default: 'light' | 'dark' | 'system';
         forced: 'light' | 'dark' | null;
+        animations: boolean;
     };
     breadcrumbs: boolean;
     userMenuItems: PanelNavigationItem[];

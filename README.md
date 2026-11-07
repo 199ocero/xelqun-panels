@@ -414,6 +414,8 @@ $panel->colors(fn (): array => ['primary' => Color::fromName(auth()->user()?->th
 
 `brandLogo()`, `darkModeBrandLogo()`, `brandLogoHeight()` and `favicon()` set the brand. `maxContentWidth('full')` sets how wide pages get. `darkMode(false)` removes the dark theme, `darkMode(isForced: true)` makes it the only one, and `defaultThemeMode('dark')` picks the theme until someone chooses. `globalSearch(false)` and `breadcrumbs(false)` remove those.
 
+**Animations** are on by default. Anyone can turn them off for themselves in the user menu, and the choice stays in their browser. `animations(false)` starts a panel with them off, and a system set to reduced motion always wins. To change the feel, override the `--xq-duration-*`, `--xq-stagger` and `--xq-ease-*` tokens.
+
 `topNavigation()` moves the navigation across the top, in place of the sidebar. Phones keep the drawer.
 
 Icons in PHP are names. The panels plugin adds common sidebar icons to the forms set, and `createXelqunForms({ icons })` adds your own.

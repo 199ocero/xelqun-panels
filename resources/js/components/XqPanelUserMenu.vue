@@ -2,10 +2,12 @@
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { XqIcon } from '@xelqun/forms';
-import { Check, LogOut, Monitor, Moon, Settings2, Sun, UserRound } from 'lucide-vue-next';
+import { Check, LogOut, Monitor, Moon, Settings2, Sparkles, Sun, UserRound } from 'lucide-vue-next';
 import {
+    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuItemIndicator,
     DropdownMenuLabel,
     DropdownMenuPortal,
     DropdownMenuRoot,
@@ -13,6 +15,7 @@ import {
     DropdownMenuTrigger,
 } from 'reka-ui';
 import { computed } from 'vue';
+import { setMotion, useMotion } from '../composables/useMotion';
 import { setTheme, useThemeChoice } from '../composables/useTheme';
 import type { ThemeChoice } from '../composables/useTheme';
 import type { PanelNavigationItem, PanelShell } from '../types';
@@ -27,6 +30,7 @@ const props = defineProps<{
     collapsed?: boolean;
 }>();
 const choice = useThemeChoice();
+const isMotionOn = useMotion();
 
 const themes: Array<{ value: ThemeChoice; label: string; icon: typeof Sun }> = [
     { value: 'light', label: 'Light', icon: Sun },
@@ -80,6 +84,19 @@ const initials = computed(() =>
                             />
                         </DropdownMenuItem>
                     </template>
+                    <DropdownMenuCheckboxItem
+                        :class="menuItemClass"
+                        :model-value="isMotionOn"
+                        data-xq-motion-toggle
+                        @update:model-value="setMotion"
+                        @select.prevent
+                    >
+                        <Sparkles class="size-4" aria-hidden="true" />
+                        {{ t('Animations') }}
+                        <DropdownMenuItemIndicator class="ml-auto">
+                            <Check class="size-4" aria-hidden="true" />
+                        </DropdownMenuItemIndicator>
+                    </DropdownMenuCheckboxItem>
                     <template v-if="logoutUrl">
                         <DropdownMenuSeparator
                             v-if="canChangeTheme !== false"

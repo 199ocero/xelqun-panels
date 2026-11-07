@@ -105,3 +105,4 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 - Resources need no generated page files.
 - Charts need no JavaScript library.
 - The admin area keeps its layout between pages, with no reloads.
+- Motion is built in, from one set of tokens, with a switch in the user menu.

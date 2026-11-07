@@ -427,6 +427,11 @@ describe('panel settings', function () {
         expect($shell['userMenuItems'])->toBe([]);
     });
 
+    it('starts with animations on, unless told otherwise', function () {
+        expect(shellFor(fn (Panel $panel) => $panel)['theme']['animations'])->toBeTrue()
+            ->and(shellFor(fn (Panel $panel) => $panel->animations(false))['theme']['animations'])->toBeFalse();
+    });
+
     it('can turn search and breadcrumbs off', function () {
         $shell = shellFor(fn (Panel $panel) => $panel->globalSearch(false)->breadcrumbs(false));
 

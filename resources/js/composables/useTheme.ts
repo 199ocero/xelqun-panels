@@ -1,4 +1,5 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { useMotion } from './useMotion';
 
 export type ThemeChoice = 'light' | 'dark' | 'system';
 
@@ -48,7 +49,8 @@ export function setTheme(next: ThemeChoice): void {
 
 /** The browser fades the whole page across, where it can. */
 function crossfade(change: () => void): void {
-    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isReduced =
+        !useMotion().value || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if ('startViewTransition' in document && !isReduced) {
         document.startViewTransition(change);

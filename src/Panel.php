@@ -146,6 +146,8 @@ final class Panel
 
     private string $defaultThemeMode = 'system';
 
+    private bool $hasAnimations = true;
+
     private bool $hasGlobalSearch = true;
 
     private bool $hasBreadcrumbs = true;
@@ -393,6 +395,22 @@ final class Panel
             $this->isDarkModeForced => 'dark',
             default => null,
         };
+    }
+
+    /**
+     * Whether animations start on. Anyone can change it for themselves from the
+     * user menu, and reduced motion in their system always wins.
+     */
+    public function animations(bool $condition = true): self
+    {
+        $this->hasAnimations = $condition;
+
+        return $this;
+    }
+
+    public function hasAnimations(): bool
+    {
+        return $this->hasAnimations;
     }
 
     public function globalSearch(bool $condition = true): self
@@ -1138,6 +1156,7 @@ final class Panel
                 'font' => $this->font,
                 'default' => $this->defaultThemeMode,
                 'forced' => $this->getForcedThemeMode(),
+                'animations' => $this->hasAnimations,
             ],
             'breadcrumbs' => $this->hasBreadcrumbs,
             'userMenuItems' => $isInside ? array_map(fn (NavigationItem $item): array => $item->toArray(), $this->userMenuItems) : [],

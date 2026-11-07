@@ -129,6 +129,22 @@
 }
 
 /*
+ * Someone can turn animation off from the user menu. Everything reads these
+ * tokens, so this covers forms and tables too. Not zero, so the events that close
+ * a dialog still fire.
+ */
+:root[data-xq-motion-off] {
+    --xq-duration-fast: 1ms;
+    --xq-duration-base: 1ms;
+    --xq-duration-slow: 1ms;
+    --xq-stagger: 0ms;
+}
+
+:root[data-xq-motion-off] .xq-skeleton {
+    animation: none;
+}
+
+/*
  * A page arrives in a short ripple, top to bottom. It plays on a visit, and not on
  * a reload of the same page, because Inertia only remounts it for a visit.
  */
@@ -164,15 +180,15 @@
 
 /* Cards lift a little under the pointer, and only where there's a pointer. */
 @media (hover: hover) {
-    [data-xq-stats] > article,
-    [data-xq-tiles] > * {
+    :root:not([data-xq-motion-off]) [data-xq-stats] > article,
+    :root:not([data-xq-motion-off]) [data-xq-tiles] > * {
         transition:
             translate var(--xq-duration-base) var(--xq-ease-out),
             box-shadow var(--xq-duration-base) var(--xq-ease-out);
     }
 
-    [data-xq-stats] > article:hover,
-    [data-xq-tiles] > :hover {
+    :root:not([data-xq-motion-off]) [data-xq-stats] > article:hover,
+    :root:not([data-xq-motion-off]) [data-xq-tiles] > :hover {
         translate: 0 -2px;
         box-shadow: 0 6px 20px -12px rgb(0 0 0 / 25%);
     }
