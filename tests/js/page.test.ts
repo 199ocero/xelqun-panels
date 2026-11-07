@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import XqPanelPage from '../../resources/js/pages/XqPanelPage.vue';
-import type { PanelContent, PanelPageData } from '../../resources/js/types';
+import type { PanelContent, PanelPageData, PanelWidget } from '../../resources/js/types';
 
 vi.mock('@inertiajs/vue3', () => ({
     Head: { template: '<i />' },
@@ -17,9 +17,15 @@ const XqForm = {
 };
 const XqTable = { props: ['table'], template: '<u data-table>{{ table.id }}</u>' };
 
-function render(page: Partial<PanelPageData>) {
+const XqPanelWidgets = {
+    props: ['widgets'],
+    template: '<div data-widgets>{{ widgets.length }}</div>',
+};
+
+function render(page: Partial<PanelPageData>, widgets?: PanelWidget[]) {
     return mount(XqPanelPage, {
         props: {
+            widgets,
             page: {
                 title: 'Home',
                 eyebrow: null,
@@ -34,11 +40,28 @@ function render(page: Partial<PanelPageData>) {
                 ...page,
             },
         },
-        global: { stubs: { Head: true, XqActions, XqForm, XqTable } },
+        global: { stubs: { Head: true, XqActions, XqForm, XqTable, XqPanelWidgets } },
     });
 }
 
 describe('XqPanelPage', () => {
+    it('keeps the widgets on screen while a reload brings new ones', async () => {
+        const widgets = [{ id: 'one' }, { id: 'two' }] as unknown as PanelWidget[];
+        const wrapper = render({ hasWidgets: true });
+
+        expect(wrapper.find('[data-xq-widgets-loading]').exists()).toBe(true);
+
+        await wrapper.setProps({ widgets });
+        expect(wrapper.find('[data-widgets]').text()).toBe('2');
+
+        await wrapper.setProps({ widgets: undefined });
+        expect(wrapper.find('[data-widgets]').text()).toBe('2');
+        expect(wrapper.find('[data-xq-widgets-loading]').exists()).toBe(false);
+
+        await wrapper.setProps({ widgets: widgets.slice(1) });
+        expect(wrapper.find('[data-widgets]').text()).toBe('1');
+    });
+
     it('marks the open tab and shows its count', () => {
         const tab = { icon: null, badge: null, url: '/posts', active: false };
         const wrapper = render({

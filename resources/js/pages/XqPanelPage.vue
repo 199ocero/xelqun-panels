@@ -1,16 +1,35 @@
 <script setup lang="ts">
-import { Deferred, Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { XqActions, XqForm, XqTabGlide, cn } from '@xelqun/forms';
 import { XqTable } from '@xelqun/tables';
 import XqPanelHook from '../components/XqPanelHook.vue';
 import XqPanelTabs from '../components/XqPanelTabs.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, shallowRef, watch } from 'vue';
 import XqPanelWidgets from '../components/widgets/XqPanelWidgets.vue';
 import XqPanelLayout from '../layouts/XqPanelLayout.vue';
 import type { PanelPageData, PanelWidget } from '../types';
 
 defineOptions({ layout: XqPanelLayout });
 const props = defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
+
+const inertiaPage = usePage();
+
+/** A reload leaves deferred props out, so the widgets on screen stay until the new ones land. */
+const loadedWidgets = shallowRef(props.widgets);
+
+watch(
+    () => props.widgets,
+    (widgets) => {
+        if (widgets) {
+            loadedWidgets.value = widgets;
+        }
+    },
+);
+
+/** Saving and staying on the page isn't a visit, so it keeps the page rather than rebuilding it. */
+function keepsPage(next: { url: string; props: Record<string, unknown> }): boolean {
+    return next.url === inertiaPage.url || Object.keys(next.props.errors ?? {}).length > 0;
+}
 
 /** Relation tables take turns, so a record with several stays one page tall. */
 const relationTables = computed(() =>
@@ -56,18 +75,16 @@ const hiddenRelations = computed(() =>
             </ul>
         </section>
         <XqPanelTabs v-if="page.tabs.length > 0" :tabs="page.tabs" />
-        <Deferred v-if="page.hasWidgets" data="widgets">
-            <template #fallback>
-                <div class="gap-4 sm:grid-cols-2 lg:grid-cols-4 grid" data-xq-widgets-loading>
-                    <div
-                        v-for="placeholder in 4"
-                        :key="placeholder"
-                        class="h-36 xq-skeleton rounded-xq-lg animate-xq-skeleton"
-                    ></div>
-                </div>
-            </template>
-            <XqPanelWidgets v-if="widgets" :widgets="widgets" />
-        </Deferred>
+        <template v-if="page.hasWidgets">
+            <XqPanelWidgets v-if="loadedWidgets" :widgets="loadedWidgets" />
+            <div v-else class="gap-4 sm:grid-cols-2 lg:grid-cols-4 grid" data-xq-widgets-loading>
+                <div
+                    v-for="placeholder in 4"
+                    :key="placeholder"
+                    class="h-36 xq-skeleton rounded-xq-lg animate-xq-skeleton"
+                ></div>
+            </div>
+        </template>
         <template v-for="item in page.content" :key="item.schema.id">
             <section
                 v-if="item.type === 'table' && item.heading"
@@ -103,15 +120,18 @@ const hiddenRelations = computed(() =>
                 <XqTable :table="item.schema" />
             </section>
             <XqTable v-else-if="item.type === 'table'" :table="item.schema" />
-            <XqForm
-                v-else-if="item.type === 'form'"
-                :key="item.revision"
-                :form="item.schema"
-                :action="item.action"
-                :method="item.method"
-                :submit-label="item.submitLabel"
-                class="max-w-2xl"
-            />
+            <!-- The form rebuilds when its record changes. The wrapper keeps that from replaying the entrance. -->
+            <div v-else-if="item.type === 'form'">
+                <XqForm
+                    :key="item.revision"
+                    :form="item.schema"
+                    :action="item.action"
+                    :method="item.method"
+                    :submit-label="item.submitLabel"
+                    :preserve-state="keepsPage"
+                    class="max-w-2xl"
+                />
+            </div>
             <XqActions v-else :actions="item.schema" />
         </template>
         <XqPanelHook name="content.end" />
