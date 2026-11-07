@@ -10,7 +10,7 @@ defineProps<{ tabs: PanelTab[] }>();
 <template>
     <nav
         :aria-label="t('Views')"
-        class="gap-1 border-xq-border -mt-2 relative flex overflow-x-auto border-b"
+        class="gap-1 border-xq-border -mt-2 relative flex [scrollbar-width:none] overflow-x-auto border-b"
         data-xq-tabs
     >
         <XqTabGlide class="bottom-0 h-0.5 bg-xq-primary" />

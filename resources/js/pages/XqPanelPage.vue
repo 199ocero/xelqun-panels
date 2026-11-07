@@ -94,7 +94,7 @@ const hiddenRelations = computed(() =>
                 <div
                     v-if="relationTables.length > 1"
                     role="tablist"
-                    class="gap-1 border-xq-border relative flex overflow-x-auto border-b"
+                    class="gap-1 border-xq-border relative flex [scrollbar-width:none] overflow-x-auto border-b"
                     data-xq-relation-tabs
                 >
                     <XqTabGlide class="bottom-0 h-0.5 bg-xq-primary" />
