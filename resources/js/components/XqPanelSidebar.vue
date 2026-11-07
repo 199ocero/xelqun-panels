@@ -3,6 +3,7 @@ import { t } from '../composables/useMessages';
 import { Link } from '@inertiajs/vue3';
 import { PanelLeft, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useGlidingHover } from '../composables/useGlidingHover';
 import type { PanelShell } from '../types';
 import { iconButtonClass } from '../ui/classes';
 import XqPanelHook from './XqPanelHook.vue';
@@ -14,6 +15,8 @@ import XqPanelUserMenu from './XqPanelUserMenu.vue';
 
 const props = defineProps<{ panel: PanelShell; collapsed?: boolean }>();
 defineEmits<{ collapse: []; search: [] }>();
+
+const { glideClass, glideStyle, glideTo, hideGlide } = useGlidingHover();
 
 const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase());
 </script>
@@ -86,13 +89,25 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
             </button>
         </div>
 
-        <div class="gap-5 min-h-0 flex flex-1 flex-col overflow-y-auto">
+        <div
+            class="gap-5 min-h-0 relative flex flex-1 flex-col overflow-y-auto"
+            @mouseover="glideTo"
+            @focusin="glideTo"
+            @mouseleave="hideGlide"
+            @focusout="hideGlide"
+        >
+            <span
+                aria-hidden="true"
+                :class="glideClass"
+                :style="glideStyle"
+                data-xq-nav-glide
+            ></span>
             <div
                 v-for="group in panel.navigation"
                 :key="group.label ?? ''"
                 role="group"
                 :aria-label="group.label ?? undefined"
-                class="gap-0.5 grid"
+                class="gap-0.5 relative grid"
             >
                 <p
                     v-if="group.label && !collapsed"

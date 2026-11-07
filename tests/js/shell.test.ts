@@ -136,6 +136,58 @@ describe('the new button', () => {
     });
 });
 
+describe('the gliding highlight', () => {
+    const glide = (wrapper: ReturnType<typeof mount>) => wrapper.find('[data-xq-nav-glide]');
+
+    it('stays hidden until an item is hovered', () => {
+        const wrapper = mount(XqPanelSidebar, { props: { panel: shell } });
+
+        expect(glide(wrapper).attributes('style')).toContain('opacity: 0');
+    });
+
+    it('appears on the first item, then slides between the next ones', async () => {
+        const wrapper = mount(XqPanelSidebar, { props: { panel: shell } });
+        const items = wrapper.findAll('[data-xq-nav-item]');
+
+        await items[0].trigger('mouseover');
+        expect(glide(wrapper).attributes('style')).toContain('opacity: 1');
+        expect(glide(wrapper).classes().join(' ')).not.toContain('[transform');
+
+        await items[1].trigger('mouseover');
+        expect(glide(wrapper).classes().join(' ')).toContain('[transform');
+    });
+
+    it('fades out when the pointer leaves, and starts fresh next time', async () => {
+        const wrapper = mount(XqPanelSidebar, { props: { panel: shell } });
+        const items = wrapper.findAll('[data-xq-nav-item]');
+
+        await items[0].trigger('mouseover');
+        await items[1].trigger('mouseover');
+        glide(wrapper).element.parentElement!.dispatchEvent(new Event('mouseleave'));
+        await nextTick();
+
+        expect(glide(wrapper).attributes('style')).toContain('opacity: 0');
+
+        await items[1].trigger('mouseover');
+        expect(glide(wrapper).classes().join(' ')).not.toContain('[transform');
+    });
+
+    it('follows the keyboard too', async () => {
+        const wrapper = mount(XqPanelSidebar, { props: { panel: shell } });
+
+        await wrapper.find('[data-xq-nav-item]').trigger('focusin');
+
+        expect(glide(wrapper).attributes('style')).toContain('opacity: 1');
+    });
+
+    it('stays out of the way of screen readers and clicks', () => {
+        const wrapper = mount(XqPanelSidebar, { props: { panel: shell } });
+
+        expect(glide(wrapper).attributes('aria-hidden')).toBe('true');
+        expect(glide(wrapper).classes()).toContain('pointer-events-none');
+    });
+});
+
 describe('translations', () => {
     afterEach(() => setMessages({}));
 

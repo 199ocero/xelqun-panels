@@ -12,10 +12,11 @@ defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
         :href="item.url"
         :aria-current="item.active ? 'page' : undefined"
         :title="collapsed ? item.label : undefined"
+        data-xq-nav-item
         :class="
             cn(
-                'gap-2.5 px-2.5 text-sm h-9 rounded-xq-sm flex items-center transition-colors',
-                'focus-visible:ring-xq-ring hover:bg-xq-nav-hover focus-visible:ring-2 focus-visible:outline-none',
+                'gap-2.5 px-2.5 text-sm h-9 rounded-xq-sm relative flex items-center transition-colors',
+                'focus-visible:ring-xq-ring focus-visible:ring-2 focus-visible:outline-none',
                 item.active
                     ? 'font-medium text-xq-foreground bg-xq-nav-active'
                     : 'text-xq-foreground/80',
