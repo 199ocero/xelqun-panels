@@ -34,6 +34,11 @@ class EditRecord extends ResourcePage
         ];
     }
 
+    protected function getWidgets(): array
+    {
+        return $this->resource::getRecordWidgets();
+    }
+
     public function content(): array
     {
         return [

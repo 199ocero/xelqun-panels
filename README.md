@@ -362,7 +362,7 @@ class Reports extends Page
 | `ChartWidget`   | Line, bar and doughnut charts, drawn with no chart library.                                                                                                                    |
 | `Widget`        | Your own, with a Vue component registered in `createXelqunForms({ components })`.                                                                                              |
 
-Set `$columnSpan` (out of 12), `$sort` and `$heading`, and override `canView()` to hide one. `getHeaderWidgets()` on a resource shows widgets above its list.
+Set `$columnSpan` (out of 12), `$sort` and `$heading`, and override `canView()` to hide one. `getHeaderWidgets()` on a resource shows widgets above its list, and `getRecordWidgets()` above a record, where a widget reads it from `$this->record`.
 
 ```php
 class OrdersChart extends ChartWidget

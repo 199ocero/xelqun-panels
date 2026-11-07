@@ -85,7 +85,9 @@ abstract class Page
      */
     public function getBreadcrumbs(): array
     {
-        return [['label' => $this->getHeading()]];
+        $cluster = static::getCluster();
+
+        return [...($cluster === null ? [] : [['label' => $cluster::getLabel()]]), ['label' => $this->getHeading()]];
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -219,6 +221,14 @@ abstract class Page
     }
 
     /**
+     * @param  class-string<PanelWidget>  $widget
+     */
+    protected function makeWidget(string $widget): PanelWidget
+    {
+        return $widget::make();
+    }
+
+    /**
      * Deferred, so the page paints at once and a slow query only holds back the cards.
      *
      * @return array<string, mixed>
@@ -229,7 +239,7 @@ abstract class Page
             ->filter(fn (string $widget): bool => $widget::canView())
             ->sortBy(fn (string $widget): int => $widget::getSort())
             // One failing widget shouldn't take the others down. rescue() reports it.
-            ->map(fn (string $widget): ?array => rescue(fn (): array => $widget::make()->toWidget()))
+            ->map(fn (string $widget): ?array => rescue(fn (): array => $this->makeWidget($widget)->toWidget()))
             ->filter()
             ->values()
             ->all())];

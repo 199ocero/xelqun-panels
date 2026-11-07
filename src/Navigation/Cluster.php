@@ -21,12 +21,17 @@ abstract class Cluster
 
     protected static int $navigationSort = 0;
 
+    public static function getLabel(): string
+    {
+        return static::$navigationLabel ?? Str::headline(class_basename(static::class));
+    }
+
     /**
      * @param  array<int, NavigationItem>  $members  What this user can reach, in order.
      */
     public static function getNavigationItem(array $members): NavigationItem
     {
-        return NavigationItem::make(static::$navigationLabel ?? Str::headline(class_basename(static::class)))
+        return NavigationItem::make(static::getLabel())
             ->icon(static::$navigationIcon)
             ->group(static::$navigationGroup)
             ->sort(static::$navigationSort)

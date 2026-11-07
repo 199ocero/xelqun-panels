@@ -341,6 +341,10 @@ describe('clusters', function () {
             ->where('xelqunPanel.navigation', fn ($groups): bool => collect($groups)->flatMap(fn (array $group): array => $group['items'])->firstWhere('label', 'Settings')['active']));
     });
 
+    it('names the cluster in the breadcrumbs', function () {
+        $this->get('/admin/billing')->assertInertia(fn (Assert $page) => $page->where('page.breadcrumbs.0.label', 'Settings'));
+    });
+
     it('leaves out a member the user can\'t reach', function () {
         config(['testing.team_settings' => false]);
 

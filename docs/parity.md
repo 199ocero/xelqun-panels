@@ -15,7 +15,7 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 | Singular resources        | Yes        | `ManageSingleRecord`.                                                                                 |
 | Simple resources          | Yes        | `ManageRecords`.                                                                                      |
 | Global search             | Yes        |                                                                                                       |
-| Widgets on resource pages | Partly     | On the list page. Not on record pages.                                                                |
+| Widgets on resource pages | Yes        | On lists, and on record pages with the record.                                                        |
 | Custom resource pages     | Yes        |                                                                                                       |
 
 ## Tables
@@ -85,7 +85,7 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 | Navigation, groups and badges       | Yes        |                                                                       |
 | Top navigation                      | Yes        |                                                                       |
 | User menu                           | Yes        |                                                                       |
-| Clusters                            | Partly     | No URL prefix, and members don't show the cluster in breadcrumbs.     |
+| Clusters                            | Partly     | Members keep their own URLs, with no shared prefix.                   |
 | Sub navigation                      | Yes        |                                                                       |
 | Authentication flows                | Yes        |                                                                       |
 | Multi-factor authentication         | Partly     | App codes, email codes and recovery codes. App setup has no QR code, because that needs a new dependency. |

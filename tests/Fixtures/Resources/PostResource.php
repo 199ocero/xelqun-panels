@@ -41,6 +41,11 @@ class PostResource extends Resource
         return self::$headerWidgets;
     }
 
+    public static function getRecordWidgets(): array
+    {
+        return self::$headerWidgets;
+    }
+
     public static function form(): array
     {
         return [

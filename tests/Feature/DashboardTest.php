@@ -9,6 +9,7 @@ use Xelqun\Panels\Tests\Fixtures\Resources\PostPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostResource;
 use Xelqun\Panels\Tests\Fixtures\Widgets\BrokenWidget;
 use Xelqun\Panels\Tests\Fixtures\Widgets\PendingPosts;
+use Xelqun\Panels\Tests\Fixtures\Widgets\RecordStats;
 use Xelqun\Panels\Tests\Fixtures\Widgets\SalesChart;
 
 beforeEach(function () {
@@ -210,4 +211,16 @@ it('shows a resource\'s widgets above its list', function () {
     PostResource::$headerWidgets = [];
 
     $this->get('/admin/posts')->assertInertia(fn (Assert $page) => $page->where('page.hasWidgets', false));
+});
+
+it('gives a widget on a record\'s page that record', function () {
+    Gate::policy(Post::class, PostPolicy::class);
+    PostPolicy::$denied = [];
+    PostResource::$headerWidgets = [RecordStats::class];
+    $post = Post::create(['title' => 'Mine']);
+
+    $this->get("/admin/posts/{$post->id}", ['X-Inertia' => 'true', 'X-Inertia-Partial-Component' => 'xelqun/Panel', 'X-Inertia-Partial-Data' => 'widgets', 'X-Inertia-Version' => ''])
+        ->assertJsonPath('props.widgets.0.data.stats.0.value', 'Mine');
+
+    PostResource::$headerWidgets = [];
 });

@@ -28,6 +28,11 @@ class ViewRecord extends ResourcePage
         return ! $this->resource::hasPage('edit') ? [] : [EditAction::for($this->resource)->button()];
     }
 
+    protected function getWidgets(): array
+    {
+        return $this->resource::getRecordWidgets();
+    }
+
     public function content(): array
     {
         return [

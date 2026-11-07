@@ -24,7 +24,7 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **Soft deletes.** A model that uses them gets a filter, restore and force delete, one at a time or in bulk.
 - **Linking existing records.** `AttachAction`, `DetachAction`, `AssociateAction` and `DissociateAction` for relation managers.
 - **Chart widgets.** `ChartWidget` draws line, bar and doughnut charts as SVG, with no chart library.
-- **Widgets on resource lists.** `Resource::getHeaderWidgets()`.
+- **Widgets on resource pages.** `getHeaderWidgets()` above a list, and `getRecordWidgets()` above a record.
 - **Clusters.** `Cluster` puts pages and resources behind one link, with tabs between them.
 - **One-record resources.** `ManageSingleRecord` edits a single record, with no list.
 - **More panel settings.** `brandLogo()`, `darkModeBrandLogo()`, `brandLogoHeight()`, `favicon()`, `maxContentWidth()`, `darkMode()`, `defaultThemeMode()`, `globalSearch()`, `breadcrumbs()` and `userMenuItems()`.

@@ -183,6 +183,17 @@ abstract class Resource
     }
 
     /**
+     * Widgets on a record's view and edit pages. A Widget reads the record from
+     * $this->record.
+     *
+     * @return array<int, class-string<PanelWidget>>
+     */
+    public static function getRecordWidgets(): array
+    {
+        return [];
+    }
+
+    /**
      * Relationship tables for the edit and view pages.
      *
      * @return array<int, class-string<RelationManager>>

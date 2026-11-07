@@ -9,6 +9,8 @@ use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\Resource;
+use Xelqun\Panels\Widgets\PanelWidget;
+use Xelqun\Panels\Widgets\Widget;
 
 /**
  * A page that works for any resource. The route says which, so a resource needs
@@ -73,6 +75,13 @@ abstract class ResourcePage extends Page
         $this->record = $key === null ? null : $this->resource::findRecord($key);
     }
 
+    protected function makeWidget(string $widget): PanelWidget
+    {
+        $made = parent::makeWidget($widget);
+
+        return $made instanceof Widget ? $made->forRecord($this->record) : $made;
+    }
+
     public function getSubNavigation(): array
     {
         if ($this->record?->exists && ($items = $this->resource::getRecordSubNavigation($this->record)) !== []) {
@@ -82,6 +91,16 @@ abstract class ResourcePage extends Page
         $cluster = $this->resource::getCluster();
 
         return $cluster === null ? [] : app(Panels::class)->current()->getClusterNavigation($cluster);
+    }
+
+    /**
+     * @return array<int, array{label: string}>
+     */
+    protected function getClusterBreadcrumbs(): array
+    {
+        $cluster = $this->resource::getCluster();
+
+        return $cluster === null ? [] : [['label' => $cluster::getLabel()]];
     }
 
     /**
@@ -132,6 +151,7 @@ abstract class ResourcePage extends Page
     public function getBreadcrumbs(): array
     {
         return [
+            ...$this->getClusterBreadcrumbs(),
             ...$this->getParentBreadcrumbs(),
             ['label' => $this->resource::getNavigationLabel(), 'url' => $this->resource::getUrl()],
             ['label' => $this->getHeading()],
