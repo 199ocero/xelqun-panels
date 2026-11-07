@@ -71,6 +71,21 @@ describe('the sidebar', () => {
         expect(wrapper.text()).toContain('12');
     });
 
+    it('separates groups with a line only when collapsed', () => {
+        const groups = [
+            { label: 'One', items: [item('First')] },
+            { label: 'Two', items: [item('Second')] },
+            { label: 'Three', items: [item('Third')] },
+        ];
+        const panel = { ...shell, navigation: groups };
+
+        const collapsed = mount(XqPanelSidebar, { props: { panel, collapsed: true } });
+        const expanded = mount(XqPanelSidebar, { props: { panel } });
+
+        expect(collapsed.findAll('[data-xq-nav-divider]')).toHaveLength(2);
+        expect(expanded.findAll('[data-xq-nav-divider]')).toHaveLength(0);
+    });
+
     it('keeps labels for screen readers when collapsed, and drops the badges', () => {
         const wrapper = mount(XqPanelSidebar, { props: { panel: shell, collapsed: true } });
         const label = wrapper

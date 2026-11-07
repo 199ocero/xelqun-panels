@@ -2,6 +2,7 @@
 import { t } from '../composables/useMessages';
 import { Link } from '@inertiajs/vue3';
 import { PanelLeft, Search } from 'lucide-vue-next';
+import { TooltipProvider } from 'reka-ui';
 import { computed, ref } from 'vue';
 import { useActivePill, useGlidingHover } from '../composables/useGlidingHover';
 import type { PanelShell } from '../types';
@@ -100,48 +101,59 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
             </button>
         </div>
 
-        <div
-            ref="list"
-            class="gap-5 min-h-0 relative flex flex-1 flex-col overflow-y-auto"
-            @mouseover="glideTo"
-            @focusin="glideTo"
-            @mouseleave="hideGlide"
-            @focusout="hideGlide"
-        >
-            <span
-                aria-hidden="true"
-                :class="activeClass"
-                :style="activeStyle"
-                data-xq-nav-active
-            ></span>
-            <span
-                aria-hidden="true"
-                :class="glideClass"
-                :style="glideStyle"
-                data-xq-nav-glide
-            ></span>
+        <TooltipProvider :delay-duration="150">
             <div
-                v-for="group in panel.navigation"
-                :key="group.label ?? ''"
-                role="group"
-                :aria-label="group.label ?? undefined"
-                class="gap-0.5 relative grid"
+                ref="list"
+                :class="[
+                    'min-h-0 relative flex flex-1 flex-col overflow-y-auto',
+                    collapsed ? 'gap-2' : 'gap-5',
+                ]"
+                @mouseover="glideTo"
+                @focusin="glideTo"
+                @mouseleave="hideGlide"
+                @focusout="hideGlide"
             >
-                <p
-                    v-if="group.label && !collapsed"
+                <span
                     aria-hidden="true"
-                    class="px-2.5 pb-1 text-xs font-medium text-xq-muted-foreground"
+                    :class="activeClass"
+                    :style="activeStyle"
+                    data-xq-nav-active
+                ></span>
+                <span
+                    aria-hidden="true"
+                    :class="glideClass"
+                    :style="glideStyle"
+                    data-xq-nav-glide
+                ></span>
+                <div
+                    v-for="(group, index) in panel.navigation"
+                    :key="group.label ?? ''"
+                    role="group"
+                    :aria-label="group.label ?? undefined"
+                    class="gap-0.5 relative grid"
                 >
-                    {{ group.label }}
-                </p>
-                <XqPanelNavItem
-                    v-for="item in group.items"
-                    :key="item.label"
-                    :item="item"
-                    :collapsed="collapsed"
-                />
+                    <span
+                        v-if="collapsed && index > 0"
+                        aria-hidden="true"
+                        class="mx-2 mb-2 bg-xq-border block h-px"
+                        data-xq-nav-divider
+                    ></span>
+                    <p
+                        v-if="group.label && !collapsed"
+                        aria-hidden="true"
+                        class="px-2.5 pb-1 text-xs font-medium text-xq-muted-foreground"
+                    >
+                        {{ group.label }}
+                    </p>
+                    <XqPanelNavItem
+                        v-for="item in group.items"
+                        :key="item.label"
+                        :item="item"
+                        :collapsed="collapsed"
+                    />
+                </div>
             </div>
-        </div>
+        </TooltipProvider>
 
         <XqPanelHook name="sidebar.end" />
 

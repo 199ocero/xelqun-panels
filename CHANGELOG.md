@@ -51,6 +51,7 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 
 ### Fixed
 
+- **A collapsed sidebar stays usable.** Links show their name in a tooltip, a line separates the groups, and the avatar opens the user menu, which was squeezed out. The whole user row opens it, not just the settings icon.
 - **Saving and running an action no longer flicker.** A save that stays on the page keeps the page, and widgets stay on screen while a reload brings new data, so the entrance doesn't replay.
 - **A new panel works straight away.** `make:xelqun-panel` left out `login()` and any pages, so `/admin` was a 404.
 - **A missing `PanelUser` says so at login, in debug mode.** With the right password, the login page only said the credentials were wrong.

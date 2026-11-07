@@ -19,7 +19,7 @@ import { setMotion, useMotion } from '../composables/useMotion';
 import { setTheme, useThemeChoice } from '../composables/useTheme';
 import type { ThemeChoice } from '../composables/useTheme';
 import type { PanelNavigationItem, PanelShell } from '../types';
-import { iconButtonClass, menuClass, menuItemClass } from '../ui/classes';
+import { menuClass, menuItemClass } from '../ui/classes';
 
 const props = defineProps<{
     user: NonNullable<PanelShell['user']>;
@@ -48,24 +48,51 @@ const initials = computed(() =>
 </script>
 
 <template>
-    <div class="gap-2.5 flex items-center" data-xq-user>
-        <span
-            aria-hidden="true"
-            class="text-xs font-medium size-8 flex shrink-0 items-center justify-center rounded-full bg-xq-nav-active"
-        >
-            {{ initials }}
-        </span>
-        <div v-if="!collapsed" class="min-w-0 text-sm flex-1">
-            <p class="font-medium truncate">{{ user.name }}</p>
-            <p class="text-xs text-xq-muted-foreground truncate">{{ user.email }}</p>
-        </div>
+    <div data-xq-user>
         <DropdownMenuRoot :modal="false">
-            <DropdownMenuTrigger :class="iconButtonClass" :aria-label="t('Open user menu')">
-                <Settings2 class="size-4" aria-hidden="true" />
+            <DropdownMenuTrigger
+                :class="[
+                    'group gap-2.5 p-1 rounded-xq-sm flex w-full cursor-pointer items-center text-left transition-[background-color,scale] duration-(--xq-duration-fast) active:scale-[0.98]',
+                    'focus-visible:ring-xq-ring hover:bg-xq-nav-hover focus-visible:ring-2 focus-visible:outline-none data-[state=open]:bg-xq-nav-hover',
+                    collapsed && 'justify-center',
+                ]"
+                :aria-label="t('Open user menu')"
+            >
+                <span
+                    aria-hidden="true"
+                    class="text-xs font-medium size-8 flex shrink-0 items-center justify-center rounded-full bg-xq-nav-active"
+                >
+                    {{ initials }}
+                </span>
+                <span v-if="!collapsed" class="min-w-0 text-sm flex-1">
+                    <span class="font-medium block truncate">{{ user.name }}</span>
+                    <span class="text-xs text-xq-muted-foreground block truncate">
+                        {{ user.email }}
+                    </span>
+                </span>
+                <Settings2
+                    v-if="!collapsed"
+                    class="size-4 mr-1.5 text-xq-muted-foreground group-hover:text-xq-foreground shrink-0 transition-[scale,color] duration-(--xq-duration-base) ease-(--xq-ease-spring) group-hover:scale-110"
+                    aria-hidden="true"
+                />
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
-                <DropdownMenuContent :class="menuClass" side="top" align="end" :side-offset="6">
+                <DropdownMenuContent
+                    :class="menuClass"
+                    :side="collapsed ? 'right' : 'top'"
+                    align="end"
+                    :side-offset="collapsed ? 14 : 6"
+                >
                     <XqMenuGlide />
+                    <template v-if="collapsed">
+                        <DropdownMenuLabel class="px-2 py-1.5">
+                            <span class="text-sm font-medium block truncate">{{ user.name }}</span>
+                            <span class="text-xs text-xq-muted-foreground block truncate">
+                                {{ user.email }}
+                            </span>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator class="my-1 bg-xq-border h-px" />
+                    </template>
                     <template v-if="canChangeTheme !== false">
                         <DropdownMenuLabel class="px-2 py-1.5 text-xs text-xq-muted-foreground">
                             {{ t('Theme') }}
