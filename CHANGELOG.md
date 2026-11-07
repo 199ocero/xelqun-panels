@@ -37,7 +37,7 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **Relation tables on tabs**, when a record has more than one.
 - **Record sub-navigation.** `getRecordSubNavigation()` adds tabs across a record's pages.
 - **`make:xelqun-widget`** makes a chart or stats widget, and **`InteractsWithPanels`** helps tests sign in on a panel.
-- **Motion throughout.** One highlight glides between sidebar links and table rows, and a pill slides to the current page. Sidebar links press, their icons lift on hover, and a badge pops when its count changes. Pages and widgets ripple in, numbers rise digit by digit, charts draw themselves, and menus, the palette and the drawer all open and close properly. Theme changes crossfade. It follows forms' `--xq-*` tokens, and reduced motion turns it off.
+- **Motion throughout.** One highlight glides between sidebar links and table rows, and a pill slides to the current page. The same glide runs through menus and the search palette, by pointer or arrow keys. Sidebar links press, their icons lift on hover, and a badge pops when its count changes. Pages and widgets ripple in, numbers rise digit by digit, charts draw themselves, and menus, the palette and the drawer all open and close properly. Theme changes crossfade. It follows forms' `--xq-*` tokens, and reduced motion turns it off.
 - **An animations switch.** Anyone can turn animations off in the user menu, and `animations(false)` sets a panel's default.
 - **Infolists.** `Resource::infolist()` with `TextEntry`, `IconEntry` and `ImageEntry`, in place of a disabled form on the view page.
 

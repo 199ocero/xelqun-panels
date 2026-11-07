@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
+import { XqMenuGlide } from '@xelqun/forms';
 import { Check, ChevronsUpDown } from 'lucide-vue-next';
 import {
     DropdownMenuContent,
@@ -36,6 +37,7 @@ defineProps<{ tenant: NonNullable<PanelShell['tenant']> }>();
                 :side-offset="6"
                 data-xq-tenant-menu
             >
+                <XqMenuGlide />
                 <DropdownMenuItem
                     v-for="option in tenant.tenants"
                     :key="option.url"

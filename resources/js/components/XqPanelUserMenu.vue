@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
-import { XqIcon } from '@xelqun/forms';
+import { XqIcon, XqMenuGlide } from '@xelqun/forms';
 import { Check, LogOut, Monitor, Moon, Settings2, Sparkles, Sun, UserRound } from 'lucide-vue-next';
 import {
     DropdownMenuCheckboxItem,
@@ -65,6 +65,7 @@ const initials = computed(() =>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
                 <DropdownMenuContent :class="menuClass" side="top" align="end" :side-offset="6">
+                    <XqMenuGlide />
                     <template v-if="canChangeTheme !== false">
                         <DropdownMenuLabel class="px-2 py-1.5 text-xs text-xq-muted-foreground">
                             {{ t('Theme') }}

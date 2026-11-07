@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
-import { XqIcon, cn } from '@xelqun/forms';
+import { XqIcon, cn, XqMenuGlide } from '@xelqun/forms';
 import { Plus } from 'lucide-vue-next';
 import {
     DropdownMenuContent,
@@ -42,6 +42,7 @@ defineProps<{ items: PanelQuickCreateItem[]; collapsed?: boolean }>();
                 :side-offset="6"
                 data-xq-new-menu
             >
+                <XqMenuGlide />
                 <DropdownMenuItem
                     v-for="item in items"
                     :key="item.url"

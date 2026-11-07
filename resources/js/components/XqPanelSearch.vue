@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
-import { HttpError, XqIcon, cn, postJson } from '@xelqun/forms';
+import { HttpError, XqIcon, XqMenuGlide, cn, postJson } from '@xelqun/forms';
 import { Search } from 'lucide-vue-next';
 import {
     DialogContent,
@@ -151,7 +151,8 @@ function go(result: PanelSearchResult | undefined): void {
                         @keydown.enter.prevent="go(results[highlighted])"
                     />
                 </div>
-                <div v-if="results.length > 0" class="p-1.5 max-h-96 overflow-y-auto">
+                <div v-if="results.length > 0" class="p-1.5 max-h-96 relative overflow-y-auto">
+                    <XqMenuGlide />
                     <div v-for="group in groups" :key="group.label">
                         <p class="px-2.5 pt-2 pb-1 text-xs font-medium text-xq-muted-foreground">
                             {{ group.label }}
@@ -168,11 +169,12 @@ function go(result: PanelSearchResult | undefined): void {
                                 <button
                                     type="button"
                                     tabindex="-1"
+                                    :data-highlighted="
+                                        results.indexOf(result) === highlighted ? '' : undefined
+                                    "
                                     :class="
                                         cn(
-                                            'gap-2.5 px-2.5 py-2 text-sm rounded-xq-sm flex w-full cursor-pointer items-center text-left transition-colors duration-(--xq-duration-fast)',
-                                            results.indexOf(result) === highlighted &&
-                                                'bg-xq-accent',
+                                            'gap-2.5 px-2.5 py-2 text-sm rounded-xq-sm relative flex w-full cursor-pointer items-center text-left',
                                         )
                                     "
                                     @mouseenter="highlighted = results.indexOf(result)"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { XqIcon, cn } from '@xelqun/forms';
+import { XqIcon, cn, XqMenuGlide } from '@xelqun/forms';
 import { ChevronDown } from 'lucide-vue-next';
 import {
     DropdownMenuContent,
@@ -50,6 +50,7 @@ const itemClass =
                 </DropdownMenuTrigger>
                 <DropdownMenuPortal>
                     <DropdownMenuContent :class="menuClass" align="start" :side-offset="6">
+                        <XqMenuGlide />
                         <DropdownMenuItem
                             v-for="item in group.items"
                             :key="item.label"
