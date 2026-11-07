@@ -15,14 +15,14 @@ final class StoredNotification extends Notification
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function __construct(private readonly array $payload) {}
+    public function __construct(private readonly array $payload, private readonly bool $shouldBroadcast = false) {}
 
     /**
      * @return array<int, string>
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return $this->shouldBroadcast ? ['database', 'broadcast'] : ['database'];
     }
 
     /**
@@ -31,5 +31,15 @@ final class StoredNotification extends Notification
     public function toDatabase(object $notifiable): array
     {
         return $this->payload;
+    }
+
+    /**
+     * The bell only needs to know to check, so nothing else crosses the socket.
+     *
+     * @return array<string, mixed>
+     */
+    public function toBroadcast(object $notifiable): array
+    {
+        return [];
     }
 }

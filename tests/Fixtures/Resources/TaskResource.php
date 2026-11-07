@@ -2,10 +2,12 @@
 
 namespace Xelqun\Panels\Tests\Fixtures\Resources;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Xelqun\Forms\Components\TextInput;
 use Xelqun\Panels\Actions\ReplicateAction;
 use Xelqun\Panels\Resources\Resource;
+use Xelqun\Panels\Resources\Tab;
 use Xelqun\Panels\Tests\Fixtures\Task;
 use Xelqun\Tables\Columns\TextColumn;
 
@@ -23,6 +25,11 @@ class TaskResource extends Resource
     public static function columns(): array
     {
         return [TextColumn::make('title')];
+    }
+
+    public static function getTabs(): array
+    {
+        return ['all' => Tab::make(), 'sluggy' => Tab::make()->modifyQueryUsing(fn (Builder $query) => $query->whereNotNull('slug'))];
     }
 
     public static function recordActions(): array

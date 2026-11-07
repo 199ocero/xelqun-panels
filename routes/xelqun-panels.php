@@ -8,6 +8,7 @@ use Xelqun\Panels\Http\Controllers\Auth\MultiFactorChallengeController;
 use Xelqun\Panels\Http\Controllers\Auth\PasswordResetController;
 use Xelqun\Panels\Http\Controllers\Auth\ProfileController;
 use Xelqun\Panels\Http\Controllers\Auth\RegisterController;
+use Xelqun\Panels\Http\Controllers\ExportController;
 use Xelqun\Panels\Http\Controllers\GlobalSearchController;
 use Xelqun\Panels\Http\Controllers\NotificationController;
 use Xelqun\Panels\Http\Controllers\RedirectToTenantController;
@@ -93,6 +94,7 @@ foreach (app(Panels::class)->all() as $panel) {
 
                             Route::prefix($slug)->name("resources.{$slug}.")->group(function () use ($pages, $resource): void {
                                 Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
+                                Route::get('_export', ExportController::class)->middleware('throttle:10,1')->name('export')->defaults('resource', $resource);
 
                                 if (is_subclass_of($pages['index'], ManageSingleRecord::class) || $pages['index'] === ManageSingleRecord::class) {
                                     Route::put('', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);

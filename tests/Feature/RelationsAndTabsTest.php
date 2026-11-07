@@ -3,6 +3,10 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Testing\AssertableInertia as Assert;
+use Xelqun\Panels\Infolists\CodeEntry;
+use Xelqun\Panels\Infolists\KeyValueEntry;
+use Xelqun\Panels\Infolists\RepeatableEntry;
+use Xelqun\Panels\Infolists\TextEntry;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\ResourceTable;
@@ -298,6 +302,25 @@ describe('infolists', function () {
 
         $this->get("/admin/posts/{$this->post->id}/edit")->assertInertia(fn (Assert $page) => $page
             ->where('page.content.0.schema.components.0.type', 'text-input'));
+    });
+
+    it('repeats entries for each related record, and for each row of an array', function () {
+        $entry = RepeatableEntry::make('comments')->schema([TextEntry::make('body')]);
+        $tags = RepeatableEntry::make('tags')->schema([TextEntry::make('name')]);
+        $this->post->update(['tags' => [['name' => 'Red'], ['name' => 'Blue']]]);
+
+        expect($entry->toProps($this->post->fresh())['rows'][0][0]['cell']['state'])->toBe('First')
+            ->and(collect($tags->toProps($this->post->fresh())['rows'])->pluck('0.cell.state')->all())->toBe(['Red', 'Blue']);
+    });
+
+    it('lists an array as keys and values, and as code', function () {
+        $record = new Post(['tags' => ['size' => 'L', 'stock' => 2]]);
+
+        expect(KeyValueEntry::make('tags')->toProps($record)['pairs'])->toBe([
+            ['key' => 'size', 'value' => 'L'],
+            ['key' => 'stock', 'value' => '2'],
+        ])->and(CodeEntry::make('tags')->toProps($record)['text'])->toContain('"size": "L"')
+            ->and(KeyValueEntry::make('title')->toProps(new Post(['title' => 'Plain']))['pairs'])->toBe([]);
     });
 
     it('keeps the disabled form for a resource with no infolist', function () {

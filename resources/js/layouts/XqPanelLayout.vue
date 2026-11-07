@@ -126,6 +126,7 @@ onBeforeUnmount(() => {
                     v-if="panel.notifications"
                     :url="panel.notifications.url"
                     :poll-seconds="panel.notifications.pollSeconds"
+                    :broadcast-channel="panel.notifications.broadcastChannel"
                 />
                 <XqPanelUserMenu
                     v-if="panel.topNavigation && panel.user"

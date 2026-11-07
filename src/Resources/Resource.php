@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Xelqun\Actions\Action;
 use Xelqun\Actions\ActionGroup;
 use Xelqun\Forms\Components\Component;
+use Xelqun\Forms\Components\Field;
 use Xelqun\Panels\Actions\DeleteAction;
 use Xelqun\Panels\Actions\EditAction;
 use Xelqun\Panels\Actions\ForceDeleteAction;
@@ -116,6 +117,44 @@ abstract class Resource
     public static function getTabs(): array
     {
         return [];
+    }
+
+    /**
+     * More buttons beside the list's title, such as ExportAction and ImportAction.
+     *
+     * @return array<int, Action|ActionGroup>
+     */
+    public static function getHeaderActions(): array
+    {
+        return [];
+    }
+
+    /**
+     * What ExportAction writes, as heading => attribute, with dots for a relation.
+     * By default, the columns of the table.
+     *
+     * @return array<string, string>
+     */
+    public static function getExportColumns(): array
+    {
+        return collect(static::columns())
+            ->mapWithKeys(fn (Column $column): array => [$column->getLabel() => $column->getName()])
+            ->all();
+    }
+
+    /**
+     * What ImportAction takes from a file. Anything else in it is ignored, so a
+     * file can't set a column you didn't list. By default, the form's top-level
+     * fields.
+     *
+     * @return array<int, string>
+     */
+    public static function getImportColumns(): array
+    {
+        return collect(static::form())
+            ->flatMap(fn (Component $component): array => $component instanceof Field ? [$component->getName()] : [])
+            ->values()
+            ->all();
     }
 
     /**

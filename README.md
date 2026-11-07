@@ -138,6 +138,19 @@ public static function recordActions(): array
 
 Each takes the usual action methods, such as `->label()` or `->visible()`. `ReplicateAction` needs `replicate` in the policy.
 
+### Export and import
+
+```php
+public static function getHeaderActions(): array
+{
+    return [ExportAction::for(static::class), ImportAction::for(static::class)];
+}
+```
+
+Export downloads the list as CSV, inside `getEloquentQuery()` and the current tab, using the table's columns. Override `getExportColumns()` to change them. Any cell that a spreadsheet would run as a formula is kept as text.
+
+Import reads a CSV whose first row names the columns. Each row goes through the resource's form, so it gets the same validation, hooks and tenant as a record typed in, and bad rows are counted and skipped. Only columns from `getImportColumns()` are read. It runs in the request and stops at 1,000 rows.
+
 ### One record, no list
 
 For settings and the like, return only `ManageSingleRecord` from `getPages()`. It edits what `getSingularRecord()` returns, which by default is the first record, or a new one until it's saved.
@@ -202,7 +215,7 @@ The first tab is the default. A tab always stays inside `getEloquentQuery()`, ev
 
 ### Infolists
 
-Give the view page real values instead of a disabled form. Entries take the same options as table columns, and sit in any of forms' layouts:
+Give the view page real values instead of a disabled form. Entries take the same options as table columns, and sit in any of forms' layouts. Besides the ones below there are `ColorEntry`, `CodeEntry`, `KeyValueEntry`, and `RepeatableEntry` with its own `schema()`:
 
 ```php
 public static function infolist(): array
@@ -289,6 +302,8 @@ DatabaseNotification::make()
 **Clusters** put several pages and resources behind one sidebar link, with tabs between them. Extend `Cluster`, then set `protected static ?string $cluster = Settings::class;` on each member. The link goes to the first member the user can reach.
 
 **The user menu** takes more links: `userMenuItems([NavigationItem::make('Billing')->url(fn () => route('billing'))])`.
+
+Add `broadcastNotifications()` and send with `->broadcast($user)` for an instant update. It uses your app's `window.Echo` on the user's private channel, and only sends a signal, so the bell fetches the content itself. Without Echo the bell keeps polling.
 
 ## Pages
 
@@ -398,6 +413,7 @@ Register the component in `createXelqunForms({ components })`. The places are `S
 
 - `%` and `_` in a search act as wildcards.
 - `discoverResources()` walks its folder on every request.
+- Export ignores table filters, and only follows the tab.
 - Signing out of one panel signs out of the others in that session.
 - A queued verification email gets Laravel's route, not the panel's.
 - Changing a password ends "remember me" on other devices, but not their open sessions. Add Laravel's `AuthenticateSession` middleware for that.

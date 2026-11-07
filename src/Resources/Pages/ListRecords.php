@@ -29,12 +29,15 @@ class ListRecords extends ResourcePage
 
     public function headerActions(): array
     {
-        return ! $this->resource::hasPage('create') ? [] : [
-            Action::make('create')
-                ->label(__('xelqun-panels::resources.new', ['label' => $this->resource::getModelLabel()]))
-                ->icon('plus')
-                ->authorize('create')
-                ->url($this->resource::getUrl('create')),
+        return [
+            ...$this->resource::getHeaderActions(),
+            ...(! $this->resource::hasPage('create') ? [] : [
+                Action::make('create')
+                    ->label(__('xelqun-panels::resources.new', ['label' => $this->resource::getModelLabel()]))
+                    ->icon('plus')
+                    ->authorize('create')
+                    ->url($this->resource::getUrl('create')),
+            ]),
         ];
     }
 

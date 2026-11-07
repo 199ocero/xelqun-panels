@@ -11,7 +11,16 @@ import { textToneClasses } from './widgets/tones';
 
 const SIGNED_OUT_STATUSES = [401, 403, 419];
 
-const props = defineProps<{ url: string; pollSeconds: number | null }>();
+interface EchoLike {
+    private(channel: string): { notification(callback: () => void): void };
+    leave(channel: string): void;
+}
+
+const props = defineProps<{
+    url: string;
+    pollSeconds: number | null;
+    broadcastChannel?: string | null;
+}>();
 
 const open = ref(false);
 const unread = ref(0);
@@ -21,6 +30,11 @@ let timer: ReturnType<typeof setInterval> | undefined;
 
 function stopPolling(): void {
     clearInterval(timer);
+}
+
+/** The app's Laravel Echo, if it has one. */
+function echo(): EchoLike | undefined {
+    return (window as unknown as { Echo?: EchoLike }).Echo;
 }
 
 /**
@@ -54,6 +68,12 @@ async function openNotification(notification: PanelNotification): Promise<void> 
 onMounted(() => {
     void send();
 
+    if (props.broadcastChannel) {
+        echo()
+            ?.private(props.broadcastChannel)
+            .notification(() => void send());
+    }
+
     if (props.pollSeconds !== null) {
         timer = setInterval(() => {
             if (!document.hidden) {
@@ -63,7 +83,13 @@ onMounted(() => {
     }
 });
 
-onBeforeUnmount(stopPolling);
+onBeforeUnmount(() => {
+    stopPolling();
+
+    if (props.broadcastChannel) {
+        echo()?.leave(props.broadcastChannel);
+    }
+});
 </script>
 
 <template>

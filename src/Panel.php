@@ -152,6 +152,8 @@ final class Panel
 
     private ?int $notificationPollingSeconds = 30;
 
+    private bool $hasBroadcastNotifications = false;
+
     /** @var (Closure(): ?SidebarCard)|null */
     private ?Closure $sidebarFooter = null;
 
@@ -724,6 +726,27 @@ final class Panel
     }
 
     /**
+     * Let the bell hear about new notifications at once, through the app's
+     * window.Echo. Without Echo on the page it keeps to its polling.
+     */
+    public function broadcastNotifications(bool $condition = true): self
+    {
+        $this->hasBroadcastNotifications = $condition;
+
+        return $this;
+    }
+
+    /**
+     * The private channel Laravel sends this user's notifications on.
+     */
+    private function getBroadcastChannel(Model $user): string
+    {
+        return method_exists($user, 'receivesBroadcastNotificationsOn')
+            ? $user->receivesBroadcastNotificationsOn()
+            : str_replace('\\', '.', $user::class).'.'.$user->getKey();
+    }
+
+    /**
      * How often the bell checks, as in '30s', or null to check on page load only.
      */
     public function databaseNotificationsPolling(?string $interval): self
@@ -1029,6 +1052,7 @@ final class Panel
             'notifications' => $isInside && $this->hasDatabaseNotifications ? [
                 'url' => route($this->routeName('notifications.index')),
                 'pollSeconds' => $this->notificationPollingSeconds,
+                'broadcastChannel' => $this->hasBroadcastNotifications && $user instanceof Model ? $this->getBroadcastChannel($user) : null,
             ] : null,
             'sidebarFooter' => $isInside && $this->sidebarFooter !== null ? ($this->sidebarFooter)()?->toArray() : null,
             'user' => $isInside ? ['name' => (string) data_get($user, 'name'), 'email' => (string) data_get($user, 'email')] : null,

@@ -58,6 +58,27 @@ abstract class Entry extends Component
         return $this;
     }
 
+    protected function getColumn(): Column
+    {
+        return $this->column;
+    }
+
+    /**
+     * How the browser draws it. Empty means by the column's type.
+     */
+    protected function getDisplay(): string
+    {
+        return '';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toProps(Model $record): array
+    {
+        return ['display' => $this->getDisplay(), 'column' => $this->column->toDefinition(), 'cell' => $this->column->toCell($record)];
+    }
+
     protected function getProps(): array
     {
         $record = $this->getForm()->getRecord();
@@ -66,6 +87,6 @@ abstract class Entry extends Component
             throw new LogicException('An entry shows a record, and this form has none.');
         }
 
-        return ['column' => $this->column->toDefinition(), 'cell' => $this->column->toCell($record)];
+        return $this->toProps($record);
     }
 }

@@ -34,4 +34,15 @@ class DatabaseNotification extends Notification
 
         return $this;
     }
+
+    /**
+     * The same, and it tells an open bell right away over Laravel broadcasting,
+     * rather than at its next check. The panel needs broadcastNotifications().
+     */
+    public function broadcast(Model $recipient): static
+    {
+        NotificationFacade::send($recipient, new StoredNotification([...$this->toArray(), 'url' => $this->url], shouldBroadcast: true));
+
+        return $this;
+    }
 }

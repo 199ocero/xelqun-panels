@@ -19,6 +19,7 @@ class ManageRecords extends ListRecords
         $resource = $this->resource;
 
         return [
+            ...$resource::getHeaderActions(),
             Action::make('create')
                 ->label(__('xelqun-panels::resources.new', ['label' => $resource::getModelLabel()]))
                 ->icon('plus')

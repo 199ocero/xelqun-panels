@@ -1,11 +1,14 @@
 <?php
 
 use Illuminate\Notifications\Notification as LaravelNotification;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Notifications\DatabaseNotification;
+use Xelqun\Panels\Notifications\StoredNotification;
 use Xelqun\Panels\Panel;
+use Xelqun\Panels\Panels;
 use Xelqun\Panels\Tests\Fixtures\User;
 
 class SomeOtherNotification extends LaravelNotification
@@ -96,6 +99,29 @@ it('tells the shell where the bell is, inside the panel only', function () {
     $this->get('/admin')->assertInertia(fn (Assert $page) => $page
         ->where('xelqunPanel.notifications.url', url('/admin/_notifications'))
         ->where('xelqunPanel.notifications.pollSeconds', 30));
+});
+
+it('broadcasts only that there is news, and stores the rest', function () {
+    Notification::fake();
+
+    DatabaseNotification::make()->title('Secret title')->broadcast($this->user);
+
+    Notification::assertSentTo($this->user, StoredNotification::class, fn (StoredNotification $notification): bool => $notification->via($this->user) === ['database', 'broadcast']
+        && $notification->toBroadcast($this->user) === []
+        && $notification->toDatabase($this->user)['title'] === 'Secret title');
+});
+
+it('names the user\'s private channel only when asked to', function () {
+    $panels = app(Panels::class);
+    $panel = $panels->get('admin');
+
+    $panels->enter($panel);
+    expect($panel->toShell()['notifications']['broadcastChannel'])->toBeNull();
+
+    $panel->broadcastNotifications();
+    expect($panel->toShell()['notifications']['broadcastChannel'])->toBe(str_replace('\\', '.', User::class).'.'.$this->user->id);
+
+    $panel->broadcastNotifications(false);
 });
 
 it('has no routes when a panel doesn\'t ask for it', function () {

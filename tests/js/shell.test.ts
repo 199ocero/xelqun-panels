@@ -170,14 +170,14 @@ describe('the tenant switcher', () => {
 });
 
 describe('an infolist entry', () => {
-    const entry = (type: string, cell: object, props: object = {}) =>
+    const entry = (type: string, cell: object, props: object = {}, extra: object = {}) =>
         mount(XqPanelEntry, {
             props: {
                 node: {
                     key: 'a',
                     type: 'xelqun-panels/entry',
                     hidden: false,
-                    props: { column: { label: 'Status', type, props }, cell },
+                    props: { column: { label: 'Status', type, props }, cell, ...extra },
                     children: [],
                 } as unknown as SchemaNode,
             },
@@ -208,6 +208,49 @@ describe('an infolist entry', () => {
         const wrapper = entry('text-column', { state: 'Live', url: '/live' });
 
         expect(wrapper.find('a').attributes('href')).toBe('/live');
+    });
+
+    it('shows a color as a swatch', () => {
+        const wrapper = entry('text-column', { state: '#ff0000' }, {}, { display: 'color' });
+
+        expect(wrapper.find('[aria-hidden="true"]').attributes('style')).toContain('background');
+        expect(wrapper.text()).toContain('#ff0000');
+    });
+
+    it('keeps code as text', () => {
+        const wrapper = entry(
+            'text-column',
+            { state: 'x' },
+            {},
+            { display: 'code', text: '<b>hi</b>' },
+        );
+
+        expect(wrapper.find('code').text()).toBe('<b>hi</b>');
+        expect(wrapper.find('code b').exists()).toBe(false);
+    });
+
+    it('lists keys and values', () => {
+        const pairs = [{ key: 'Size', value: 'Large' }];
+        const wrapper = entry('text-column', { state: null }, {}, { display: 'key-value', pairs });
+
+        expect(wrapper.find('dt').text()).toBe('Size');
+        expect(wrapper.find('dd').text()).toBe('Large');
+    });
+
+    it('repeats entries for each row', () => {
+        const nested = {
+            column: { label: 'Item', type: 'text-column', props: {} },
+            cell: { state: 'Lamp' },
+        };
+        const wrapper = entry(
+            'text-column',
+            { state: null },
+            {},
+            { display: 'repeatable', rows: [[nested], [nested]] },
+        );
+
+        expect(wrapper.findAll('[data-xq-entry]')).toHaveLength(3);
+        expect(wrapper.text()).toContain('Lamp');
     });
 
     it('sizes an image from the column', () => {
@@ -574,6 +617,29 @@ describe('the bell', () => {
         wrapper.unmount();
         await vi.advanceTimersByTimeAsync(60_000);
         expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('checks again the moment a broadcast arrives, and leaves when unmounted', async () => {
+        const fetchMock = respondWith(200, list(0));
+        let announce = () => {};
+        const leave = vi.fn();
+
+        vi.stubGlobal('Echo', {
+            private: () => ({ notification: (callback: () => void) => (announce = callback) }),
+            leave,
+        });
+
+        const wrapper = mount(XqPanelNotifications, {
+            props: { url: '/n', pollSeconds: null, broadcastChannel: 'App.Models.User.1' },
+        });
+
+        await vi.advanceTimersByTimeAsync(0);
+        announce();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+
+        wrapper.unmount();
+        expect(leave).toHaveBeenCalledWith('App.Models.User.1');
     });
 
     it('checks once when polling is off', async () => {

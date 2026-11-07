@@ -85,7 +85,11 @@ export interface PanelShell {
     navigation: PanelNavigationGroup[];
     quickCreate: PanelQuickCreateItem[];
     searchUrl: string | null;
-    notifications: { url: string; pollSeconds: number | null } | null;
+    notifications: {
+        url: string;
+        pollSeconds: number | null;
+        broadcastChannel: string | null;
+    } | null;
     sidebarFooter: PanelSidebarCard | null;
     user: { name: string; email: string } | null;
     logoutUrl: string | null;

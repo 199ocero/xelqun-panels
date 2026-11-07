@@ -28,6 +28,9 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **Clusters.** `Cluster` puts pages and resources behind one link, with tabs between them.
 - **One-record resources.** `ManageSingleRecord` edits a single record, with no list.
 - **More panel settings.** `brandLogo()`, `darkModeBrandLogo()`, `brandLogoHeight()`, `favicon()`, `maxContentWidth()`, `darkMode()`, `defaultThemeMode()`, `globalSearch()`, `breadcrumbs()` and `userMenuItems()`.
+- **CSV export and import.** `ExportAction` and `ImportAction`.
+- **Broadcast notifications.** `broadcastNotifications()` updates the bell at once, through Laravel Echo.
+- **More entries.** `ColorEntry`, `CodeEntry`, `KeyValueEntry` and `RepeatableEntry`.
 - **Infolists.** `Resource::infolist()` with `TextEntry`, `IconEntry` and `ImageEntry`, in place of a disabled form on the view page.
 
 ### Changed
