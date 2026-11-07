@@ -14,7 +14,7 @@ defineProps<{ page: PanelPageData; widgets?: PanelWidget[] }>();
 
 <template>
     <div
-        class="gap-6 px-4 py-6 sm:px-8 sm:py-8 mx-auto grid max-w-(--xq-panel-content-width,80rem)"
+        class="gap-6 px-4 py-6 sm:px-8 sm:py-8 mx-auto grid max-w-(--xq-panel-content-width)"
         data-xq-page
     >
         <Head :title="page.title" />
