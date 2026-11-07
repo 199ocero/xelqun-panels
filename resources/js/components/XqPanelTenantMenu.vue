@@ -7,6 +7,7 @@ import {
     DropdownMenuItem,
     DropdownMenuPortal,
     DropdownMenuRoot,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from 'reka-ui';
 import type { PanelShell } from '../types';
@@ -41,6 +42,23 @@ defineProps<{ tenant: NonNullable<PanelShell['tenant']> }>();
                     {{ option.name }}
                     <Check v-if="option.active" class="size-4 ml-auto" aria-hidden="true" />
                 </DropdownMenuItem>
+                <template v-if="tenant.profileUrl || tenant.registrationUrl">
+                    <DropdownMenuSeparator class="my-1 bg-xq-border h-px" />
+                    <DropdownMenuItem
+                        v-if="tenant.profileUrl"
+                        :class="menuItemClass"
+                        @select="router.visit(tenant.profileUrl!)"
+                    >
+                        {{ t('Settings') }}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        v-if="tenant.registrationUrl"
+                        :class="menuItemClass"
+                        @select="router.visit(tenant.registrationUrl!)"
+                    >
+                        {{ t('Add new') }}
+                    </DropdownMenuItem>
+                </template>
             </DropdownMenuContent>
         </DropdownMenuPortal>
     </DropdownMenuRoot>

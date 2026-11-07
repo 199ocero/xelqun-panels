@@ -13,7 +13,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Response;
 use Xelqun\Panels\Auth\LoginForm;
-use Xelqun\Panels\Contracts\HasAppAuthentication;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 
@@ -82,7 +81,7 @@ final class LoginController extends AuthController
             return $panel->allows($user);
         }, $remember);
 
-        if ($challenged instanceof HasAppAuthentication) {
+        if ($challenged !== null) {
             RateLimiter::clear($rateLimitKey);
 
             return app(MultiFactorChallengeController::class)->begin($request, $challenged, $remember);

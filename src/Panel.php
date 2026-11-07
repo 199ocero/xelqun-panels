@@ -8,9 +8,11 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use Symfony\Component\Finder\SplFileInfo;
+use Xelqun\Forms\Form;
 use Xelqun\Forms\Support\SafeUrl;
 use Xelqun\Panels\Auth\EditProfileForm;
 use Xelqun\Panels\Auth\LoginForm;
@@ -18,6 +20,7 @@ use Xelqun\Panels\Auth\RegisterForm;
 use Xelqun\Panels\Auth\RequestPasswordResetForm;
 use Xelqun\Panels\Auth\ResetPasswordForm;
 use Xelqun\Panels\Contracts\HasAppAuthentication;
+use Xelqun\Panels\Contracts\HasEmailAuthentication;
 use Xelqun\Panels\Contracts\HasTenants;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Contracts\Plugin;
@@ -108,7 +111,15 @@ final class Panel
 
     private ?string $tenantOwnershipRelationship = null;
 
+    /** @var class-string<Form>|null */
+    private ?string $tenantRegistrationForm = null;
+
+    /** @var class-string<Form>|null */
+    private ?string $tenantProfileForm = null;
+
     private bool $hasMultiFactorAuthentication = false;
+
+    private bool $hasEmailAuthentication = false;
 
     private bool $requiresMultiFactorAuthentication = false;
 
@@ -556,6 +567,47 @@ final class Panel
         return $this;
     }
 
+    /**
+     * Let a user start a tenant. The form saves it, and must add the user in its
+     * afterSave(), or they can't get in. Someone with no tenants lands here.
+     *
+     * @param  class-string<Form>|null  $form
+     */
+    public function tenantRegistration(?string $form): self
+    {
+        $this->tenantRegistrationForm = $form;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string<Form>|null
+     */
+    public function getTenantRegistrationForm(): ?string
+    {
+        return $this->tenantRegistrationForm;
+    }
+
+    /**
+     * Let a tenant's details be changed. It takes `update` in the tenant's policy.
+     *
+     * @param  class-string<Form>  $form
+     */
+    public function tenantProfile(string $form): self
+    {
+        $this->tenantProfileForm = $form;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string<Form>|null
+     */
+    public function getTenantProfileForm(): ?string
+    {
+        return $this->tenantProfileForm;
+    }
+
     public function hasTenancy(): bool
     {
         return $this->tenantModel !== null;
@@ -623,6 +675,30 @@ final class Panel
         $this->requiresMultiFactorAuthentication = $isRequired;
 
         return $this;
+    }
+
+    /**
+     * Let users get a code by email at sign in, for those without an authenticator.
+     * The user model needs HasEmailAuthentication.
+     */
+    public function emailAuthentication(): self
+    {
+        $this->hasEmailAuthentication = true;
+
+        return $this;
+    }
+
+    public function hasEmailAuthentication(): bool
+    {
+        return $this->hasEmailAuthentication;
+    }
+
+    /**
+     * Whether a code goes by email at this user's sign in.
+     */
+    public function sendsEmailCodeTo(?Authenticatable $user): bool
+    {
+        return $this->hasEmailAuthentication && $user instanceof HasEmailAuthentication && $user->hasEmailAuthentication();
     }
 
     public function hasMultiFactorAuthentication(): bool
@@ -698,7 +774,8 @@ final class Panel
      */
     public function needsChallenge(?Authenticatable $user): bool
     {
-        return $this->hasMultiFactorAuthentication && $user instanceof HasAppAuthentication && $user->getAppAuthenticationSecret() !== null;
+        return ($this->hasMultiFactorAuthentication && $user instanceof HasAppAuthentication && $user->getAppAuthenticationSecret() !== null)
+            || $this->sendsEmailCodeTo($user);
     }
 
     /**
@@ -1022,6 +1099,8 @@ final class Panel
             'url' => $tenant === null ? $this->getUrl() : $this->getTenantUrl($tenant),
             'tenant' => $isInside && $tenant !== null ? [
                 'name' => (string) $tenant->getAttribute('name'),
+                'profileUrl' => $this->tenantProfileForm !== null && Gate::allows('update', $tenant) ? route($this->routeName('tenant.profile')) : null,
+                'registrationUrl' => $this->tenantRegistrationForm !== null ? route($this->routeName('tenant.register')) : null,
                 'tenants' => $this->getTenantsFor($user)->map(fn (Model $option): array => [
                     'name' => (string) $option->getAttribute('name'),
                     'url' => $this->getTenantUrl($option),

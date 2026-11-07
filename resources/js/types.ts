@@ -68,6 +68,8 @@ export interface PanelShell {
     brand: { name: string; logo: string | null; darkLogo: string | null; logoHeight: string };
     tenant: {
         name: string;
+        profileUrl: string | null;
+        registrationUrl: string | null;
         tenants: Array<{ name: string; url: string; active: boolean }>;
     } | null;
     theme: {

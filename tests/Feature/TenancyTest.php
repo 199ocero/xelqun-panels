@@ -65,8 +65,16 @@ describe('getting in', function () {
         $this->get('/team')->assertRedirect('/team/blue');
     });
 
-    it('refuses someone with no tenants', function () {
+    it('sends someone with no tenants to start one', function () {
         $this->user->teams()->detach();
+
+        $this->get('/team')->assertRedirect('/team/new-tenant');
+    });
+
+    it('refuses someone with no tenants when a panel doesn\'t let them start one', function () {
+        $panels = app(Panels::class);
+        $this->user->teams()->detach();
+        $panels->get('team')->tenantRegistration(null);
 
         $this->get('/team')->assertForbidden();
     });
@@ -173,6 +181,50 @@ describe('tokens', function () {
         $panels->enter($panels->get('team'));
 
         $this->queryTable(ResourceTable::for(FolderResource::class))->assertForbidden();
+    });
+});
+
+describe('starting a tenant', function () {
+    it('saves it, adds the user and goes there', function () {
+        $this->post('/team/new-tenant', ['data' => ['name' => 'Green house', 'slug' => 'green-house']])->assertRedirect('/team/green-house');
+
+        expect($this->user->teams()->where('slug', 'green-house')->exists())->toBeTrue();
+    });
+
+    it('shows a form to a guest of no tenant', function () {
+        $this->get('/team/new-tenant')->assertOk();
+    });
+
+    it('sends a guest to sign in', function () {
+        auth('admin')->logout();
+
+        $this->get('/team/new-tenant')->assertRedirect('/team/login');
+    });
+});
+
+describe('a tenant\'s profile', function () {
+    it('needs update in the tenant\'s policy', function () {
+        $this->get('/team/red/tenant-profile')->assertForbidden();
+        $this->put('/team/red/tenant-profile', ['data' => ['name' => 'Taken', 'slug' => 'red']])->assertForbidden();
+
+        expect($this->red->fresh()->name)->toBe('Red');
+    });
+
+    it('saves, and follows a changed slug', function () {
+        Gate::policy(Team::class, RelatedPolicy::class);
+
+        $this->get('/team/red/tenant-profile')->assertOk();
+        $this->put('/team/red/tenant-profile', ['data' => ['name' => 'Crimson', 'slug' => 'crimson']])->assertRedirect('/team/crimson');
+
+        expect($this->red->fresh()->name)->toBe('Crimson');
+    });
+
+    it('can\'t change a tenant the user isn\'t in', function () {
+        Gate::policy(Team::class, RelatedPolicy::class);
+
+        $this->put('/team/green/tenant-profile', ['data' => ['name' => 'Taken', 'slug' => 'green']])->assertNotFound();
+
+        expect($this->green->fresh()->name)->toBe('Green');
     });
 });
 

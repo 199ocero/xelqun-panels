@@ -3,14 +3,17 @@
 namespace Xelqun\Panels\Http\Controllers\Auth;
 
 use Illuminate\Auth\SessionGuard;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Inertia\Response;
 use Xelqun\Panels\Auth\AppAuthentication;
 use Xelqun\Panels\Auth\MultiFactorChallengeForm;
+use Xelqun\Panels\Auth\Notifications\EmailCode;
 use Xelqun\Panels\Contracts\HasAppAuthentication;
 
 /**
@@ -61,7 +64,7 @@ final class MultiFactorChallengeController extends AuthController
         $guard = Auth::guard($panel->getAuthGuard());
         $user = $guard->getProvider()->retrieveById($pending['id']);
 
-        if (! $user instanceof HasAppAuthentication || ! $panel->allows($user) || ! AppAuthentication::verify($user, (string) $data['code'])) {
+        if (! $panel->allows($user) || ! $this->passes($user, $pending, (string) $data['code'])) {
             RateLimiter::hit($rateLimitKey);
 
             throw ValidationException::withMessages(['data.code' => __('xelqun-panels::auth.mfa.invalid')]);
@@ -76,28 +79,50 @@ final class MultiFactorChallengeController extends AuthController
     }
 
     /**
-     * Note that this user passed the password step.
+     * Note that this user passed the password step. An emailed code is kept here
+     * only as a hash.
      */
-    public function begin(Request $request, HasAppAuthentication $user, bool $remember): RedirectResponse
+    public function begin(Request $request, Authenticatable $user, bool $remember): RedirectResponse
     {
+        $code = $this->panel()->sendsEmailCodeTo($user) ? str_pad((string) random_int(0, 999_999), 6, '0', STR_PAD_LEFT) : null;
+
         $request->session()->regenerate();
         $request->session()->put($this->sessionKey(), [
             'id' => $user->getAuthIdentifier(),
             'remember' => $remember,
             'expires' => now()->addSeconds(self::EXPIRES_IN_SECONDS)->getTimestamp(),
+            'emailCode' => $code === null ? null : hash('sha256', $code.$user->getAuthIdentifier()),
         ]);
+
+        if ($code !== null) {
+            NotificationFacade::send($user, new EmailCode($code));
+        }
 
         return redirect()->route($this->panel()->routeName('auth.challenge'));
     }
 
     /**
-     * @return array{id: mixed, remember: bool, expires: int}|null
+     * @return array{id: mixed, remember: bool, expires: int, emailCode: string|null}|null
      */
     private function pending(Request $request): ?array
     {
         $pending = $request->session()->get($this->sessionKey());
 
         return is_array($pending) && $pending['expires'] > now()->getTimestamp() ? $pending : null;
+    }
+
+    /**
+     * An emailed code goes when the challenge does, so it works once.
+     *
+     * @param  array{id: mixed, remember: bool, expires: int, emailCode: string|null}  $pending
+     */
+    private function passes(?Authenticatable $user, array $pending, string $code): bool
+    {
+        if ($pending['emailCode'] !== null && hash_equals($pending['emailCode'], hash('sha256', trim($code).$pending['id']))) {
+            return true;
+        }
+
+        return $user instanceof HasAppAuthentication && AppAuthentication::verify($user, $code);
     }
 
     private function sessionKey(): string

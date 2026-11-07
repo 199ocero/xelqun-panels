@@ -31,6 +31,8 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - **CSV export and import.** `ExportAction` and `ImportAction`.
 - **Broadcast notifications.** `broadcastNotifications()` updates the bell at once, through Laravel Echo.
 - **More entries.** `ColorEntry`, `CodeEntry`, `KeyValueEntry` and `RepeatableEntry`.
+- **Email codes at sign in.** `emailAuthentication()`, with `HasEmailAuthentication`.
+- **Tenant registration and profile.** `tenantRegistration()` and `tenantProfile()`.
 - **Infolists.** `Resource::infolist()` with `TextEntry`, `IconEntry` and `ImageEntry`, in place of a disabled form on the view page.
 
 ### Changed

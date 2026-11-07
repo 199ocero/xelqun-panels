@@ -27,6 +27,6 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel->id('admin')->path('admin')->brandName('Admin')->authGuard('admin')->login()->passwordReset()->registration()->profile()->databaseNotifications()->multiFactorAuthentication()->pages([Home::class, PostDashboard::class, PartlyDenied::class, Reports::class, Billing::class, Team::class])->resources([SiteResource::class, PostResource::class, OtherPostResource::class, UnguardedResource::class, NoteResource::class, TaskResource::class])->widgets([PostTiles::class, PendingPosts::class, PostStats::class, HiddenWidget::class, BrokenWidget::class, DeniedList::class]);
+        return $panel->id('admin')->path('admin')->brandName('Admin')->authGuard('admin')->login()->passwordReset()->registration()->profile()->databaseNotifications()->multiFactorAuthentication()->emailAuthentication()->pages([Home::class, PostDashboard::class, PartlyDenied::class, Reports::class, Billing::class, Team::class])->resources([SiteResource::class, PostResource::class, OtherPostResource::class, UnguardedResource::class, NoteResource::class, TaskResource::class])->widgets([PostTiles::class, PendingPosts::class, PostStats::class, HiddenWidget::class, BrokenWidget::class, DeniedList::class]);
     }
 }

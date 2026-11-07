@@ -30,6 +30,29 @@ abstract class AuthController
     }
 
     /**
+     * A page inside the panel that isn't a Page class. Everything a page needs is
+     * here, so one of these can't miss a key the browser reads.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function panelPage(string $title, array $data): Response
+    {
+        return Inertia::render('xelqun/Panel', ['page' => [
+            'title' => $title,
+            'eyebrow' => null,
+            'subheading' => null,
+            'breadcrumbs' => [['label' => $title]],
+            'hasWidgets' => false,
+            'tabs' => [],
+            'subNavigation' => [],
+            'headerActions' => null,
+            'notice' => null,
+            'content' => [],
+            ...$data,
+        ]]);
+    }
+
+    /**
      * Always a new form, so nothing the browser typed comes back in the schema.
      *
      * @param  array<int, array{label: string, url: string|null, method: string}>  $links

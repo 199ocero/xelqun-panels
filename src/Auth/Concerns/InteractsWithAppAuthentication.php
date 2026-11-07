@@ -13,11 +13,22 @@ trait InteractsWithAppAuthentication
     public function initializeInteractsWithAppAuthentication(): void
     {
         $this->mergeCasts([
+            'has_email_authentication' => 'boolean',
             'app_authentication_secret' => 'encrypted',
             'app_authentication_recovery_codes' => 'array',
         ]);
 
         $this->makeHidden(['app_authentication_secret', 'app_authentication_recovery_codes']);
+    }
+
+    public function hasEmailAuthentication(): bool
+    {
+        return (bool) $this->getAttribute('has_email_authentication');
+    }
+
+    public function saveEmailAuthentication(bool $isOn): void
+    {
+        $this->forceFill(['has_email_authentication' => $isOn])->save();
     }
 
     public function getAppAuthenticationSecret(): ?string

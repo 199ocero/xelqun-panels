@@ -8,6 +8,7 @@ use Xelqun\Panels\Http\Controllers\Auth\MultiFactorChallengeController;
 use Xelqun\Panels\Http\Controllers\Auth\PasswordResetController;
 use Xelqun\Panels\Http\Controllers\Auth\ProfileController;
 use Xelqun\Panels\Http\Controllers\Auth\RegisterController;
+use Xelqun\Panels\Http\Controllers\Auth\TenantController;
 use Xelqun\Panels\Http\Controllers\ExportController;
 use Xelqun\Panels\Http\Controllers\GlobalSearchController;
 use Xelqun\Panels\Http\Controllers\NotificationController;
@@ -30,7 +31,7 @@ foreach (app(Panels::class)->all() as $panel) {
                 Route::post('login', [LoginController::class, 'store'])->name('auth.login.store');
             }
 
-            if ($panel->hasMultiFactorAuthentication()) {
+            if ($panel->hasMultiFactorAuthentication() || $panel->hasEmailAuthentication()) {
                 Route::get('two-factor', [MultiFactorChallengeController::class, 'show'])->name('auth.challenge');
                 Route::post('two-factor', [MultiFactorChallengeController::class, 'store'])->name('auth.challenge.store');
             }
@@ -62,12 +63,22 @@ foreach (app(Panels::class)->all() as $panel) {
                     Route::get('', RedirectToTenantController::class)->name('tenant.redirect');
                 }
 
+                if ($panel->getTenantRegistrationForm() !== null) {
+                    Route::get('new-tenant', [TenantController::class, 'showRegistration'])->name('tenant.register');
+                    Route::post('new-tenant', [TenantController::class, 'register'])->middleware('throttle:6,1')->name('tenant.register.store');
+                }
+
                 Route::prefix($panel->hasTenancy() ? '{tenant}' : '')
                     ->middleware([...($panel->hasTenancy() ? [IdentifyTenant::class] : []), RequireMultiFactorSetup::class])
                     ->group(function () use ($panel): void {
                         if ($panel->hasGlobalSearch()) {
                             // The underscore keeps it clear of a page or resource called search.
                             Route::post('_search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
+                        }
+
+                        if ($panel->getTenantProfileForm() !== null) {
+                            Route::get('tenant-profile', [TenantController::class, 'showProfile'])->name('tenant.profile');
+                            Route::put('tenant-profile', [TenantController::class, 'updateProfile'])->name('tenant.profile.update');
                         }
 
                         if ($panel->hasDatabaseNotifications()) {

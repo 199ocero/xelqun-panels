@@ -11,6 +11,7 @@ use Xelqun\Actions\ActionSet;
 use Xelqun\Forms\Components\TextInput;
 use Xelqun\Forms\Layouts\Text;
 use Xelqun\Panels\Contracts\HasAppAuthentication;
+use Xelqun\Panels\Contracts\HasEmailAuthentication;
 use Xelqun\Panels\Panels;
 
 /**
@@ -28,18 +29,23 @@ final class ProfileActions extends ActionSet
     public function actions(): array
     {
         $record = $this->getRecord();
+        $panel = app(Panels::class)->current();
 
-        return $record instanceof HasAppAuthentication && $record->getAppAuthenticationSecret() !== null
-            ? [$this->regenerateAction(), $this->disableAction()]
-            : [$this->enableAction()];
+        $app = ! ($panel->hasMultiFactorAuthentication() && $record instanceof HasAppAuthentication) ? [] : (
+            $record->getAppAuthenticationSecret() !== null ? [$this->regenerateAction(), $this->disableAction()] : [$this->enableAction()]
+        );
+
+        return [...$app, ...($panel->hasEmailAuthentication() && $record instanceof HasEmailAuthentication ? [$this->emailAction($record)] : [])];
     }
 
     public function authorize(?Authenticatable $user, ?Model $record): bool
     {
-        return $user instanceof HasAppAuthentication
+        $panel = app(Panels::class)->current();
+
+        return $user !== null
             && $record !== null
             && $user->getAuthIdentifier() === $record->getKey()
-            && (bool) app(Panels::class)->current()?->hasMultiFactorAuthentication();
+            && ((bool) $panel?->hasMultiFactorAuthentication() || (bool) $panel?->hasEmailAuthentication());
     }
 
     public function model(): string
@@ -114,6 +120,20 @@ final class ProfileActions extends ActionSet
             ->successNotificationTitle(__('xelqun-panels::auth.mfa.disabled'))
             ->successRedirectUrl(fn (): string => $this->profileUrl())
             ->action(fn () => $this->user()->saveAppAuthentication(null));
+    }
+
+    private function emailAction(HasEmailAuthentication $record): Action
+    {
+        $isOn = $record->hasEmailAuthentication();
+
+        return Action::make('email')
+            ->label(__($isOn ? 'xelqun-panels::auth.mfa.email_disable' : 'xelqun-panels::auth.mfa.email_enable'))
+            ->color('gray')
+            ->authorize(true)
+            ->schema(fn (): array => [$this->passwordField()])
+            ->successNotificationTitle(__($isOn ? 'xelqun-panels::auth.mfa.email_disabled' : 'xelqun-panels::auth.mfa.email_enabled'))
+            ->successRedirectUrl(fn (): string => $this->profileUrl())
+            ->action(fn () => $record->saveEmailAuthentication(! $isOn));
     }
 
     private function passwordField(): TextInput

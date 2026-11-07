@@ -79,7 +79,20 @@ return [
         'disable_description' => 'Your account will be protected by your password alone.',
         'disabled' => 'Two-factor authentication is off.',
         'codes_title' => 'Save your recovery codes',
+        'email_subject' => 'Your sign in code',
+        'email_line' => 'Your code is :code.',
+        'email_footer' => 'It works for 5 minutes. If you didn\'t try to sign in, change your password.',
+        'email_enable' => 'Send me codes by email',
+        'email_disable' => 'Stop email codes',
+        'email_enabled' => 'Email codes are on.',
+        'email_disabled' => 'Email codes are off.',
         'codes_description' => 'Each one signs you in once if you lose your phone. You won\'t see them again.',
+    ],
+
+    'tenant' => [
+        'register_heading' => 'Start a new team',
+        'register_submit' => 'Create',
+        'profile_heading' => 'Team settings',
     ],
 
     'failed' => 'These credentials do not match our records.',

@@ -10,11 +10,12 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Xelqun\Panels\Auth\Concerns\InteractsWithAppAuthentication;
 use Xelqun\Panels\Contracts\HasAppAuthentication;
+use Xelqun\Panels\Contracts\HasEmailAuthentication;
 use Xelqun\Panels\Contracts\HasTenants;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Panel;
 
-class User extends Authenticatable implements HasAppAuthentication, HasTenants, MustVerifyEmail, PanelUser
+class User extends Authenticatable implements HasAppAuthentication, HasEmailAuthentication, HasTenants, MustVerifyEmail, PanelUser
 {
     use InteractsWithAppAuthentication;
     use Notifiable;

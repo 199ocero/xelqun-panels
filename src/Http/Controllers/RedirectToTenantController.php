@@ -17,6 +17,10 @@ final class RedirectToTenantController
         $panel = $panels->current();
         $tenant = $panel->getTenantsFor($request->user())->first();
 
+        if ($tenant === null && $panel->getTenantRegistrationForm() !== null) {
+            return redirect()->route($panel->routeName('tenant.register'));
+        }
+
         abort_if($tenant === null, 403);
 
         return redirect()->to($panel->getTenantUrl($tenant));

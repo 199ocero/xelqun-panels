@@ -34,5 +34,7 @@ return [
     'Nothing yet.' => 'Nothing yet.',
     'Unread' => 'Unread',
     'Switch from :name' => 'Switch from :name',
+    'Settings' => 'Settings',
+    'Add new' => 'Add new',
 
 ];

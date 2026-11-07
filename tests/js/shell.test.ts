@@ -156,6 +156,8 @@ describe('translations', () => {
 describe('the tenant switcher', () => {
     const tenant = {
         name: 'Red team',
+        profileUrl: null,
+        registrationUrl: null,
         tenants: [{ name: 'Red team', url: '/red', active: true }],
     };
 

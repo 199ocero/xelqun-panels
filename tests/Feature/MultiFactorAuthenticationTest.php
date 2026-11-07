@@ -1,11 +1,14 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Xelqun\Panels\Auth\AppAuthentication;
+use Xelqun\Panels\Auth\Notifications\EmailCode;
 use Xelqun\Panels\Auth\ProfileActions;
 use Xelqun\Panels\Auth\Totp;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
@@ -235,6 +238,14 @@ describe('the profile page', function () {
         expect($this->user->fresh()->getAttribute('app_authentication_recovery_codes'))->not->toBe(['old']);
     })->with(['disable', 'regenerate']);
 
+    it('turns email codes on and off, with the password', function () {
+        runProfileAction($this->user, 'email', ['current_password' => 'wrong'])->assertUnprocessable();
+        expect($this->user->fresh()->hasEmailAuthentication())->toBeFalse();
+
+        runProfileAction($this->user, 'email', ['current_password' => 'secret'])->assertOk();
+        expect($this->user->fresh()->hasEmailAuthentication())->toBeTrue();
+    });
+
     it('can\'t act on anyone else', function () {
         $other = User::create(['name' => 'Bea', 'email' => 'bea@example.com', 'password' => Hash::make('secret')]);
         $other->saveAppAuthentication(RFC_SECRET, []);
@@ -242,6 +253,80 @@ describe('the profile page', function () {
         runProfileAction($other, 'disable', ['current_password' => 'secret'])->assertNotFound();
 
         expect($other->fresh()->getAppAuthenticationSecret())->toBe(RFC_SECRET);
+    });
+});
+
+describe('email codes', function () {
+    beforeEach(function () {
+        Notification::fake();
+        $this->user = User::create(['name' => 'Ada', 'email' => 'ada@example.com', 'password' => Hash::make('secret'), 'has_email_authentication' => true]);
+    });
+
+    function sentCode(User $user): string
+    {
+        $code = null;
+
+        Notification::assertSentTo($user, EmailCode::class, function (EmailCode $notification) use (&$code, $user): bool {
+            preg_match('/\d{6}/', implode(' ', $notification->toMail($user)->introLines), $matches);
+            $code = $matches[0];
+
+            return true;
+        });
+
+        return $code;
+    }
+
+    it('sends a code, and doesn\'t sign in until it comes back', function () {
+        passPassword()->assertRedirect('/admin/two-factor');
+
+        $this->assertGuest('admin');
+
+        answerChallenge(sentCode($this->user))->assertRedirect('/admin');
+
+        $this->assertAuthenticatedAs($this->user->fresh(), 'admin');
+    });
+
+    it('refuses a wrong code', function () {
+        passPassword();
+
+        answerChallenge('000000')->assertSessionHasErrors('data.code');
+
+        $this->assertGuest('admin');
+    });
+
+    it('keeps only a hash of the code in the session', function () {
+        passPassword();
+
+        expect(json_encode(session('xelqun-panels.challenge.admin')))->not->toContain(sentCode($this->user));
+    });
+
+    it('takes a code only once', function () {
+        passPassword();
+        $code = sentCode($this->user);
+        answerChallenge($code);
+        $this->post('/admin/logout');
+
+        answerChallenge($code)->assertRedirect('/admin/login');
+
+        $this->assertGuest('admin');
+    });
+
+    it('stops working with the challenge', function () {
+        passPassword();
+        $code = sentCode($this->user);
+
+        $this->travel(6)->minutes();
+
+        answerChallenge($code)->assertRedirect('/admin/login');
+        $this->assertGuest('admin');
+    });
+
+    it('leaves a user who hasn\'t turned it on alone', function () {
+        $this->user->saveEmailAuthentication(false);
+
+        passPassword()->assertRedirect('/admin');
+
+        Notification::assertNothingSent();
     });
 });
 

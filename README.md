@@ -84,6 +84,8 @@ It's the standard 30 second, 6 digit TOTP that any authenticator app reads, with
 
 Setup gives a link and a key to type, with no QR code, because that would need a new dependency.
 
+`emailAuthentication()` also lets people get a 6 digit code by email at sign in. Add `HasEmailAuthentication` to the user model, and the same trait covers it. The code is kept only as a hash, works once, and ends with the 5 minute challenge. It's weaker than an authenticator, because anyone in the mailbox can read it.
+
 On HTTPS, the browser's history is encrypted and cleared on sign out, so Back can't show records afterwards. Behind a proxy, set up trusted proxies, or Laravel won't see the request as secure.
 
 ## Resources
@@ -281,6 +283,8 @@ Each resource's model needs a relationship to the tenant, named after it (`team(
 Inside a tenant, those models stay in it for every query of the request: tables, search, Select options, widgets, `scopedUnique()`, `scopedExists()` and your own code. New records join the tenant on their own, and it never comes from the browser. A tenant the user isn't in is a 404, and taking someone out takes effect at once, even on an open page.
 
 A sidebar switcher moves between tenants. Notifications belong to the user, not the tenant.
+
+`tenantRegistration(RegisterTeam::class)` lets a user start a tenant, and is where someone with no tenants lands. `tenantProfile(EditTeam::class)` adds a page to change one, which needs `update` in the tenant's policy. Both take a `Form` class. The registration form has to add the user in its `afterSave()`.
 
 ## Notifications
 
