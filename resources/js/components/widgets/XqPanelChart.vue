@@ -210,22 +210,24 @@ onBeforeUnmount(() => observer?.disconnect());
             aria-hidden="true"
             @mouseleave="hovered = null"
         >
-            <g transform="rotate(-90 120 100)" data-xq-chart-ring>
-                <circle
-                    v-for="slice in slices"
-                    :key="slice.index"
-                    cx="120"
-                    cy="100"
-                    :r="DOUGHNUT_RADIUS"
-                    fill="none"
-                    :stroke="color(slice.index)"
-                    :stroke-width="DOUGHNUT_WIDTH"
-                    :stroke-dasharray="slice.dash"
-                    :stroke-dashoffset="slice.offset"
-                    :opacity="hovered === null || hovered === slice.index ? 1 : 0.45"
-                    data-xq-chart-slice
-                    @mouseenter="hovered = slice.index"
-                />
+            <g transform="rotate(-90 120 100)">
+                <g data-xq-chart-ring>
+                    <circle
+                        v-for="slice in slices"
+                        :key="slice.index"
+                        cx="120"
+                        cy="100"
+                        :r="DOUGHNUT_RADIUS"
+                        fill="none"
+                        :stroke="color(slice.index)"
+                        :stroke-width="DOUGHNUT_WIDTH"
+                        :stroke-dasharray="slice.dash"
+                        :stroke-dashoffset="slice.offset"
+                        :opacity="hovered === null || hovered === slice.index ? 1 : 0.45"
+                        data-xq-chart-slice
+                        @mouseenter="hovered = slice.index"
+                    />
+                </g>
             </g>
             <text
                 x="120"

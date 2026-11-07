@@ -2,6 +2,13 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+### Fixed
+
+- **Doughnut charts show their ring.** Its animation moved the pivot of the ring's rotation, which pushed it out of the card.
+- **`HasTenants::getTenants()` accepts a collection of your own model** in PHPStan, as in `Collection<int, Team>`.
+
 ## 0.3.0 - 2026-11-07
 
 ### Added

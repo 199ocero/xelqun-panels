@@ -331,6 +331,12 @@ describe('XqPanelChart', () => {
         expect(wrapper.find('svg text').text()).toBe('75');
     });
 
+    it('keeps the doughnut rotation off the animated ring, whose pivot would move it', () => {
+        const wrapper = mount(XqPanelChart, { props: { chart: chart({ type: 'doughnut' }) } });
+
+        expect(wrapper.find('[data-xq-chart-ring]').attributes('transform')).toBeUndefined();
+    });
+
     it('explains a point on hover', async () => {
         const wrapper = mount(XqPanelChart, { props: { chart: chart() } });
 

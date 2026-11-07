@@ -700,7 +700,7 @@ final class Panel
     }
 
     /**
-     * @return Collection<int, Model>
+     * @return Collection<int, covariant Model>
      */
     public function getTenantsFor(?Authenticatable $user): Collection
     {

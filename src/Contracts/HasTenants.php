@@ -15,7 +15,7 @@ use Xelqun\Panels\Panel;
 interface HasTenants
 {
     /**
-     * @return Collection<int, Model>
+     * @return Collection<int, covariant Model>
      */
     public function getTenants(Panel $panel): Collection;
 
