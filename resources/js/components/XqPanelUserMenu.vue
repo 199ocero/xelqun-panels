@@ -2,7 +2,16 @@
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { XqIcon, XqMenuGlide } from '@xelqun/forms';
-import { Check, LogOut, Monitor, Moon, Settings2, Sparkles, Sun, UserRound } from 'lucide-vue-next';
+import {
+    Check,
+    ChevronsUpDown,
+    LogOut,
+    Monitor,
+    Moon,
+    Sparkles,
+    Sun,
+    UserRound,
+} from 'lucide-vue-next';
 import {
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
@@ -70,7 +79,7 @@ const initials = computed(() =>
                         {{ user.email }}
                     </span>
                 </span>
-                <Settings2
+                <ChevronsUpDown
                     v-if="!collapsed"
                     class="size-4 mr-1.5 text-xq-muted-foreground group-hover:text-xq-foreground shrink-0 transition-[scale,color] duration-(--xq-duration-base) ease-(--xq-ease-spring) group-hover:scale-110"
                     aria-hidden="true"
