@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Deferred, Head } from '@inertiajs/vue3';
-import { XqActions, XqForm, cn } from '@xelqun/forms';
+import { XqActions, XqForm, XqTabGlide, cn } from '@xelqun/forms';
 import { XqTable } from '@xelqun/tables';
 import XqPanelHook from '../components/XqPanelHook.vue';
 import XqPanelTabs from '../components/XqPanelTabs.vue';
@@ -77,9 +77,10 @@ const hiddenRelations = computed(() =>
                 <div
                     v-if="relationTables.length > 1"
                     role="tablist"
-                    class="gap-1 border-xq-border flex overflow-x-auto border-b"
+                    class="gap-1 border-xq-border relative flex overflow-x-auto border-b"
                     data-xq-relation-tabs
                 >
+                    <XqTabGlide class="bottom-0 h-0.5 bg-xq-primary" />
                     <button
                         v-for="(relation, index) in relationTables"
                         :key="relation.schema.id"
@@ -88,10 +89,9 @@ const hiddenRelations = computed(() =>
                         :aria-selected="relation === item"
                         :class="
                             cn(
-                                'px-3 py-2 text-sm font-medium cursor-pointer border-b-2 whitespace-nowrap',
-                                relation === item
-                                    ? 'border-xq-primary'
-                                    : 'text-xq-muted-foreground hover:text-xq-foreground border-transparent',
+                                'px-3 py-2 text-sm font-medium cursor-pointer whitespace-nowrap transition-colors duration-(--xq-duration-fast)',
+                                relation !== item &&
+                                    'text-xq-muted-foreground hover:text-xq-foreground',
                             )
                         "
                         @click="activeRelation = index"

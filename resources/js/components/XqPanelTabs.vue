@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { XqIcon, cn } from '@xelqun/forms';
+import { XqIcon, XqTabGlide, cn } from '@xelqun/forms';
 import { t } from '../composables/useMessages';
 import type { PanelTab } from '../types';
 
@@ -10,9 +10,10 @@ defineProps<{ tabs: PanelTab[] }>();
 <template>
     <nav
         :aria-label="t('Views')"
-        class="gap-1 border-xq-border -mt-2 flex overflow-x-auto border-b"
+        class="gap-1 border-xq-border -mt-2 relative flex overflow-x-auto border-b"
         data-xq-tabs
     >
+        <XqTabGlide class="bottom-0 h-0.5 bg-xq-primary" />
         <Link
             v-for="tab in tabs"
             :key="tab.key"
@@ -20,10 +21,10 @@ defineProps<{ tabs: PanelTab[] }>();
             :aria-current="tab.active ? 'page' : undefined"
             :class="
                 cn(
-                    'gap-1.5 px-3 py-2 text-sm font-medium flex shrink-0 items-center border-b-2 whitespace-nowrap',
+                    'gap-1.5 px-3 py-2 text-sm font-medium flex shrink-0 items-center whitespace-nowrap transition-colors duration-(--xq-duration-fast)',
                     tab.active
-                        ? 'border-xq-primary text-xq-foreground'
-                        : 'text-xq-muted-foreground hover:text-xq-foreground border-transparent',
+                        ? 'text-xq-foreground'
+                        : 'text-xq-muted-foreground hover:text-xq-foreground',
                 )
             "
         >
