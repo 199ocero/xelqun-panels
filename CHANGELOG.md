@@ -4,6 +4,8 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 
 ## Unreleased
 
+This needs `xelqun/tables` 0.6.1: `composer update xelqun/panels xelqun/tables`.
+
 ### Added
 
 - "Send a new code" on the two-factor page for someone who gets codes by email. It replaces the old code and gives the challenge its full five minutes again (3 a minute).
@@ -16,7 +18,7 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 
 ### Fixed
 
-- "Restore selected" and "Delete selected for good" only show while the list shows deleted rows. The list only hides them once the next `xelqun/tables` is out, which sends bulk actions with each query.
+- "Restore selected" and "Delete selected for good" only show while the list shows deleted rows. It needs `xelqun/tables` 0.6.1, which sends bulk actions with each query, so panels now requires it.
 
 ## 0.4.0 - 2026-11-08
 
