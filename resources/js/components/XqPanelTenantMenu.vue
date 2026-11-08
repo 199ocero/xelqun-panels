@@ -26,10 +26,14 @@ const search = ref('');
 const found = ref<PanelTenantOption[] | null>(null);
 const options = computed(() => found.value ?? props.tenant.tenants);
 let timer: ReturnType<typeof setTimeout> | undefined;
+let latest = 0;
 
 // Only some tenants come with the page, so the rest are found on the server by name.
 watch(search, (term) => {
     clearTimeout(timer);
+
+    // An older answer that arrives late, or after the box was cleared, must not replace a newer list.
+    const mine = ++latest;
 
     if (!props.tenant.searchUrl || term.trim() === '') {
         found.value = null;

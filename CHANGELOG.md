@@ -2,7 +2,13 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
-## Unreleased
+## 0.4.0 - 2026-11-08
+
+This release needs `xelqun/forms` 0.8 and `xelqun/tables` 0.6.
+
+### Upgrading
+
+`composer update xelqun/panels xelqun/forms xelqun/tables` and `npm install @xelqun/panels@0.4.0 @xelqun/tables@0.6.0 @xelqun/forms@0.8.0`.
 
 ### Changed
 
@@ -22,7 +28,7 @@ Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, 
 - The two-factor page says the code was emailed when it was.
 - A navigation item with no icon lines up with the others, and shows its initial on a collapsed sidebar.
 - `make:xelqun-panel` only asks you to add `PanelUser` when the user model doesn't have it.
-- Each auth and panel endpoint has its own rate limit. They shared one counter per user or visitor, so six requests of any throttled kind blocked a password reset.
+- Each auth and panel endpoint has its own rate limit, in each panel. They shared one counter per user or visitor, so six requests of any throttled kind blocked a password reset.
 
 ## 0.3.1 - 2026-11-07
 

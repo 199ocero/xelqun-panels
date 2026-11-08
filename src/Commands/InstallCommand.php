@@ -5,7 +5,9 @@ namespace Xelqun\Panels\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Xelqun\Forms\Commands\Concerns\EditsHostApp;
+use Xelqun\Forms\Schema\SchemaVersion as FormsVersion;
 use Xelqun\Panels\Panels;
+use Xelqun\Tables\Schema\SchemaVersion as TablesVersion;
 
 class InstallCommand extends Command
 {
@@ -23,7 +25,10 @@ class InstallCommand extends Command
 
     public function handle(): int
     {
-        if (! $this->option('without-node') && ! $this->installNodePackage(self::NPM_PACKAGE.'@'.Panels::VERSION)) {
+        // All three, so forms and tables land in package.json rather than as unlisted peers.
+        $packages = implode(' ', [self::NPM_PACKAGE.'@'.Panels::VERSION, '@xelqun/tables@'.TablesVersion::PACKAGE, '@xelqun/forms@'.FormsVersion::PACKAGE]);
+
+        if (! $this->option('without-node') && ! $this->installNodePackage($packages)) {
             return self::FAILURE;
         }
 

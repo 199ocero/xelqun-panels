@@ -40,21 +40,21 @@ foreach (app(Panels::class)->all() as $panel) {
 
             if ($panel->getPasswordResetRequestForm() !== null) {
                 Route::get('forgot-password', [PasswordResetController::class, 'showRequest'])->name('auth.password.request');
-                Route::post('forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:6,1,xelqun-panels-auth.password.email')->name('auth.password.email');
+                Route::post('forgot-password', [PasswordResetController::class, 'sendLink'])->middleware("throttle:6,1,xelqun-panels.{$panel->getId()}.auth.password.email")->name('auth.password.email');
                 Route::get('reset-password/{token}', [PasswordResetController::class, 'showReset'])->name('auth.password.reset');
-                Route::post('reset-password/{token}', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1,xelqun-panels-auth.password.update')->name('auth.password.update');
+                Route::post('reset-password/{token}', [PasswordResetController::class, 'reset'])->middleware("throttle:6,1,xelqun-panels.{$panel->getId()}.auth.password.update")->name('auth.password.update');
             }
 
             if ($panel->getRegistrationForm() !== null) {
                 Route::get('register', [RegisterController::class, 'show'])->name('auth.register');
-                Route::post('register', [RegisterController::class, 'store'])->middleware('throttle:6,1,xelqun-panels-auth.register.store')->name('auth.register.store');
+                Route::post('register', [RegisterController::class, 'store'])->middleware("throttle:6,1,xelqun-panels.{$panel->getId()}.auth.register.store")->name('auth.register.store');
             }
 
             if ($panel->requiresEmailVerification()) {
-                Route::middleware(Authenticate::class.':unverified')->group(function (): void {
+                Route::middleware(Authenticate::class.':unverified')->group(function () use ($panel): void {
                     Route::get('email/verify', [EmailVerificationController::class, 'prompt'])->name('auth.verification.notice');
-                    Route::post('email/send', [EmailVerificationController::class, 'send'])->middleware('throttle:6,1,xelqun-panels-auth.verification.send')->name('auth.verification.send');
-                    Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware(['signed', 'throttle:6,1,xelqun-panels-auth.verification.verify'])->name('auth.verification.verify');
+                    Route::post('email/send', [EmailVerificationController::class, 'send'])->middleware("throttle:6,1,xelqun-panels.{$panel->getId()}.auth.verification.send")->name('auth.verification.send');
+                    Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware(['signed', "throttle:6,1,xelqun-panels.{$panel->getId()}.auth.verification.verify"])->name('auth.verification.verify');
                 });
             }
 
@@ -67,7 +67,7 @@ foreach (app(Panels::class)->all() as $panel) {
 
                 if ($panel->getTenantRegistrationForm() !== null) {
                     Route::get('new-tenant', [TenantController::class, 'showRegistration'])->name('tenant.register');
-                    Route::post('new-tenant', [TenantController::class, 'register'])->middleware('throttle:6,1,xelqun-panels-tenant.register.store')->name('tenant.register.store');
+                    Route::post('new-tenant', [TenantController::class, 'register'])->middleware("throttle:6,1,xelqun-panels.{$panel->getId()}.tenant.register.store")->name('tenant.register.store');
                 }
 
                 Route::prefix($panel->hasTenancy() ? '{tenant}' : '')
@@ -75,11 +75,11 @@ foreach (app(Panels::class)->all() as $panel) {
                     ->group(function () use ($panel): void {
                         if ($panel->hasGlobalSearch()) {
                             // The underscore keeps it clear of a page or resource called search.
-                            Route::post('_search', GlobalSearchController::class)->middleware('throttle:60,1,xelqun-panels-search')->name('search');
+                            Route::post('_search', GlobalSearchController::class)->middleware("throttle:60,1,xelqun-panels.{$panel->getId()}.search")->name('search');
                         }
 
                         if ($panel->hasTenancy()) {
-                            Route::post('_tenants', TenantSearchController::class)->middleware('throttle:60,1,xelqun-panels-tenant.search')->name('tenant.search');
+                            Route::post('_tenants', TenantSearchController::class)->middleware("throttle:60,1,xelqun-panels.{$panel->getId()}.tenant.search")->name('tenant.search');
                         }
 
                         if ($panel->getTenantProfileForm() !== null) {
@@ -88,7 +88,7 @@ foreach (app(Panels::class)->all() as $panel) {
                         }
 
                         if ($panel->hasDatabaseNotifications()) {
-                            Route::prefix('_notifications')->middleware('throttle:120,1,xelqun-panels-notifications')->name('notifications.')->group(function (): void {
+                            Route::prefix('_notifications')->middleware("throttle:120,1,xelqun-panels.{$panel->getId()}.notifications")->name('notifications.')->group(function (): void {
                                 Route::post('', [NotificationController::class, 'index'])->name('index');
                                 Route::post('read-all', [NotificationController::class, 'readAll'])->name('read-all');
                                 Route::post('clear', [NotificationController::class, 'clear'])->name('clear');
@@ -111,9 +111,9 @@ foreach (app(Panels::class)->all() as $panel) {
 
                             $parent = $resource::getParentResource();
 
-                            Route::prefix($parent === null ? $slug : $parent::getSlug()."/{parentRecord}/{$slug}")->name("resources.{$slug}.")->group(function () use ($pages, $resource): void {
+                            Route::prefix($parent === null ? $slug : $parent::getSlug()."/{parentRecord}/{$slug}")->name("resources.{$slug}.")->group(function () use ($pages, $resource, $panel): void {
                                 Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
-                                Route::get('_export', ExportController::class)->middleware('throttle:10,1,xelqun-panels-export')->name('export')->defaults('resource', $resource);
+                                Route::get('_export', ExportController::class)->middleware("throttle:10,1,xelqun-panels.{$panel->getId()}.export")->name('export')->defaults('resource', $resource);
 
                                 if (is_subclass_of($pages['index'], ManageSingleRecord::class) || $pages['index'] === ManageSingleRecord::class) {
                                     Route::put('', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);

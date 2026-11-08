@@ -27,8 +27,8 @@
         "illuminate/support": "^13.0",
         "illuminate/view": "^13.0",
         "inertiajs/inertia-laravel": "^3.0",
-        "xelqun/forms": "^0.7",
-        "xelqun/tables": "^0.5"
+        "xelqun/forms": "^0.8",
+        "xelqun/tables": "^0.6"
     },
     "require-dev": {
         "larastan/larastan": "^3.9",
