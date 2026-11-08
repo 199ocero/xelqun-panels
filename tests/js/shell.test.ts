@@ -304,6 +304,46 @@ describe('the tenant switcher', () => {
         expect(switcher(shell).exists()).toBe(false);
     });
 
+    it('searches the server for tenants it was not sent', async () => {
+        vi.useFakeTimers();
+
+        const fetchMock = vi.fn(
+            async () =>
+                new Response(
+                    JSON.stringify({
+                        tenants: [{ name: 'Team 25', url: '/team-25', active: false }],
+                    }),
+                ),
+        );
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        const wrapper = mount(XqPanelSidebar, {
+            props: { panel: { ...shell, tenant: { ...tenant, searchUrl: '/red/_tenants' } } },
+            attachTo: document.body,
+        });
+
+        await wrapper.find('[data-xq-tenant]').trigger('keydown', { key: 'Enter' });
+        await flushPromises();
+
+        const input = document.querySelector<HTMLInputElement>('[data-xq-tenant-search]')!;
+
+        input.value = 'team 25';
+        input.dispatchEvent(new Event('input'));
+        await vi.advanceTimersByTimeAsync(250);
+        await flushPromises();
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(document.querySelector('[data-xq-tenant-menu]')!.textContent).toContain('Team 25');
+        expect(document.querySelector('[data-xq-tenant-menu]')!.textContent).not.toContain(
+            'Red team',
+        );
+
+        wrapper.unmount();
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
+
     it('stays on a collapsed sidebar, shrunk to an initial', () => {
         const switcher = mount(XqPanelSidebar, {
             props: { panel: { ...shell, tenant }, collapsed: true },

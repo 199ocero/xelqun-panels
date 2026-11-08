@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
-import { XqMenuGlide, cn } from '@xelqun/forms';
-import { Check, ChevronsUpDown } from 'lucide-vue-next';
+import { XqMenuGlide, cn, postJson } from '@xelqun/forms';
+import { Check, ChevronsUpDown } from '@lucide/vue';
 import {
     DropdownMenuContent,
     DropdownMenuItem,
@@ -15,13 +15,46 @@ import {
     TooltipRoot,
     TooltipTrigger,
 } from 'reka-ui';
-import { ref } from 'vue';
-import type { PanelShell } from '../types';
+import { computed, ref, watch } from 'vue';
+import type { PanelShell, PanelTenantOption } from '../types';
 import { menuClass, menuItemClass, sidebarTooltipClass } from '../ui/classes';
 
-defineProps<{ tenant: NonNullable<PanelShell['tenant']>; collapsed?: boolean }>();
+const props = defineProps<{ tenant: NonNullable<PanelShell['tenant']>; collapsed?: boolean }>();
 
 const isMenuOpen = ref(false);
+const search = ref('');
+const found = ref<PanelTenantOption[] | null>(null);
+const options = computed(() => found.value ?? props.tenant.tenants);
+let timer: ReturnType<typeof setTimeout> | undefined;
+
+// Only some tenants come with the page, so the rest are found on the server by name.
+watch(search, (term) => {
+    clearTimeout(timer);
+
+    if (!props.tenant.searchUrl || term.trim() === '') {
+        found.value = null;
+
+        return;
+    }
+
+    timer = setTimeout(async () => {
+        try {
+            found.value = (
+                await postJson<{ tenants: PanelTenantOption[] }>(props.tenant.searchUrl!, {
+                    q: term,
+                })
+            ).tenants;
+        } catch {
+            found.value = [];
+        }
+    }, 250);
+});
+
+watch(isMenuOpen, (open) => {
+    if (!open) {
+        search.value = '';
+    }
+});
 </script>
 
 <template>
@@ -62,8 +95,21 @@ const isMenuOpen = ref(false);
                             data-xq-tenant-menu
                         >
                             <XqMenuGlide />
+                            <!-- Keys stay in the box, or the menu would take them to jump between items. Escape still closes it. -->
+                            <input
+                                v-if="tenant.searchUrl"
+                                v-model="search"
+                                type="search"
+                                :placeholder="t('Search')"
+                                :aria-label="t('Search')"
+                                class="mb-1 h-8 px-2 text-sm rounded-xq-sm border-xq-border bg-xq-background focus-visible:border-xq-ring w-full border outline-none"
+                                data-xq-tenant-search
+                                @keydown="
+                                    (event) => event.key !== 'Escape' && event.stopPropagation()
+                                "
+                            />
                             <DropdownMenuItem
-                                v-for="option in tenant.tenants"
+                                v-for="option in options"
                                 :key="option.url"
                                 :class="menuItemClass"
                                 @select="router.visit(option.url)"

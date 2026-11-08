@@ -43,6 +43,8 @@ final class RegisterController extends AuthController
 
         // validate() returns only what the form declares, so a posted is_admin goes nowhere.
         $user->forceFill($this->form()->validate($request))->save();
+        // A new model lacks the columns the database filled in, such as is_admin, so canAccessPanel() would read null.
+        $user->refresh();
 
         event(new Registered($user));
 

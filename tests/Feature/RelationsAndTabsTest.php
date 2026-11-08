@@ -376,6 +376,21 @@ describe('nested resources', function () {
             ->where('page.content.0.schema.rows.0.cells.body.state', 'First'));
     });
 
+    it('finds the parent once a request, however many rows there are', function () {
+        foreach (range(1, 9) as $number) {
+            $this->post->comments()->create(['body' => "Reply {$number}"]);
+        }
+
+        $parentQueries = 0;
+        DB::listen(function ($query) use (&$parentQueries): void {
+            $parentQueries += (int) str_contains($query->sql, 'from "posts" where "team" = ? and "posts"."id" = ?');
+        });
+
+        $this->get("/admin/posts/{$this->post->id}/post-comments")->assertOk();
+
+        expect($parentQueries)->toBe(1);
+    });
+
     it('leads back up through the parent', function () {
         $this->get("/admin/posts/{$this->post->id}/post-comments/{$this->comment->id}/edit")->assertInertia(fn (Assert $page) => $page
             ->where('page.breadcrumbs.0.label', 'Posts')

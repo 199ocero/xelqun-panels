@@ -11,7 +11,7 @@ import {
     Sparkles,
     Sun,
     UserRound,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import {
     DropdownMenuCheckboxItem,
     DropdownMenuContent,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { Link } from '@inertiajs/vue3';
-import { PanelLeft, Search } from 'lucide-vue-next';
+import { PanelLeft, Search } from '@lucide/vue';
 import { TooltipProvider } from 'reka-ui';
 import { computed, ref } from 'vue';
 import { useActivePill, useGlidingHover } from '../composables/useGlidingHover';

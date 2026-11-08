@@ -2,7 +2,7 @@
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { HttpError, cn, postJson } from '@xelqun/forms';
-import { Bell } from 'lucide-vue-next';
+import { Bell } from '@lucide/vue';
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { PanelNotification, PanelNotificationList } from '../types';

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { Link } from '@inertiajs/vue3';
-import { ChevronRight, Menu, Search } from 'lucide-vue-next';
+import { ChevronRight, Menu, Search } from '@lucide/vue';
 import type { PanelBreadcrumb } from '../types';
 import { iconButtonClass } from '../ui/classes';
 import XqPanelHook from './XqPanelHook.vue';

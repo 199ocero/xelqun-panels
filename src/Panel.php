@@ -41,6 +41,9 @@ use Xelqun\Panels\Widgets\PanelWidget;
  */
 final class Panel
 {
+    /** How many tenants the switcher lists before it offers a search. */
+    public const int TENANT_LIST_LIMIT = 20;
+
     private const string ID = '/^[a-z0-9]+(-[a-z0-9]+)*$/';
 
     private const string HEX_COLOR = '/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i';
@@ -707,6 +710,44 @@ final class Panel
         return $user instanceof HasTenants ? $user->getTenants($this) : collect();
     }
 
+    /**
+     * The switcher lists a handful, always with this one among them, and finds the
+     * rest by name. Every page carries this, so thousands would weigh down each one.
+     *
+     * @return array{tenants: array<int, array{name: string, url: string, active: bool}>, searchUrl: string|null}
+     */
+    private function getTenantList(?Authenticatable $user, Model $current): array
+    {
+        $tenants = $this->getTenantsFor($user);
+        $listed = $tenants->take(self::TENANT_LIST_LIMIT);
+
+        if (! $listed->contains(fn (Model $tenant): bool => $tenant->is($current))) {
+            $listed = collect([...$listed->take(self::TENANT_LIST_LIMIT - 1)->all(), $current]);
+        }
+
+        return [
+            'tenants' => $this->toTenantOptions($listed),
+            'searchUrl' => $tenants->count() > self::TENANT_LIST_LIMIT ? route($this->routeName('tenant.search')) : null,
+        ];
+    }
+
+    /**
+     * @internal
+     *
+     * @param  Collection<int, covariant Model>  $tenants
+     * @return array<int, array{name: string, url: string, active: bool}>
+     */
+    public function toTenantOptions(Collection $tenants): array
+    {
+        $current = app(Panels::class)->tenant();
+
+        return $tenants->take(self::TENANT_LIST_LIMIT)->map(fn (Model $option): array => [
+            'name' => (string) $option->getAttribute('name'),
+            'url' => $this->getTenantUrl($option),
+            'active' => $current !== null && $option->is($current),
+        ])->values()->all();
+    }
+
     public function getTenantUrl(Model $tenant): string
     {
         return $this->urlTo($this->path.'/'.$tenant->getAttribute($this->getTenantSlugAttribute()));
@@ -1169,11 +1210,7 @@ final class Panel
                 'name' => (string) $tenant->getAttribute('name'),
                 'profileUrl' => $this->tenantProfileForm !== null && Gate::allows('update', $tenant) ? route($this->routeName('tenant.profile')) : null,
                 'registrationUrl' => $this->tenantRegistrationForm !== null ? route($this->routeName('tenant.register')) : null,
-                'tenants' => $this->getTenantsFor($user)->map(fn (Model $option): array => [
-                    'name' => (string) $option->getAttribute('name'),
-                    'url' => $this->getTenantUrl($option),
-                    'active' => $option->is($tenant),
-                ])->values()->all(),
+                ...$this->getTenantList($user, $tenant),
             ] : null,
             'brand' => [
                 'name' => $this->getBrandName(),

@@ -285,8 +285,9 @@ abstract class Resource
     }
 
     /**
-     * Found through the parent resource every time, so a parent out of reach takes
-     * its children with it. Refused the same as a parent that doesn't exist.
+     * Found through the parent resource, so a parent out of reach takes its
+     * children with it, and refused the same as a parent that doesn't exist. It is
+     * kept on the request once found, because every row asks for it again.
      */
     public static function getParentRecord(): Model
     {
@@ -294,11 +295,18 @@ abstract class Resource
 
         abort_if($key === null, 404);
 
-        $parent = static::$parentResource::findRecord($key);
+        $cacheKey = 'xelqun-panels.parent.'.static::$parentResource.".{$key}";
+        $attributes = request()->attributes;
 
-        abort_unless(static::$parentResource::can('view', $parent), 404);
+        if (! $attributes->has($cacheKey)) {
+            $parent = static::$parentResource::findRecord($key);
 
-        return $parent;
+            abort_unless(static::$parentResource::can('view', $parent), 404);
+
+            $attributes->set($cacheKey, $parent);
+        }
+
+        return $attributes->get($cacheKey);
     }
 
     /**
@@ -639,7 +647,7 @@ abstract class Resource
      */
     public static function getUrl(string $page = 'index', array $parameters = [], ?Panel $panel = null): string
     {
-        $panel ??= app(Panels::class)->current();
+        $panel ??= app(Panels::class)->current() ?? self::findOnlyPanel();
         $slug = static::getSlug();
 
         if (static::isNested()) {
@@ -650,6 +658,24 @@ abstract class Resource
             fn (mixed $value): mixed => $value instanceof Model ? $value->getKey() : $value,
             $parameters,
         ));
+    }
+
+    /**
+     * Outside a panel's request, as in a job, a mail or a test, the panel that
+     * registers this resource, when only one does.
+     */
+    private static function findOnlyPanel(): Panel
+    {
+        $panels = array_values(array_filter(
+            app(Panels::class)->all(),
+            fn (Panel $panel): bool => in_array(static::class, $panel->getResources(), true),
+        ));
+
+        if (count($panels) !== 1) {
+            throw new PanelDefinitionException('['.static::class.'] is in '.count($panels).' panels, so getUrl() needs to be told which: getUrl($page, $parameters, app(Panels::class)->get(\'admin\')).');
+        }
+
+        return $panels[0];
     }
 
     /**

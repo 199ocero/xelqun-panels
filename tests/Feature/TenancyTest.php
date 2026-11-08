@@ -5,6 +5,7 @@ use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
+use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\Resource;
@@ -288,6 +289,25 @@ it('has a helper for tests that need a panel and a tenant', function () {
 });
 
 describe('the shell', function () {
+    it('lists a handful of tenants, with this one, and finds the rest by name', function () {
+        foreach (range(1, Panel::TENANT_LIST_LIMIT + 5) as $number) {
+            $this->user->teams()->attach(Team::create(['name' => sprintf('Team %02d', $number), 'slug' => "team-{$number}"])->id);
+        }
+
+        $this->get('/team/team-25')->assertInertia(fn (Assert $page) => $page
+            ->has('xelqunPanel.tenant.tenants', Panel::TENANT_LIST_LIMIT)
+            ->where('xelqunPanel.tenant.tenants.'.(Panel::TENANT_LIST_LIMIT - 1), ['name' => 'Team 25', 'url' => url('/team/team-25'), 'active' => true])
+            ->where('xelqunPanel.tenant.searchUrl', url('/team/team-25/_tenants')));
+
+        $this->postJson('/team/red/_tenants', ['q' => 'team 25'])
+            ->assertOk()
+            ->assertJsonPath('tenants', [['name' => 'Team 25', 'url' => url('/team/team-25'), 'active' => false]]);
+    });
+
+    it('never finds another user\'s tenant', function () {
+        $this->postJson('/team/red/_tenants', ['q' => 'Green'])->assertOk()->assertJsonPath('tenants', []);
+    });
+
     it('lists the user\'s tenants, marks this one, and links inside it', function () {
         $this->get('/team/red')->assertInertia(fn (Assert $page) => $page
             ->where('xelqunPanel.url', url('/team/red'))

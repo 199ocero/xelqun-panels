@@ -3,11 +3,15 @@
 namespace Xelqun\Panels\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Xelqun\Panels\Commands\Concerns\GuessesTitleColumn;
 
 class MakeRelationManagerCommand extends Command
 {
+    use GuessesTitleColumn;
+
     private const string CLASS_NAME = '/^[A-Z][A-Za-z0-9]*$/';
 
     private const string METHOD_NAME = '/^[a-z][A-Za-z0-9]*$/';
@@ -42,9 +46,12 @@ class MakeRelationManagerCommand extends Command
         }
 
         File::ensureDirectoryExists(dirname($path));
+        $parentClass = "{$this->laravel->getNamespace()}Models\\{$model}";
+        $related = is_subclass_of($parentClass, Model::class) && method_exists($parentClass, $relationship) ? rescue(fn (): ?Model => (new $parentClass)->{$relationship}()->getRelated(), report: false) : null;
+
         File::put($path, str_replace(
-            ['{{ namespace }}', '{{ class }}', '{{ relationship }}'],
-            ["{$this->laravel->getNamespace()}Xelqun\\{$panel}\\Resources\\{$model}Resource", $class, $relationship],
+            ['{{ namespace }}', '{{ class }}', '{{ relationship }}', '{{ title }}'],
+            ["{$this->laravel->getNamespace()}Xelqun\\{$panel}\\Resources\\{$model}Resource", $class, $relationship, $this->guessTitleColumn($related)],
             File::get(__DIR__.'/../../stubs/relation-manager.php.stub'),
         ));
 

@@ -76,7 +76,7 @@ it('sends how wide each one is', function () {
 
 it('sends where See all goes', function () {
     expect(widget('pending-posts')['data']['seeAllUrl'])->toBe('/posts')
-        ->and(widget('post-stats')['data']['seeAllUrl'])->toBeNull();
+        ->and(widget('post-stats')['data'])->not->toHaveKey('seeAllUrl');
 });
 
 it('sends a stat\'s parts', function () {

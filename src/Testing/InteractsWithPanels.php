@@ -14,10 +14,13 @@ use Xelqun\Panels\Panels;
 trait InteractsWithPanels
 {
     /**
-     * Sign in on a panel's own guard.
+     * Sign in on a panel's own guard, and be inside the panel, so getUrl() and
+     * the panel's tables and forms work in the test as they do in a request.
      */
     public function actingInPanel(Authenticatable $user, string $id): static
     {
+        $this->enterPanel($id);
+
         return $this->actingAs($user, app(Panels::class)->get($id)->getAuthGuard());
     }
 

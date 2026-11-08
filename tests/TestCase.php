@@ -11,6 +11,7 @@ use Orchestra\Testbench\TestCase as Orchestra;
 use Xelqun\Forms\FormsServiceProvider;
 use Xelqun\Forms\Testing\InteractsWithForms;
 use Xelqun\Panels\PanelsServiceProvider;
+use Xelqun\Panels\Testing\InteractsWithPanels;
 use Xelqun\Panels\Tests\Fixtures\AdminPanelProvider;
 use Xelqun\Panels\Tests\Fixtures\DomainPanelProvider;
 use Xelqun\Panels\Tests\Fixtures\HandleInertia;
@@ -23,6 +24,7 @@ use Xelqun\Tables\Testing\InteractsWithTables;
 abstract class TestCase extends Orchestra
 {
     use InteractsWithForms;
+    use InteractsWithPanels;
     use InteractsWithTables;
 
     protected function getPackageProviders($app): array
@@ -54,6 +56,7 @@ abstract class TestCase extends Orchestra
 
         $this->withoutVite();
         User::$allowed = true;
+        User::$allowedWhen = null;
     }
 
     /**

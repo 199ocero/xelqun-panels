@@ -2,7 +2,7 @@
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { HttpError, XqIcon, XqMenuGlide, cn, postJson } from '@xelqun/forms';
-import { Search } from 'lucide-vue-next';
+import { Search } from '@lucide/vue';
 import {
     DialogContent,
     DialogDescription,

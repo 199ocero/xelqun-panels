@@ -28,13 +28,16 @@ final class MultiFactorChallengeController extends AuthController
 
     public function show(Request $request): Response|RedirectResponse
     {
-        if ($this->pending($request) === null) {
+        $pending = $this->pending($request);
+
+        if ($pending === null) {
             return redirect()->to($this->panel()->getLoginUrl());
         }
 
         return $this->page(
             __('xelqun-panels::auth.mfa.heading'),
-            __('xelqun-panels::auth.mfa.description'),
+            // Someone who only gets codes by email has no app to open.
+            __($pending['emailCode'] === null ? 'xelqun-panels::auth.mfa.description' : 'xelqun-panels::auth.mfa.description_email'),
             MultiFactorChallengeForm::make(),
             route($this->panel()->routeName('auth.challenge.store')),
             __('xelqun-panels::auth.mfa.submit'),

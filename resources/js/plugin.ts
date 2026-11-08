@@ -26,7 +26,7 @@ import {
     Upload,
     Users,
     Zap,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import XqPanelEntry from './components/XqPanelEntry.vue';
 
 /**

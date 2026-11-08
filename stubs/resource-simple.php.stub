@@ -12,17 +12,19 @@ class {{ class }} extends Resource
 {
     protected static string $model = {{ model }}::class;
 
+    protected static ?string $recordTitleAttribute = '{{ title }}';
+
     public static function form(): array
     {
         return [
-            TextInput::make('name')->required(),
+            TextInput::make('{{ title }}')->required(),
         ];
     }
 
     public static function columns(): array
     {
         return [
-            TextColumn::make('name')->searchable()->sortable(),
+            TextColumn::make('{{ title }}')->searchable()->sortable(),
         ];
     }
 

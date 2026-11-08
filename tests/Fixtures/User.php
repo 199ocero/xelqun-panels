@@ -2,6 +2,7 @@
 
 namespace Xelqun\Panels\Tests\Fixtures;
 
+use Closure;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -22,6 +23,9 @@ class User extends Authenticatable implements HasAppAuthentication, HasEmailAuth
 
     public static bool $allowed = true;
 
+    /** Lets a test decide by the user's own columns. */
+    public static ?Closure $allowedWhen = null;
+
     protected $guarded = [];
 
     protected $hidden = ['password', 'remember_token'];
@@ -30,7 +34,7 @@ class User extends Authenticatable implements HasAppAuthentication, HasEmailAuth
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return self::$allowed;
+        return self::$allowedWhen === null ? self::$allowed : (self::$allowedWhen)($this);
     }
 
     /**

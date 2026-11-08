@@ -1,6 +1,9 @@
 <?php
 
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 
 beforeEach(function (): void {
     $this->appPath = sys_get_temp_dir().'/xelqun-panels-'.uniqid();
@@ -63,7 +66,15 @@ describe('xelqun-panels:install', function () {
 });
 
 describe('make:xelqun-panel', function () {
+    it('leaves out the PanelUser step when the user model has it', function (): void {
+        $this->artisan('make:xelqun-panel', ['name' => 'Staff'])
+            ->doesntExpectOutputToContain('PanelUser')
+            ->assertSuccessful();
+    });
+
     it('creates a provider and registers it', function (): void {
+        config(['auth.providers.users.model' => User::class]);
+
         $this->artisan('make:xelqun-panel', ['name' => 'BackOffice'])
             ->expectsOutputToContain('PanelUser')
             ->assertSuccessful();
@@ -116,6 +127,24 @@ describe('make:xelqun-resource', function () {
         expect(File::get("{$this->appPath}/app/Xelqun/Staff/Resources/ProductResource.php"))
             ->toContain('namespace App\Xelqun\Staff\Resources;')
             ->toContain('protected static string $model = Product::class;');
+    });
+
+    it('starts from a column the model\'s table has, and falls back to name', function (): void {
+        Schema::create('invoices', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedInteger('total');
+            $table->string('number');
+        });
+        eval('namespace App\\Models; class Invoice extends \\Illuminate\\Database\\Eloquent\\Model {}');
+
+        $this->artisan('make:xelqun-resource', ['model' => 'Invoice'])->assertSuccessful();
+        $this->artisan('make:xelqun-resource', ['model' => 'Ghost'])->assertSuccessful();
+
+        expect(File::get("{$this->appPath}/app/Xelqun/Admin/Resources/InvoiceResource.php"))
+            ->toContain("TextInput::make('number')")
+            ->toContain("TextColumn::make('number')")
+            ->toContain("protected static ?string \$recordTitleAttribute = 'number';")
+            ->and(File::get("{$this->appPath}/app/Xelqun/Admin/Resources/GhostResource.php"))->toContain("TextInput::make('name')");
     });
 
     it('makes a one-page resource', function (): void {

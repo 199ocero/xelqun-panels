@@ -144,6 +144,12 @@ describe('registration', function () {
             ->and(User::query()->where('email', 'ada@example.com')->exists())->toBeTrue();
     });
 
+    it('lets canAccessPanel() read a column the database filled in', function () {
+        User::$allowedWhen = fn (User $user): bool => $user->has_email_authentication === false;
+
+        register()->assertRedirect('/admin');
+    });
+
     it('refuses an address already in use', function () {
         makeUser();
 

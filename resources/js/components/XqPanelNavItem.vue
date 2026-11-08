@@ -30,6 +30,15 @@ defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
                     class="size-4.5 text-xq-muted-foreground group-hover:text-xq-foreground shrink-0 transition-[scale,color] duration-(--xq-duration-base) ease-(--xq-ease-spring) group-hover:scale-110"
                     aria-hidden="true"
                 />
+                <!-- An item with no icon keeps its place, so labels line up, and shows its initial when collapsed. -->
+                <span
+                    v-else
+                    class="size-4.5 text-xs font-medium text-xq-muted-foreground flex shrink-0 items-center justify-center"
+                    aria-hidden="true"
+                    data-xq-nav-placeholder
+                >
+                    {{ collapsed ? item.label.charAt(0).toUpperCase() : '' }}
+                </span>
                 <span :class="collapsed ? 'sr-only' : 'truncate'">{{ item.label }}</span>
                 <span
                     v-if="item.badge && !collapsed"

@@ -3,10 +3,14 @@
 namespace Xelqun\Panels\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
+use Xelqun\Panels\Commands\Concerns\GuessesTitleColumn;
 
 class MakeResourceCommand extends Command
 {
+    use GuessesTitleColumn;
+
     private const string CLASS_NAME = '/^[A-Z][A-Za-z0-9]*$/';
 
     protected $signature = 'make:xelqun-resource
@@ -42,9 +46,12 @@ class MakeResourceCommand extends Command
         $namespace = $this->laravel->getNamespace();
 
         File::ensureDirectoryExists(dirname($path));
+        $modelClass = "{$namespace}Models\\{$model}";
+        $title = $this->guessTitleColumn(is_subclass_of($modelClass, Model::class) ? new $modelClass : null);
+
         File::put($path, str_replace(
-            ['{{ namespace }}', '{{ class }}', '{{ modelNamespace }}', '{{ model }}'],
-            ["{$namespace}Xelqun\\{$panel}\\Resources", $class, "{$namespace}Models", $model],
+            ['{{ namespace }}', '{{ class }}', '{{ modelNamespace }}', '{{ model }}', '{{ title }}'],
+            ["{$namespace}Xelqun\\{$panel}\\Resources", $class, "{$namespace}Models", $model, $title],
             File::get(__DIR__.'/../../stubs/'.($this->option('simple') ? 'resource-simple.php.stub' : 'resource.php.stub')),
         ));
 

@@ -2,7 +2,7 @@
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
 import { XqIcon, cn, XqMenuGlide } from '@xelqun/forms';
-import { Plus } from 'lucide-vue-next';
+import { Plus } from '@lucide/vue';
 import {
     DropdownMenuContent,
     DropdownMenuItem,

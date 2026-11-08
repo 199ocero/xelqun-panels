@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Xelqun\Panels\Contracts\PanelUser;
 
 class MakePanelCommand extends Command
 {
@@ -50,10 +51,12 @@ class MakePanelCommand extends Command
         ServiceProvider::addProviderToBootstrapFile("{$namespace}\\{$class}");
 
         $this->components->info("Panel created. It will live at /{$id}.");
-        $this->components->bulletList([
+        $userModel = config('auth.providers.users.model');
+
+        $this->components->bulletList(array_filter([
             $path,
-            'Add Xelqun\Panels\Contracts\PanelUser to your user model, or nobody can sign in.',
-        ]);
+            is_string($userModel) && is_subclass_of($userModel, PanelUser::class) ? null : 'Add Xelqun\Panels\Contracts\PanelUser to your user model, or nobody can sign in.',
+        ]));
 
         return self::SUCCESS;
     }

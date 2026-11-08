@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { XqIcon, cn, XqMenuGlide } from '@xelqun/forms';
-import { ChevronDown } from 'lucide-vue-next';
+import { ChevronDown } from '@lucide/vue';
 import {
     DropdownMenuContent,
     DropdownMenuItem,

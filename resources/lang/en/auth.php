@@ -44,7 +44,7 @@ return [
         'submit' => 'Create the account',
         'have_account' => 'Already have an account?',
         'sign_in' => 'Sign in',
-        'done' => 'Your account is created.',
+        'done' => 'Your account is created. You can sign in once someone gives you access.',
     ],
 
     'verify' => [
@@ -65,6 +65,7 @@ return [
     'mfa' => [
         'heading' => 'Two-factor authentication',
         'description' => 'Enter the 6 digit code from your authenticator app, or a recovery code.',
+        'description_email' => 'Enter the 6 digit code we just emailed you. A code from an authenticator app or a recovery code works too.',
         'code' => 'Code',
         'submit' => 'Continue',
         'back' => 'Back to sign in',

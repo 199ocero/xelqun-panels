@@ -61,6 +61,12 @@ export interface PanelSidebarCard {
     link: { label: string; url: string } | null;
 }
 
+export interface PanelTenantOption {
+    name: string;
+    url: string;
+    active: boolean;
+}
+
 /** What every page of a panel shares. Hosts read it as `xelqunPanel`. */
 export interface PanelShell {
     id: string;
@@ -70,7 +76,9 @@ export interface PanelShell {
         name: string;
         profileUrl: string | null;
         registrationUrl: string | null;
-        tenants: Array<{ name: string; url: string; active: boolean }>;
+        tenants: PanelTenantOption[];
+        /** Set when the user has more tenants than are listed. */
+        searchUrl?: string | null;
     } | null;
     theme: {
         colors: Record<string, string>;

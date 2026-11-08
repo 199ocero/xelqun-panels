@@ -4,7 +4,7 @@ import { XqAction, XqActionGroup, XqIcon, cn } from '@xelqun/forms';
 import type { ActionRunner } from '@xelqun/forms';
 import { actionNode, createTableStore } from '@xelqun/tables';
 import type { TableSchema } from '@xelqun/tables';
-import { ChevronRight } from 'lucide-vue-next';
+import { ChevronRight } from '@lucide/vue';
 import { computed, onScopeDispose, watch } from 'vue';
 import { toneClasses } from './tones';
 import XqPanelWidgetCard from './XqPanelWidgetCard.vue';

@@ -83,8 +83,9 @@ class PanelsServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/lang' => lang_path('vendor/xelqun-panels'),
             ], 'xelqun-panels-lang');
 
+            // The date is a placeholder that publishing replaces with the time it ran.
             $this->publishesMigrations([
-                __DIR__.'/../database/migrations/add_app_authentication_to_users_table.php.stub' => database_path('migrations/add_app_authentication_to_users_table.php'),
+                __DIR__.'/../database/migrations/add_app_authentication_to_users_table.php.stub' => database_path('migrations/2026_01_01_000000_add_app_authentication_to_users_table.php'),
             ], 'xelqun-panels-mfa');
 
             $this->commands([InstallCommand::class, MakePageCommand::class, MakePanelCommand::class, MakeRelationManagerCommand::class, MakeResourceCommand::class, MakeWidgetCommand::class]);

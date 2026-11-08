@@ -2,6 +2,28 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+### Changed
+
+- **Icons come from `@lucide/vue`**, the new name of the deprecated `lucide-vue-next`.
+- **The tenant switcher lists 20 tenants**, always with the current one, and has a search box for the rest. Every page carried the whole list, which was 525 KB for 5,000 tenants.
+- `make:xelqun-resource` and `make:xelqun-relation-manager` start from a column the model's table has (`name`, `title`, `label`, `number`, `email`, `slug`, or its first text column), and a generated resource sets `$recordTitleAttribute`, so it shows in global search.
+- The published two-factor migration carries the date it was published, so it runs in order with the app's own.
+
+### Fixed
+
+- `Resource::getUrl()` works outside a panel's request, as in a job, a mail or a test, when one panel registers the resource. With more than one, it says to pass the panel.
+- `actingInPanel()` enters the panel too, so `getUrl()` works in a test after it.
+- A nested resource finds its parent once a request, instead of once for every row: 26 queries for a page of 10 became 1.
+- Registration reads the new user back before asking `canAccessPanel()`, so a column the database fills in, such as `is_admin`, isn't null. A new user the panel refuses is told someone has to give them access.
+- An action with `authorize('export')` on a page of its own asks the gate, rather than always hiding. This needs `xelqun/forms` with the same fix.
+- A custom widget keeps the heading it gives its card when the widget class sets none.
+- The two-factor page says the code was emailed when it was.
+- A navigation item with no icon lines up with the others, and shows its initial on a collapsed sidebar.
+- `make:xelqun-panel` only asks you to add `PanelUser` when the user model doesn't have it.
+- Each auth and panel endpoint has its own rate limit. They shared one counter per user or visitor, so six requests of any throttled kind blocked a password reset.
+
 ## 0.3.1 - 2026-11-07
 
 ### Fixed

@@ -51,7 +51,8 @@ trait HasWidgetSettings
             'type' => $type,
             'id' => $this->getWidgetId(),
             'columnSpan' => static::$columnSpan,
-            'data' => ['heading' => static::$heading, 'seeAllUrl' => $this->getSeeAllUrl(), ...$data],
+            // Left out when unset, so a null can't override the heading a custom widget gives its card.
+            'data' => [...array_filter(['heading' => static::$heading, 'seeAllUrl' => $this->getSeeAllUrl()], fn (mixed $value): bool => $value !== null), ...$data],
         ];
     }
 }

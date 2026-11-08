@@ -12,6 +12,7 @@ use Xelqun\Panels\Resources\ResourceTable;
 use Xelqun\Panels\Tests\Fixtures\Post;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostResource;
+use Xelqun\Panels\Tests\Fixtures\User;
 
 beforeEach(function () {
     Gate::policy(Post::class, PostPolicy::class);
@@ -321,4 +322,17 @@ describe('uploads', function () {
 
 it('can\'t be pointed at a class that isn\'t a resource', function () {
     expect(fn () => ResourceForm::make(null, ['resource' => stdClass::class]))->toThrow(LogicException::class);
+});
+
+describe('links from outside a panel', function () {
+    it('finds the only panel that registers the resource, as in a job or a mail', function () {
+        expect(app(Panels::class)->current())->toBeNull()
+            ->and(PostResource::getUrl())->toBe(url('/admin/posts'));
+    });
+
+    it('is inside the panel once a test signs in to it', function () {
+        $this->actingInPanel(User::query()->firstOrFail(), 'admin');
+
+        expect(app(Panels::class)->current()->getId())->toBe('admin');
+    });
 });

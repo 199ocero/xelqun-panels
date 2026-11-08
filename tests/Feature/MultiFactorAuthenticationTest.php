@@ -370,6 +370,13 @@ describe('email codes', function () {
         $this->assertAuthenticatedAs($this->user->fresh(), 'admin');
     });
 
+    it('says the code was emailed', function () {
+        passPassword();
+
+        $this->get('/admin/two-factor')->assertInertia(fn (Assert $page) => $page
+            ->where('page.description', __('xelqun-panels::auth.mfa.description_email')));
+    });
+
     it('refuses a wrong code', function () {
         passPassword();
 
@@ -447,4 +454,14 @@ it('ships a migration with the columns the trait reads', function () {
     expect(Schema::hasColumns('users', ['app_authentication_secret', 'app_authentication_recovery_codes']))->toBeTrue()
         ->and(file_get_contents(dirname(__DIR__, 2).'/database/migrations/add_app_authentication_to_users_table.php.stub'))
         ->toContain('app_authentication_secret')->toContain('app_authentication_recovery_codes');
+});
+
+it('publishes the migration with the date it was published, so it runs in order', function () {
+    $this->artisan('vendor:publish', ['--tag' => 'xelqun-panels-mfa'])->assertSuccessful();
+
+    $published = glob(database_path('migrations/*_add_app_authentication_to_users_table.php'));
+    array_map(unlink(...), $published);
+
+    expect($published)->toHaveCount(1)
+        ->and(basename($published[0]))->toStartWith(now()->format('Y_m_d_'));
 });
