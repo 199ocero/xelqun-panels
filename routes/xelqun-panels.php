@@ -36,6 +36,7 @@ foreach (app(Panels::class)->all() as $panel) {
             if ($panel->hasMultiFactorAuthentication() || $panel->hasEmailAuthentication()) {
                 Route::get('two-factor', [MultiFactorChallengeController::class, 'show'])->name('auth.challenge');
                 Route::post('two-factor', [MultiFactorChallengeController::class, 'store'])->name('auth.challenge.store');
+                Route::post('two-factor/resend', [MultiFactorChallengeController::class, 'resend'])->middleware("throttle:3,1,xelqun-panels.{$panel->getId()}.auth.challenge.resend")->name('auth.challenge.resend');
             }
 
             if ($panel->getPasswordResetRequestForm() !== null) {

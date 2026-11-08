@@ -59,7 +59,9 @@ class ReplicateAction extends Action
     }
 
     /**
-     * @param  Closure(Model, Model): mixed  $using  Gets the copy, then the original.
+     * @template TModel of Model
+     *
+     * @param  Closure(TModel, TModel): mixed  $using  Gets the copy, then the original.
      */
     public function beforeReplicaSaved(Closure $using): static
     {

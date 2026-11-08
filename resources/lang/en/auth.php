@@ -69,6 +69,8 @@ return [
         'code' => 'Code',
         'submit' => 'Continue',
         'back' => 'Back to sign in',
+        'resend' => 'Send a new code',
+        'resent' => 'We emailed you a new code.',
         'invalid' => 'That code didn\'t work.',
         'required' => 'Set up two-factor authentication to continue.',
         'enable' => 'Set up two-factor',

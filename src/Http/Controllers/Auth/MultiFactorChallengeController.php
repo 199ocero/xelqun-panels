@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Inertia\Response;
+use Xelqun\Notifications\Notification;
 use Xelqun\Panels\Auth\AppAuthentication;
 use Xelqun\Panels\Auth\MultiFactorChallengeForm;
 use Xelqun\Panels\Auth\Notifications\EmailCode;
@@ -41,8 +42,40 @@ final class MultiFactorChallengeController extends AuthController
             MultiFactorChallengeForm::make(),
             route($this->panel()->routeName('auth.challenge.store')),
             __('xelqun-panels::auth.mfa.submit'),
-            [$this->link(__('xelqun-panels::auth.mfa.back'), $this->panel()->getLoginUrl())],
+            array_filter([
+                $pending['emailCode'] === null ? null : $this->link(__('xelqun-panels::auth.mfa.resend'), route($this->panel()->routeName('auth.challenge.resend')), 'post'),
+                $this->link(__('xelqun-panels::auth.mfa.back'), $this->panel()->getLoginUrl()),
+            ]),
         );
+    }
+
+    /**
+     * A new code, for one that didn't arrive or ran out. It replaces the old one
+     * and gives the challenge its full time again.
+     */
+    public function resend(Request $request): RedirectResponse
+    {
+        $pending = $this->pending($request);
+
+        if ($pending === null) {
+            return redirect()->to($this->panel()->getLoginUrl());
+        }
+
+        /** @var SessionGuard $guard */
+        $guard = Auth::guard($this->panel()->getAuthGuard());
+        $user = $guard->getProvider()->retrieveById($pending['id']);
+
+        if ($pending['emailCode'] !== null && $user !== null && $this->panel()->sendsEmailCodeTo($user)) {
+            $request->session()->put($this->sessionKey(), [
+                ...$pending,
+                'expires' => now()->addSeconds(self::EXPIRES_IN_SECONDS)->getTimestamp(),
+                'emailCode' => $this->sendEmailCode($user),
+            ]);
+
+            Notification::make()->title(__('xelqun-panels::auth.mfa.resent'))->success()->send();
+        }
+
+        return redirect()->route($this->panel()->routeName('auth.challenge'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -102,21 +135,27 @@ final class MultiFactorChallengeController extends AuthController
      */
     public function begin(Request $request, Authenticatable $user, bool $remember): RedirectResponse
     {
-        $code = $this->panel()->sendsEmailCodeTo($user) ? str_pad((string) random_int(0, 999_999), 6, '0', STR_PAD_LEFT) : null;
-
         $request->session()->regenerate();
         $request->session()->put($this->sessionKey(), [
             'id' => $user->getAuthIdentifier(),
             'remember' => $remember,
             'expires' => now()->addSeconds(self::EXPIRES_IN_SECONDS)->getTimestamp(),
-            'emailCode' => $code === null ? null : hash('sha256', $code.$user->getAuthIdentifier()),
+            'emailCode' => $this->panel()->sendsEmailCodeTo($user) ? $this->sendEmailCode($user) : null,
         ]);
 
-        if ($code !== null) {
-            NotificationFacade::send($user, new EmailCode($code));
-        }
-
         return redirect()->route($this->panel()->routeName('auth.challenge'));
+    }
+
+    /**
+     * @return string The code's hash, for the session.
+     */
+    private function sendEmailCode(Authenticatable $user): string
+    {
+        $code = str_pad((string) random_int(0, 999_999), 6, '0', STR_PAD_LEFT);
+
+        NotificationFacade::send($user, new EmailCode($code));
+
+        return hash('sha256', $code.$user->getAuthIdentifier());
     }
 
     /**

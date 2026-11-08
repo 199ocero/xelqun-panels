@@ -2,6 +2,22 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+### Added
+
+- "Send a new code" on the two-factor page for someone who gets codes by email. It replaces the old code and gives the challenge its full five minutes again (3 a minute).
+
+### Changed
+
+- `ListWidget` is generic: write `/** @extends ListWidget<Product> */` and `title()`, `meta()` and the others get a `Product` for Larastan.
+- `ReplicateAction::beforeReplicaSaved()` takes a closure typed for your model, such as `fn (Post $replica) => ...`, without a Larastan error.
+- `Resource::bulkActions()` and `RelationManager::bulkActions()` are documented to return `ActionGroup`s too, as tables always allowed.
+
+### Fixed
+
+- "Restore selected" and "Delete selected for good" only show while the list shows deleted rows. The list only hides them once the next `xelqun/tables` is out, which sends bulk actions with each query.
+
 ## 0.4.0 - 2026-11-08
 
 This release needs `xelqun/forms` 0.8 and `xelqun/tables` 0.6.

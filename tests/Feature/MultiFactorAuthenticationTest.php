@@ -377,6 +377,34 @@ describe('email codes', function () {
             ->where('page.description', __('xelqun-panels::auth.mfa.description_email')));
     });
 
+    it('sends a new code that replaces the old one', function () {
+        passPassword();
+        $old = sentCode($this->user);
+
+        $this->get('/admin/two-factor')->assertInertia(fn (Assert $page) => $page
+            ->where('page.links.0', ['label' => __('xelqun-panels::auth.mfa.resend'), 'url' => route('xelqun-panels.admin.auth.challenge.resend'), 'method' => 'post']));
+
+        Notification::fake();
+        $this->travel(4)->minutes();
+        $this->post('/admin/two-factor/resend')->assertRedirect('/admin/two-factor');
+        $new = sentCode($this->user);
+        $this->travel(4)->minutes();
+
+        answerChallenge($old)->assertSessionHasErrors('data.code');
+        answerChallenge($new)->assertRedirect('/admin');
+    });
+
+    it('offers no new code to someone who uses an app', function () {
+        $this->user->saveEmailAuthentication(false);
+        $this->user->saveAppAuthentication(RFC_SECRET, []);
+        passPassword();
+
+        $this->get('/admin/two-factor')->assertInertia(fn (Assert $page) => $page->has('page.links', 1));
+        $this->post('/admin/two-factor/resend');
+
+        Notification::assertNothingSent();
+    });
+
     it('refuses a wrong code', function () {
         passPassword();
 

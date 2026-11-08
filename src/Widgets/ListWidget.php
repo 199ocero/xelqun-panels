@@ -11,7 +11,10 @@ use Xelqun\Tables\Table;
  * actions, a progress bar or a link. It's a table underneath, so query() limits
  * what it can reach, and every row action is rebuilt and checked on the server.
  *
- * Define query(), title() and any of the others.
+ * Define query(), title() and any of the others. Name the model, as in
+ * `@extends ListWidget<Product>`, and each of them gets a Product.
+ *
+ * @template TModel of Model = Model
  *
  * @api
  */
@@ -27,19 +30,29 @@ abstract class ListWidget extends Table implements PanelWidget
         $this->id($this->getWidgetId())->paginationPageOptions([static::$limit]);
     }
 
+    /**
+     * @param  TModel  $record
+     */
     abstract protected function title(Model $record): string;
 
+    /**
+     * @param  TModel  $record
+     */
     protected function meta(Model $record): ?string
     {
         return null;
     }
 
+    /**
+     * @param  TModel  $record
+     */
     protected function icon(Model $record): ?string
     {
         return null;
     }
 
     /**
+     * @param  TModel  $record
      * @return 'primary'|'success'|'warning'|'danger'|'gray'
      */
     protected function iconColor(Model $record): string
@@ -49,12 +62,17 @@ abstract class ListWidget extends Table implements PanelWidget
 
     /**
      * From 0 to 1, or null for no bar.
+     *
+     * @param  TModel  $record
      */
     protected function progress(Model $record): ?float
     {
         return null;
     }
 
+    /**
+     * @param  TModel  $record
+     */
     protected function progressNote(Model $record): ?string
     {
         return null;

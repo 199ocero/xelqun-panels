@@ -156,7 +156,7 @@ abstract class RelationManager
     }
 
     /**
-     * @return array<int, BulkAction>
+     * @return array<int, BulkAction|ActionGroup>
      */
     public static function bulkActions(Model $owner): array
     {

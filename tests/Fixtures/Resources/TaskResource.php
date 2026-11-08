@@ -4,6 +4,7 @@ namespace Xelqun\Panels\Tests\Fixtures\Resources;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Xelqun\Actions\ActionGroup;
 use Xelqun\Forms\Components\TextInput;
 use Xelqun\Panels\Actions\ExportAction;
 use Xelqun\Panels\Actions\ReplicateAction;
@@ -17,6 +18,8 @@ class TaskResource extends Resource
     protected static string $model = Task::class;
 
     protected static ?string $recordTitleAttribute = 'title';
+
+    public static bool $groupsBulkActions = false;
 
     public static function form(): array
     {
@@ -36,6 +39,11 @@ class TaskResource extends Resource
     public static function getTabs(): array
     {
         return ['all' => Tab::make(), 'sluggy' => Tab::make()->modifyQueryUsing(fn (Builder $query) => $query->whereNotNull('slug'))];
+    }
+
+    public static function bulkActions(): array
+    {
+        return static::$groupsBulkActions ? [ActionGroup::make(parent::bulkActions())] : parent::bulkActions();
     }
 
     public static function recordActions(): array

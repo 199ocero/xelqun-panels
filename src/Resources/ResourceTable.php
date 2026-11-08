@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use LogicException;
 use Xelqun\Panels\Tables\TrashedFilter;
+use Xelqun\Tables\Actions\BulkAction;
 use Xelqun\Tables\Filters\BaseFilter;
 use Xelqun\Tables\State\TableState;
 use Xelqun\Tables\Table;
@@ -112,9 +113,18 @@ final class ResourceTable extends Table
         return $this->getResource()::recordActions();
     }
 
+    /**
+     * Restore and delete for good only show while the list shows deleted rows.
+     * Running one doesn't go through a listing, so it still finds them.
+     */
     public function bulkActions(): array
     {
-        return $this->getResource()::bulkActions();
+        $actions = $this->getResource()::bulkActions();
+
+        return ! $this->hidesTrashed ? $actions : array_values(array_filter(
+            $actions,
+            fn (object $action): bool => ! ($action instanceof BulkAction && in_array($action->getName(), ['restore', 'forceDelete'], true)),
+        ));
     }
 
     /**

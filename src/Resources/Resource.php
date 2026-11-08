@@ -218,7 +218,7 @@ abstract class Resource
     }
 
     /**
-     * @return array<int, BulkAction>
+     * @return array<int, BulkAction|ActionGroup>
      */
     public static function bulkActions(): array
     {

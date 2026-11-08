@@ -1,11 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Gate;
+use Xelqun\Actions\ActionGroup;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\ResourceTable;
 use Xelqun\Panels\Tests\Fixtures\Resources\TaskPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\TaskResource;
 use Xelqun\Panels\Tests\Fixtures\Task;
+use Xelqun\Tables\Actions\BulkAction;
+use Xelqun\Tables\State\TableState;
 
 /**
  * @return array<int, string>
@@ -19,6 +22,7 @@ function listedTasks(array $filters = []): array
 beforeEach(function () {
     Gate::policy(Task::class, TaskPolicy::class);
     TaskPolicy::$denied = [];
+    TaskResource::$groupsBulkActions = false;
 
     $this->signIn();
     app(Panels::class)->enter(app(Panels::class)->get('admin'));
@@ -46,6 +50,28 @@ describe('the list', function () {
         expect($row)->not->toHaveKey('url')
             ->and($actions)->toContain('restore', 'forceDelete')
             ->and($actions)->not->toContain('edit', 'delete');
+    });
+
+    it('offers restore and force delete on a selection only while deleted rows show', function (array $filters, array $expected) {
+        $table = ResourceTable::for(TaskResource::class);
+        $table->toResult(TableState::from(['filters' => $filters], $table));
+
+        expect(array_map(fn (BulkAction $action) => $action->getName(), $table->bulkActions()))->toBe($expected);
+    })->with([
+        'without deleted' => [[], ['delete']],
+        'with deleted' => [['trashed' => '1'], ['delete', 'restore', 'forceDelete']],
+        'only deleted' => [['trashed' => '0'], ['delete', 'restore', 'forceDelete']],
+    ]);
+
+    it('keeps bulk actions a resource put in a group', function () {
+        TaskResource::$groupsBulkActions = true;
+
+        $table = ResourceTable::for(TaskResource::class);
+        $table->toResult(TableState::from([], $table));
+        $actions = $table->bulkActions();
+
+        expect($actions)->toHaveCount(1)
+            ->and($actions[0])->toBeInstanceOf(ActionGroup::class);
     });
 });
 
