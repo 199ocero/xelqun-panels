@@ -2,9 +2,9 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
-## Unreleased
+## 0.4.1 - 2026-11-08
 
-This needs `xelqun/tables` 0.6.1: `composer update xelqun/panels xelqun/tables`.
+This release needs `xelqun/tables` 0.6.1: `composer update xelqun/panels xelqun/tables` and `npm install @xelqun/panels@0.4.1 @xelqun/tables@0.6.1`.
 
 ### Added
 

@@ -1,6 +1,6 @@
 {
     "name": "@xelqun/panels",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "Vue renderer for Xelqun Panels: PHP-defined admin panels for Laravel + Inertia.",
     "license": "MIT",
     "repository": {
