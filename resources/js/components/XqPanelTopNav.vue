@@ -9,8 +9,8 @@ import {
     DropdownMenuRoot,
     DropdownMenuTrigger,
 } from 'reka-ui';
-import { router } from '@inertiajs/vue3';
 import { t } from '../composables/useMessages';
+import { isOwnUrl, visitUrl } from '../lib/url';
 import type { PanelNavigationGroup } from '../types';
 import { menuClass, menuItemClass } from '../ui/classes';
 
@@ -28,7 +28,8 @@ const itemClass =
     >
         <template v-for="group in navigation" :key="group.label ?? ''">
             <template v-if="!group.label">
-                <Link
+                <component
+                    :is="isOwnUrl(item.url ?? '') ? Link : 'a'"
                     v-for="item in group.items"
                     :key="item.label"
                     :href="item.url ?? ''"
@@ -37,7 +38,7 @@ const itemClass =
                 >
                     <XqIcon v-if="item.icon" :name="item.icon" class="size-4" aria-hidden="true" />
                     {{ item.label }}
-                </Link>
+                </component>
             </template>
             <DropdownMenuRoot v-else :modal="false">
                 <DropdownMenuTrigger
@@ -55,7 +56,7 @@ const itemClass =
                             v-for="item in group.items"
                             :key="item.label"
                             :class="menuItemClass"
-                            @select="item.url && router.visit(item.url)"
+                            @select="item.url && visitUrl(item.url)"
                         >
                             <XqIcon
                                 v-if="item.icon"

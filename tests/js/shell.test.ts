@@ -19,7 +19,7 @@ const { reload, visit } = vi.hoisted(() => ({ reload: vi.fn(), visit: vi.fn() })
 vi.mock('@inertiajs/vue3', () => ({
     router: { reload, visit, on: vi.fn(() => vi.fn()) },
     usePage: () => ({ props: { xelqunPanel: { hooks: {} } } }),
-    Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
+    Link: { props: ['href'], template: '<a :href="href" data-inertia-link><slot /></a>' },
 }));
 
 const item = (label: string, overrides = {}) => ({
@@ -168,6 +168,30 @@ describe('sidebar interactions', () => {
 
         expect(link.classes()).toContain('active:scale-[0.98]');
         expect(link.find('svg').classes()).toContain('group-hover:scale-110');
+    });
+
+    it('links to another site with a plain anchor, since Inertia cannot visit it', () => {
+        const wrapper = mount(XqPanelSidebar, {
+            props: {
+                panel: {
+                    ...shell,
+                    navigation: [
+                        {
+                            label: null,
+                            items: [
+                                item('Home'),
+                                item('Docs', { url: 'https://example.org/docs' }),
+                            ],
+                        },
+                    ],
+                },
+            },
+        });
+        const [home, docs] = wrapper.findAll('[data-xq-nav-item]');
+
+        expect(home.attributes()).toHaveProperty('data-inertia-link');
+        expect(docs.attributes()).not.toHaveProperty('data-inertia-link');
+        expect(docs.attributes('href')).toBe('https://example.org/docs');
     });
 
     it('turns the collapse icon when the sidebar folds', () => {

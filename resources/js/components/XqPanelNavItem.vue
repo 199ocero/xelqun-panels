@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import { XqIcon, cn } from '@xelqun/forms';
 import { TooltipContent, TooltipPortal, TooltipRoot, TooltipTrigger } from 'reka-ui';
+import { isOwnUrl } from '../lib/url';
 import type { PanelNavigationItem } from '../types';
 import { sidebarTooltipClass } from '../ui/classes';
 
@@ -11,7 +12,8 @@ defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
 <template>
     <TooltipRoot v-if="item.url" :disabled="!collapsed">
         <TooltipTrigger as-child>
-            <Link
+            <component
+                :is="isOwnUrl(item.url) ? Link : 'a'"
                 :href="item.url"
                 :aria-current="item.active ? 'page' : undefined"
                 data-xq-nav-item
@@ -47,7 +49,7 @@ defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
                 >
                     {{ item.badge }}
                 </span>
-            </Link>
+            </component>
         </TooltipTrigger>
         <TooltipPortal>
             <TooltipContent

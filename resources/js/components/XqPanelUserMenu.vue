@@ -26,6 +26,7 @@ import {
 import { computed } from 'vue';
 import { setMotion, useMotion } from '../composables/useMotion';
 import { setTheme, useThemeChoice } from '../composables/useTheme';
+import { visitUrl } from '../lib/url';
 import type { ThemeChoice } from '../composables/useTheme';
 import type { PanelNavigationItem, PanelShell } from '../types';
 import { menuClass, menuItemClass } from '../ui/classes';
@@ -144,7 +145,7 @@ const initials = computed(() =>
                             v-for="item in items"
                             :key="item.label"
                             :class="menuItemClass"
-                            @select="item.url && router.visit(item.url)"
+                            @select="item.url && visitUrl(item.url)"
                         >
                             <XqIcon
                                 v-if="item.icon"
