@@ -10,7 +10,7 @@
 
 Describe an admin panel in PHP and generic Vue components render it, with navigation, authentication, CRUD pages and dashboards. Normal panels need no Vue at all.
 
-> **Pre-alpha:** the API will change. Requires Laravel 13, Inertia 3, Vue 3.5, Tailwind 4, [`xelqun/forms`](https://github.com/199ocero/xelqun-forms) and [`xelqun/tables`](https://github.com/199ocero/xelqun-tables).
+> **Alpha:** the API will change. Requires Laravel 13, Inertia 3, Vue 3.5, Tailwind 4, [`xelqun/forms`](https://github.com/199ocero/xelqun-forms) and [`xelqun/tables`](https://github.com/199ocero/xelqun-tables).
 
 ## Example
 
