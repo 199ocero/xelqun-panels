@@ -2,6 +2,12 @@
 
 Xelqun Panels is pre-alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## 0.4.2 - 2026-11-08
+
+### Fixed
+
+- A navigation or user menu item that links to another site opens it. It was sent as an Inertia visit, which the other site's CORS policy blocked, so the click did nothing.
+
 ## 0.4.1 - 2026-11-08
 
 This release needs `xelqun/tables` 0.6.1: `composer update xelqun/panels xelqun/tables` and `npm install @xelqun/panels@0.4.1 @xelqun/tables@0.6.1`.
