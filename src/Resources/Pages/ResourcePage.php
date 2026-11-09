@@ -7,6 +7,7 @@ use Inertia\Response;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panels;
+use Xelqun\Panels\Resources\RelationManager;
 use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\Resource;
 use Xelqun\Panels\Widgets\PanelWidget;
@@ -28,6 +29,20 @@ abstract class ResourcePage extends Page
     protected string $resource;
 
     protected ?Model $record = null;
+
+    /**
+     * Where a page of your own sits under the resource, such as 'sort' or
+     * '{record}/activity'. It defaults to the page's key in getPages().
+     */
+    protected static ?string $routePath = null;
+
+    /**
+     * @internal
+     */
+    public static function getRoutePath(string $key): string
+    {
+        return trim(static::$routePath ?? $key, '/');
+    }
 
     /**
      * @param  class-string<\Xelqun\Panels\Resources\Resource>  $resource
@@ -125,13 +140,14 @@ abstract class ResourcePage extends Page
     }
 
     /**
+     * @param  array<int, class-string<RelationManager>>|null  $managers  The resource's own by default.
      * @return array<int, RelationTable>
      */
-    protected function getRelationTables(bool $isReadOnly): array
+    protected function getRelationTables(bool $isReadOnly, ?array $managers = null): array
     {
         return array_map(
             fn (string $manager): RelationTable => RelationTable::for($this->resource, $manager, $this->record, $isReadOnly),
-            $this->resource::getRelations(),
+            $managers ?? $this->resource::getRelations(),
         );
     }
 

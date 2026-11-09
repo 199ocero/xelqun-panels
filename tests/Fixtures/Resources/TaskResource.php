@@ -21,6 +21,13 @@ class TaskResource extends Resource
 
     public static bool $groupsBulkActions = false;
 
+    public static bool $showsInNavigation = true;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::$showsInNavigation;
+    }
+
     public static function form(): array
     {
         return [TextInput::make('title')->required()];

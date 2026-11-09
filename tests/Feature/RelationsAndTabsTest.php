@@ -464,3 +464,23 @@ describe('nested resources', function () {
         $this->queryTable($table)->assertJsonPath('rows.0.url', url("/admin/posts/{$this->post->id}/post-comments/{$this->comment->id}/edit"));
     });
 });
+
+describe('pages of a resource\'s own', function () {
+    it('routes a page at its own path, ahead of the record pages', function () {
+        expect(PostResource::getUrl('sort'))->toEndWith('/admin/posts/sort');
+
+        $this->get('/admin/posts/sort')->assertOk()->assertInertia(fn (Assert $page) => $page->where('page.title', 'Sort posts'));
+    });
+
+    it('manages one relationship on a page under the record', function () {
+        expect(PostResource::getUrl('comments', ['record' => $this->post]))->toEndWith("/admin/posts/{$this->post->id}/comments");
+
+        $this->get("/admin/posts/{$this->post->id}/comments")->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('page.title', 'Comments')
+            ->where('page.content.0.type', 'table'));
+    });
+
+    it('refuses the related page for a record out of reach', function () {
+        $this->get('/admin/posts/999999/comments')->assertNotFound();
+    });
+});

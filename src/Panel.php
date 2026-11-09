@@ -1290,7 +1290,7 @@ final class Panel
         $pages = collect($this->pages)
             ->filter(fn (string $page): bool => $page::shouldRegisterNavigation() && $page::canAccess());
         $resources = collect($this->getResources())
-            ->filter(fn (string $resource): bool => ! $resource::isNested() && $resource::can('viewAny'));
+            ->filter(fn (string $resource): bool => ! $resource::isNested() && $resource::shouldRegisterNavigation() && $resource::can('viewAny'));
 
         return $pages->concat($resources)
             ->groupBy(fn (string $member): string => (string) $member::getCluster())

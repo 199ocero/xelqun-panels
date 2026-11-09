@@ -4,8 +4,6 @@ namespace Xelqun\Panels\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Xelqun\Panels\Resources\Pages\CreateRecord;
-use Xelqun\Panels\Resources\Pages\EditRecord;
 use Xelqun\Panels\Resources\Resource;
 
 /**
@@ -30,7 +28,7 @@ final class ResourceRecordController
     /**
      * From the route by name, because a controller's arguments arrive by position.
      *
-     * @return array{index: string, create?: class-string<CreateRecord>, view?: string, edit?: class-string<EditRecord>}
+     * @return array<string, class-string>
      */
     private function pages(Request $request): array
     {

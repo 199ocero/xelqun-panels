@@ -432,7 +432,10 @@ abstract class Resource
      * ManageRecords to do everything on one page, or ManageSingleRecord for a
      * resource that's a single record.
      *
-     * @return array{index: class-string<Page>, create?: class-string<CreateRecord>, view?: class-string<ViewRecord>, edit?: class-string<EditRecord>}
+     * Add pages of your own under any other key, such as a ResourcePage or a
+     * ManageRelatedRecords. Each gets a route, and getUrl('key') links to it.
+     *
+     * @return array<string, class-string<Page>>
      */
     public static function getPages(): array
     {
@@ -442,6 +445,14 @@ abstract class Resource
             'view' => ViewRecord::class,
             'edit' => EditRecord::class,
         ];
+    }
+
+    /**
+     * Whether the resource has a link in the navigation. It still needs viewAny.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return true;
     }
 
     public static function usesSoftDeletes(): bool

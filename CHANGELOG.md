@@ -11,6 +11,9 @@ This needs `xelqun/forms` 0.9 and `xelqun/tables` 0.7.
 - **`Panel::middleware()`** adds middleware to every route of the panel, **`authMiddleware()`** to the routes behind sign in, and **`tenantMiddleware()`** to the routes inside a tenant, once it's known.
 - **`Panel::tenantRoutePrefix('team')`** puts a segment before the tenant, as in `/admin/team/acme`, and **`tenantDomain('{tenant}.example.com')`** finds the tenant in the host instead.
 - **`Panel::tenantMenuItems()`** adds links to the tenant menu.
+- **Pages of a resource's own.** Any extra key in `getPages()` gets a route, at `$routePath` or its key, and `getUrl('key')` links to it. Before, such a page was quietly left without one.
+- **`ManageRelatedRecords`**: one relation manager on a page of its own under the record, at `{record}/key`.
+- **`Resource::shouldRegisterNavigation()`** leaves a resource out of the navigation.
 
 ## 0.4.2 - 2026-11-08
 

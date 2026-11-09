@@ -84,6 +84,11 @@ class PostResource extends Resource
         return parent::getEloquentQuery()->where('team', 'red');
     }
 
+    public static function getPages(): array
+    {
+        return [...parent::getPages(), 'sort' => SortPosts::class, 'comments' => ManagePostComments::class];
+    }
+
     public static function getRelations(): array
     {
         return [CommentsRelationManager::class, LabelsRelationManager::class];

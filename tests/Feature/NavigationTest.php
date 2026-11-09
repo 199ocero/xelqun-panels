@@ -13,6 +13,9 @@ use Xelqun\Panels\Panels;
 use Xelqun\Panels\Support\Colors\Color;
 use Xelqun\Panels\Tests\Fixtures\Note;
 use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
+use Xelqun\Panels\Tests\Fixtures\Resources\TaskPolicy;
+use Xelqun\Panels\Tests\Fixtures\Resources\TaskResource;
+use Xelqun\Panels\Tests\Fixtures\Task;
 use Xelqun\Panels\View\RenderHook;
 
 class FirstPage extends Page
@@ -466,4 +469,19 @@ describe('panel settings', function () {
         expect(Panel::make()->favicon('/icon.png')->getFavicon())->toBe('/icon.png')
             ->and(Panel::make()->favicon('javascript:alert(1)')->getFavicon())->toBeNull();
     });
+});
+
+it('leaves out a resource that asks not to be in the navigation', function () {
+    Gate::policy(Task::class, TaskPolicy::class);
+    $labels = fn (): array => collect(app(Panels::class)->get('admin')->getNavigation())->flatMap(fn (array $group): array => array_column($group['items'], 'label'))->all();
+
+    expect($labels())->toContain('Tasks');
+
+    TaskResource::$showsInNavigation = false;
+
+    try {
+        expect($labels())->not->toContain('Tasks');
+    } finally {
+        TaskResource::$showsInNavigation = true;
+    }
 });

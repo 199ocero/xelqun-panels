@@ -128,6 +128,11 @@ foreach (app(Panels::class)->all() as $panel) {
                                 Route::post('', [ResourceRecordController::class, 'store'])->name('store')->defaults('resource', $resource);
                             }
 
+                            // Ahead of view, so a page at 'sort' isn't read as a record called sort.
+                            foreach (array_diff_key($pages, array_flip(['index', 'create', 'view', 'edit'])) as $key => $page) {
+                                Route::get($page::getRoutePath($key), $page)->name($key)->defaults('resource', $resource);
+                            }
+
                             if (isset($pages['view'])) {
                                 Route::get('{record}', $pages['view'])->name('view')->defaults('resource', $resource);
                             }
