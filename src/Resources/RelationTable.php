@@ -37,6 +37,43 @@ final class RelationTable extends Table
         $this->emptyState(__('xelqun-panels::resources.empty', ['label' => mb_strtolower($manager::getTitle())]));
 
         $manager::configureTable($this);
+
+        if ($manager::isLazy()) {
+            $this->deferLoading();
+        }
+    }
+
+    private ?string $group = null;
+
+    /**
+     * @internal The tab it shares with the rest of a RelationGroup.
+     */
+    public function inGroup(?string $label): self
+    {
+        $this->group = $label;
+
+        return $this;
+    }
+
+    /**
+     * What the page shows on the tab: the group's or the manager's name, and a badge.
+     *
+     * @return array{heading: string, group?: string, badge?: string, badgeColor?: string}
+     */
+    public function getTabData(): array
+    {
+        $manager = $this->getManager();
+        $owner = $this->getOwner();
+        $badge = $manager::getBadge($owner);
+
+        return [
+            'heading' => $this->getHeading(),
+            ...array_filter([
+                'group' => $this->group,
+                'badge' => $badge === null ? null : (string) $badge,
+                'badgeColor' => $badge === null ? null : $manager::getBadgeColor($owner),
+            ]),
+        ];
     }
 
     public function getHeading(): string

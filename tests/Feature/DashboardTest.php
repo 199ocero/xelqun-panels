@@ -224,3 +224,31 @@ it('gives a widget on a record\'s page that record', function () {
 
     PostResource::$headerWidgets = [];
 });
+
+describe('filters, footer widgets and polling', function () {
+    function loadFooter(string $query = ''): TestResponse
+    {
+        $version = test()->get('/admin/dashboard')->viewData('page')['version'];
+
+        return test()->get('/admin/dashboard'.$query, [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => $version,
+            'X-Inertia-Partial-Component' => 'xelqun/Panel',
+            'X-Inertia-Partial-Data' => 'footerWidgets',
+        ]);
+    }
+
+    it('sends the filters form with the values in the URL', function () {
+        $this->get('/admin/dashboard?filters[team]=blue')->assertInertia(fn (Assert $page) => $page
+            ->where('page.hasFooterWidgets', true)
+            ->where('page.filters.state.data.team', 'blue')
+            ->missing('footerWidgets'));
+    });
+
+    it('gives widgets the filter values, and the default for one that fails its rules', function () {
+        expect(loadFooter('?filters[team]=blue')->json('props.footerWidgets.0'))->toMatchArray(['id' => 'filter-echo', 'pollSeconds' => 30])
+            ->and(loadFooter('?filters[team]=blue')->json('props.footerWidgets.0.data.filters'))->toBe(['team' => 'blue'])
+            ->and(loadFooter('?filters[team]=green')->json('props.footerWidgets.0.data.filters'))->toBe(['team' => 'red'])
+            ->and(loadFooter()->json('props.footerWidgets.0.data.filters'))->toBe(['team' => 'red']);
+    });
+});

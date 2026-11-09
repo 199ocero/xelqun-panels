@@ -7,6 +7,7 @@ use Inertia\Response;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panels;
+use Xelqun\Panels\Resources\RelationGroup;
 use Xelqun\Panels\Resources\RelationManager;
 use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\Resource;
@@ -90,6 +91,11 @@ abstract class ResourcePage extends Page
         $this->record = $key === null ? null : $this->resource::findRecord($key);
     }
 
+    protected function getRelationsLayout(): string
+    {
+        return $this->resource::getRelationManagersLayout();
+    }
+
     protected function makeWidget(string $widget): PanelWidget
     {
         $made = parent::makeWidget($widget);
@@ -140,15 +146,23 @@ abstract class ResourcePage extends Page
     }
 
     /**
-     * @param  array<int, class-string<RelationManager>>|null  $managers  The resource's own by default.
+     * A manager's own isReadOnly() wins over the page's.
+     *
+     * @param  array<int, class-string<RelationManager>|RelationGroup>|null  $managers  The resource's own by default.
      * @return array<int, RelationTable>
      */
     protected function getRelationTables(bool $isReadOnly, ?array $managers = null): array
     {
-        return array_map(
-            fn (string $manager): RelationTable => RelationTable::for($this->resource, $manager, $this->record, $isReadOnly),
-            $managers ?? $this->resource::getRelations(),
-        );
+        $tables = [];
+
+        foreach ($managers ?? $this->resource::getRelations() as $item) {
+            foreach ($item instanceof RelationGroup ? $item->getManagers() : [$item] as $manager) {
+                $tables[] = RelationTable::for($this->resource, $manager, $this->record, $manager::isReadOnly() ?? $isReadOnly)
+                    ->inGroup($item instanceof RelationGroup ? $item->getLabel() : null);
+            }
+        }
+
+        return $tables;
     }
 
     protected function getAccessDeniedReason(): string

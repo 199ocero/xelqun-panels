@@ -140,6 +140,8 @@ export interface PanelTile {
 interface PanelWidgetBase {
     id: string;
     columnSpan: number;
+    /** Seconds between reloads, from $pollingInterval. */
+    pollSeconds?: number;
 }
 
 interface PanelWidgetCard {
@@ -162,7 +164,15 @@ export type PanelWidget = PanelWidgetBase &
     );
 
 export type PanelContent =
-    | { type: 'table'; schema: TableSchema; heading: string | null }
+    | {
+          type: 'table';
+          schema: TableSchema;
+          heading: string | null;
+          /** The tab a RelationGroup gives it, shared with the rest of the group. */
+          group?: string;
+          badge?: string;
+          badgeColor?: string;
+      }
     | { type: 'actions'; schema: FormSchema }
     | {
           type: 'form';
@@ -204,9 +214,14 @@ export interface PanelPageData {
     subheading: string | null;
     breadcrumbs: PanelBreadcrumb[];
     hasWidgets: boolean;
+    hasFooterWidgets?: boolean;
+    /** Fields above the widgets, whose values widgets read. */
+    filters?: FormSchema;
     tabs: PanelTab[];
     subNavigation: PanelTab[];
     notice: { title: string; description: string; lines: string[] } | null;
     headerActions: FormSchema | null;
     content: PanelContent[];
+    /** stacked shows every relation table, one after another. Tabs otherwise. */
+    relationsLayout?: 'stacked';
 }

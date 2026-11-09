@@ -18,6 +18,24 @@ trait HasWidgetSettings
 
     protected static ?string $heading = null;
 
+    /** Load it again this often, in seconds, while the page is open. */
+    protected static ?int $pollingInterval = null;
+
+    /** @var array<string, mixed> The page's filter values, as the dashboard's filters() set them. */
+    protected array $pageFilters = [];
+
+    /**
+     * @internal
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function pageFilters(array $filters): static
+    {
+        $this->pageFilters = $filters;
+
+        return $this;
+    }
+
     public static function canView(): bool
     {
         return true;
@@ -51,6 +69,7 @@ trait HasWidgetSettings
             'type' => $type,
             'id' => $this->getWidgetId(),
             'columnSpan' => static::$columnSpan,
+            ...(static::$pollingInterval === null ? [] : ['pollSeconds' => static::$pollingInterval]),
             // Left out when unset, so a null can't override the heading a custom widget gives its card.
             'data' => [...array_filter(['heading' => static::$heading, 'seeAllUrl' => $this->getSeeAllUrl()], fn (mixed $value): bool => $value !== null), ...$data],
         ];

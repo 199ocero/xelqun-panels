@@ -196,13 +196,23 @@ abstract class Resource
     }
 
     /**
-     * Relationship tables for the edit and view pages.
+     * Relationship tables for the edit and view pages. A RelationGroup puts
+     * several under one tab.
      *
-     * @return array<int, class-string<RelationManager>>
+     * @return array<int, class-string<RelationManager>|RelationGroup>
      */
     public static function getRelations(): array
     {
         return [];
+    }
+
+    /**
+     * tabs shows one relationship at a time, and stacked shows them all, one
+     * after another.
+     */
+    public static function getRelationManagersLayout(): string
+    {
+        return 'tabs';
     }
 
     /**

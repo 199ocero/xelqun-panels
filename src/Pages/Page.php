@@ -3,11 +3,15 @@
 namespace Xelqun\Panels\Pages;
 
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Xelqun\Actions\Action;
 use Xelqun\Actions\ActionGroup;
 use Xelqun\Actions\ActionSet;
+use Xelqun\Forms\Components\Component;
+use Xelqun\Forms\Form;
+use Xelqun\Forms\Support\StatePath;
 use Xelqun\Panels\Navigation\Cluster;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Panel;
@@ -230,6 +234,14 @@ abstract class Page
     }
 
     /**
+     * How relation tables sit on the page: tabs or stacked.
+     */
+    protected function getRelationsLayout(): string
+    {
+        return 'tabs';
+    }
+
+    /**
      * Widgets above the content.
      *
      * @return array<int, class-string<PanelWidget>>
@@ -240,11 +252,58 @@ abstract class Page
     }
 
     /**
+     * Widgets below the content.
+     *
+     * @return array<int, class-string<PanelWidget>>
+     */
+    protected function getFooterWidgets(): array
+    {
+        return [];
+    }
+
+    /**
+     * Fields above the widgets, such as a date range. Widgets read their values
+     * as $this->pageFilters, and they stay in the URL.
+     *
+     * @return array<int, Component>
+     */
+    public function filters(): array
+    {
+        return [];
+    }
+
+    /**
+     * The filter values from the URL, checked by the fields' rules. Values that
+     * fail are left at the fields' defaults. Not kept on the page, because the
+     * router reuses a page object for the next request.
+     *
+     * @return array<string, mixed>
+     */
+    protected function getFilterValues(): array
+    {
+        $form = Form::make($this->filters());
+        $input = request()->query('filters');
+
+        if (! is_array($input)) {
+            return $form->getData();
+        }
+
+        try {
+            return [...$form->getData(), ...$form->validate([StatePath::ROOT => $input])];
+        } catch (ValidationException) {
+            // A fresh form, since validating filled this one with what failed.
+            return Form::make($this->filters())->getData();
+        }
+    }
+
+    /**
      * @param  class-string<PanelWidget>  $widget
      */
     protected function makeWidget(string $widget): PanelWidget
     {
-        return $widget::make();
+        $made = $widget::make();
+
+        return $this->filters() !== [] && method_exists($made, 'pageFilters') ? $made->pageFilters($this->getFilterValues()) : $made;
     }
 
     /**
@@ -254,14 +313,40 @@ abstract class Page
      */
     private function getWidgetProps(): array
     {
-        return $this->getWidgets() === [] ? [] : ['widgets' => Inertia::defer(fn (): array => collect($this->getWidgets())
+        return [
+            ...($this->getWidgets() === [] ? [] : ['widgets' => Inertia::defer(fn (): array => $this->renderWidgets($this->getWidgets()))]),
+            ...($this->getFooterWidgets() === [] ? [] : ['footerWidgets' => Inertia::defer(fn (): array => $this->renderWidgets($this->getFooterWidgets()))]),
+        ];
+    }
+
+    /**
+     * @param  array<int, class-string<PanelWidget>>  $widgets
+     * @return array<int, array<string, mixed>>
+     */
+    private function renderWidgets(array $widgets): array
+    {
+        return collect($widgets)
             ->filter(fn (string $widget): bool => $widget::canView())
             ->sortBy(fn (string $widget): int => $widget::getSort())
             // One failing widget shouldn't take the others down. rescue() reports it.
             ->map(fn (string $widget): ?array => rescue(fn (): array => $this->makeWidget($widget)->toWidget()))
             ->filter()
             ->values()
-            ->all())];
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function getFiltersSchema(): array
+    {
+        $form = Form::make($this->filters());
+
+        foreach ($this->getFilterValues() as $name => $value) {
+            $form->setStateValue(StatePath::ROOT.'.'.$name, $value);
+        }
+
+        return $form->toSchema();
     }
 
     protected function getComponent(): string
@@ -287,15 +372,18 @@ abstract class Page
             'subheading' => $this->getSubheading(),
             'breadcrumbs' => $this->getBreadcrumbs(),
             'hasWidgets' => $this->getWidgets() !== [],
+            ...($this->getFooterWidgets() === [] ? [] : ['hasFooterWidgets' => true]),
+            ...($this->filters() === [] ? [] : ['filters' => $this->getFiltersSchema()]),
             'tabs' => $this->getTabs(),
             'subNavigation' => $this->getSubNavigation(),
             'notice' => null,
+            ...($this->getRelationsLayout() === 'tabs' ? [] : ['relationsLayout' => $this->getRelationsLayout()]),
             'headerActions' => $this->headerActions() === [] ? null : PageActionSet::for($this)->toSchema(),
             'content' => array_map(fn (Table|ActionSet|FormContent $item): array => match (true) {
                 $item instanceof Table => [
                     'type' => 'table',
                     'schema' => $item->toSchema(),
-                    'heading' => $item instanceof RelationTable ? $item->getHeading() : null,
+                    ...($item instanceof RelationTable ? $item->getTabData() : ['heading' => null]),
                 ],
                 $item instanceof ActionSet => ['type' => 'actions', 'schema' => $item->toSchema()],
                 $item instanceof FormContent => $item->toArray(),

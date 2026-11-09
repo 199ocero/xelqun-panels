@@ -50,6 +50,9 @@ abstract class RelationManager
     /** The column that names a record in the attach and associate modals. */
     protected static string $recordTitleAttribute = 'name';
 
+    /** Load the rows after the page renders, for a slow relationship. */
+    protected static bool $isLazy = false;
+
     /**
      * @return array<int, Component>
      */
@@ -75,6 +78,36 @@ abstract class RelationManager
     }
 
     public static function configureTable(Table $table): void {}
+
+    /**
+     * A count or short word on the tab. It gets the record that owns the relationship.
+     */
+    public static function getBadge(Model $owner): string|int|null
+    {
+        return null;
+    }
+
+    /**
+     * primary, danger, info, success, warning or gray, for the badge.
+     */
+    public static function getBadgeColor(Model $owner): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Whether the table can't change anything. Null follows the page: read-only
+     * on the view page, and not on the edit page.
+     */
+    public static function isReadOnly(): ?bool
+    {
+        return null;
+    }
+
+    public static function isLazy(): bool
+    {
+        return static::$isLazy;
+    }
 
     /**
      * A nested related resource's page for a row, where it has one.

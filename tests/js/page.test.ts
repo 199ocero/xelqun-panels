@@ -115,10 +115,52 @@ describe('XqPanelPage', () => {
         expect(sections[0].isVisible()).toBe(true);
         expect(sections[1].attributes('style')).toContain('display: none');
 
-        await sections[0].findAll('[role="tab"]')[1].trigger('click');
+        await wrapper.findAll('[role="tab"]')[1].trigger('click');
 
         expect(sections[0].attributes('style')).toContain('display: none');
         expect(sections[1].attributes('style') ?? '').not.toContain('display: none');
+    });
+
+    it('shows a tab badge, puts a group under one tab, and stacks when asked', async () => {
+        const content = [
+            {
+                type: 'table',
+                schema: { id: 'items' },
+                heading: 'Items',
+                badge: '3',
+                badgeColor: 'danger',
+            },
+            { type: 'table', schema: { id: 'phones' }, heading: 'Phones', group: 'Contacts' },
+            { type: 'table', schema: { id: 'emails' }, heading: 'Emails', group: 'Contacts' },
+        ] as unknown as PanelContent[];
+        const wrapper = render({ content });
+
+        expect(wrapper.findAll('[role="tab"]').map((tab) => tab.text())).toEqual([
+            'Items 3',
+            'Contacts',
+        ]);
+        expect(wrapper.find('[data-xq-relation-badge]').classes()).toContain('text-xq-destructive');
+
+        await wrapper.findAll('[role="tab"]')[1].trigger('click');
+
+        const visible = wrapper
+            .findAll('section')
+            .filter(
+                (section) =>
+                    section.find('h2').exists() &&
+                    !(section.attributes('style') ?? '').includes('display: none'),
+            );
+
+        expect(visible.map((section) => section.find('h2').text())).toEqual(['Phones', 'Emails']);
+
+        const stacked = render({ content, relationsLayout: 'stacked' });
+
+        expect(stacked.find('[role="tablist"]').exists()).toBe(false);
+        expect(stacked.findAll('h2').map((heading) => heading.text())).toEqual([
+            'Items',
+            'Phones',
+            'Emails',
+        ]);
     });
 
     it('names a relation table with a heading', () => {

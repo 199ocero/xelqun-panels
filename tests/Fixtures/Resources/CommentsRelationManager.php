@@ -15,6 +15,28 @@ class CommentsRelationManager extends RelationManager
 
     protected static string $recordTitleAttribute = 'body';
 
+    public static bool $tuned = false;
+
+    public static function getBadge(Model $owner): string|int|null
+    {
+        return static::$tuned ? $owner->comments()->count() : null;
+    }
+
+    public static function getBadgeColor(Model $owner): ?string
+    {
+        return 'info';
+    }
+
+    public static function isReadOnly(): ?bool
+    {
+        return static::$tuned ? false : null;
+    }
+
+    public static function isLazy(): bool
+    {
+        return static::$tuned;
+    }
+
     public static function headerActions(Model $owner): array
     {
         return [...parent::headerActions($owner), AssociateAction::for(static::class, $owner)];

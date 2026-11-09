@@ -484,3 +484,36 @@ describe('pages of a resource\'s own', function () {
         $this->get('/admin/posts/999999/comments')->assertNotFound();
     });
 });
+
+describe('how relation managers sit on the page', function () {
+    afterEach(function () {
+        CommentsRelationManager::$tuned = false;
+        PostResource::$groupsRelations = false;
+    });
+
+    it('sends a badge, loads lazily, and can be changed on the view page', function () {
+        CommentsRelationManager::$tuned = true;
+
+        $this->get("/admin/posts/{$this->post->id}")->assertInertia(fn (Assert $page) => $page
+            ->where('page.content.1.badge', '1')
+            ->where('page.content.1.badgeColor', 'info')
+            ->where('page.content.1.schema.deferred', true)
+            ->has('page.content.1.schema.rows', 0)
+            ->has('page.content.1.schema.headerActions', 2));
+    });
+
+    it('stays read-only on the view page unless the manager says otherwise', function () {
+        $this->get("/admin/posts/{$this->post->id}")->assertInertia(fn (Assert $page) => $page
+            ->has('page.content.1.schema.headerActions', 0)
+            ->missing('page.content.1.badge'));
+    });
+
+    it('puts a group under one tab, and stacks the tables when asked', function () {
+        PostResource::$groupsRelations = true;
+
+        $this->get("/admin/posts/{$this->post->id}/edit")->assertInertia(fn (Assert $page) => $page
+            ->where('page.relationsLayout', 'stacked')
+            ->where('page.content.1.group', 'Talk')
+            ->where('page.content.2.group', 'Talk'));
+    });
+});

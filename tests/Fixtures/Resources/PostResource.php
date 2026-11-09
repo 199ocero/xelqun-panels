@@ -12,6 +12,7 @@ use Xelqun\Panels\Actions\ExportAction;
 use Xelqun\Panels\Infolists\IconEntry;
 use Xelqun\Panels\Infolists\TextEntry;
 use Xelqun\Panels\Navigation\NavigationItem;
+use Xelqun\Panels\Resources\RelationGroup;
 use Xelqun\Panels\Resources\Resource;
 use Xelqun\Panels\Resources\Tab;
 use Xelqun\Panels\Tests\Fixtures\Post;
@@ -100,9 +101,18 @@ class PostResource extends Resource
         ] : [];
     }
 
+    public static bool $groupsRelations = false;
+
     public static function getRelations(): array
     {
-        return [CommentsRelationManager::class, LabelsRelationManager::class];
+        return static::$groupsRelations
+            ? [RelationGroup::make('Talk', [CommentsRelationManager::class, LabelsRelationManager::class])]
+            : [CommentsRelationManager::class, LabelsRelationManager::class];
+    }
+
+    public static function getRelationManagersLayout(): string
+    {
+        return static::$groupsRelations ? 'stacked' : 'tabs';
     }
 
     public static function getTabs(): array

@@ -18,6 +18,10 @@ This needs `xelqun/forms` 0.9 and `xelqun/tables` 0.7.
 - **`$navigationParentItem`** on a page or resource, or `parentItem()` on a `NavigationItem`, puts an item under another of its group, shown while either is open.
 - **`getNavigationBadgeColor()`** and **`getNavigationBadgeTooltip()`** on pages and resources, and `badgeColor()` and `badgeTooltip()` on a `NavigationItem`.
 - The notification bell shows a notification's icon and its actions that link somewhere. Actions that run code stay in the toast, because their token has expired by the time anyone opens the bell.
+- **Dashboard filters.** A page's `filters()` puts fields above its widgets. Their values stay in the URL, are checked by the fields' rules, and reach each widget as `$this->pageFilters`.
+- **`$pollingInterval`** on a widget reloads the page's widgets that often, in seconds.
+- **`getFooterWidgets()`** puts widgets below a page's content.
+- **Relation managers:** `getBadge()` and `getBadgeColor()` on the tab, `$isLazy` to load the rows after the page renders, `isReadOnly()` to override the page, `RelationGroup::make('Contacts', [...])` for several under one tab, and `Resource::getRelationManagersLayout()` returning `stacked` to show every table at once.
 - **`getGlobalSearchResultActions()`** adds links under a search result, and **`$globalSearchResultsLimit`** sets how many results a resource gives.
 
 ## 0.4.2 - 2026-11-08
