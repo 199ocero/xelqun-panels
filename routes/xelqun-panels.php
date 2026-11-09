@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Xelqun\Panels\Http\Controllers\Auth\EmailChangeController;
 use Xelqun\Panels\Http\Controllers\Auth\EmailVerificationController;
 use Xelqun\Panels\Http\Controllers\Auth\LoginController;
 use Xelqun\Panels\Http\Controllers\Auth\LogoutController;
@@ -64,6 +65,11 @@ foreach (app(Panels::class)->all() as $panel) {
             Route::middleware([Authenticate::class, ...$panel->getAuthMiddleware()])->group(function () use ($panel): void {
                 if ($panel->hasTenancy()) {
                     Route::get('', RedirectToTenantController::class)->name('tenant.redirect');
+                }
+
+                // Whenever there's a profile, since the switch can turn on after routes are cached.
+                if ($panel->getProfileForm() !== null) {
+                    Route::get('email-change/verify', [EmailChangeController::class, 'verify'])->middleware(['signed', "throttle:6,1,xelqun-panels.{$panel->getId()}.auth.email-change"])->name('auth.email-change.verify');
                 }
 
                 if ($panel->getTenantRegistrationForm() !== null) {

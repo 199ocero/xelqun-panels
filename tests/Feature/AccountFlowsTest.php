@@ -16,7 +16,9 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Xelqun\Panels\Auth\EditProfileForm;
+use Xelqun\Panels\Auth\Notifications\EmailChangeRequested;
 use Xelqun\Panels\Auth\Notifications\ResetPassword;
+use Xelqun\Panels\Auth\Notifications\VerifyEmailChange;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
@@ -403,5 +405,48 @@ describe('the profile page', function () {
         $this->user->markEmailAsVerified();
 
         $this->get('/staff/profile')->assertNotFound();
+    });
+});
+
+describe('changing the email address', function () {
+    beforeEach(function () {
+        Notification::fake();
+        $this->user = makeUser(['email_verified_at' => now()]);
+        $this->actingAs($this->user, 'admin');
+        app(Panels::class)->get('admin')->emailChangeVerification();
+    });
+
+    afterEach(function () {
+        app(Panels::class)->get('admin')->emailChangeVerification(false);
+    });
+
+    function changeEmailLink(User $user, string $email): string
+    {
+        return URL::temporarySignedRoute('xelqun-panels.admin.auth.email-change.verify', now()->addHour(), ['id' => $user->getKey(), 'email' => $email]);
+    }
+
+    it('keeps the old address until the link to the new one is opened, and tells both', function () {
+        test()->from('/admin/profile')->put('/admin/profile', ['data' => ['name' => 'Ada', 'email' => 'new@example.com']])->assertSessionHasNoErrors();
+
+        expect($this->user->fresh()->email)->toBe('ada@example.com');
+        Notification::assertSentOnDemand(VerifyEmailChange::class, fn ($notification, array $channels, object $notifiable): bool => $notifiable->routes['mail'] === 'new@example.com');
+        Notification::assertSentOnDemand(EmailChangeRequested::class, fn ($notification, array $channels, object $notifiable): bool => $notifiable->routes['mail'] === 'ada@example.com');
+
+        $this->get(changeEmailLink($this->user, 'new@example.com'))->assertRedirect('/admin/profile');
+
+        expect($this->user->fresh()->email)->toBe('new@example.com')
+            ->and($this->user->fresh()->email_verified_at)->not->toBeNull();
+    });
+
+    it('refuses a link for someone else, one that was changed, and an address taken since', function () {
+        $other = makeUser(['email' => 'other@example.com']);
+
+        $this->get(changeEmailLink($other, 'new@example.com'))->assertForbidden();
+        $this->get(changeEmailLink($this->user, 'new@example.com').'x')->assertForbidden();
+
+        makeUser(['email' => 'taken@example.com']);
+        $this->get(changeEmailLink($this->user, 'taken@example.com'))->assertRedirect('/admin/profile');
+
+        expect($this->user->fresh()->email)->toBe('ada@example.com');
     });
 });

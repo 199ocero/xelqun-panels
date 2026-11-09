@@ -26,6 +26,10 @@ abstract class Entry extends Component
 {
     private Column $column;
 
+    protected ?string $hint = null;
+
+    protected bool $hasInlineLabel = false;
+
     final public function __construct(string $name)
     {
         $this->column = static::makeColumn($name);
@@ -58,6 +62,26 @@ abstract class Entry extends Component
         return $this;
     }
 
+    /**
+     * A short note beside the label.
+     */
+    public function hint(?string $hint): static
+    {
+        $this->hint = $hint;
+
+        return $this;
+    }
+
+    /**
+     * Put the label beside the value instead of above it.
+     */
+    public function inlineLabel(bool $condition = true): static
+    {
+        $this->hasInlineLabel = $condition;
+
+        return $this;
+    }
+
     protected function getColumn(): Column
     {
         return $this->column;
@@ -76,7 +100,12 @@ abstract class Entry extends Component
      */
     public function toProps(Model $record): array
     {
-        return ['display' => $this->getDisplay(), 'column' => $this->column->toDefinition(), 'cell' => $this->column->toCell($record)];
+        return [
+            'display' => $this->getDisplay(),
+            'column' => $this->column->toDefinition(),
+            'cell' => $this->column->toCell($record),
+            ...array_filter(['hint' => $this->hint, 'inlineLabel' => $this->hasInlineLabel]),
+        ];
     }
 
     protected function getProps(): array

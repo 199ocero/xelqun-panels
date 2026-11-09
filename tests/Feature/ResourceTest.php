@@ -124,6 +124,13 @@ describe('creating', function () {
         expect(PostResource::$calls)->toBe(['beforeCreate', 'afterCreate']);
     });
 
+    it('offers to create another, and goes back to an empty form for it', function () {
+        $this->get('/admin/posts/create')->assertInertia(fn (Assert $page) => $page
+            ->where('page.content.0.createAnotherLabel', 'Create & create another'));
+
+        saveAsBrowser('POST', '/admin/posts?another=1', ['title' => 'Next', 'tags' => []])->assertRedirect('/admin/posts/create');
+    });
+
     it('goes back to the list when the user can\'t reach the new record', function () {
         PostPolicy::$denied = ['update', 'view'];
 

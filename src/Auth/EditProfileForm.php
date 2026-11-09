@@ -6,6 +6,8 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -13,6 +15,10 @@ use LogicException;
 use Xelqun\Forms\Components\TextInput;
 use Xelqun\Forms\Form;
 use Xelqun\Forms\Layouts\Section;
+use Xelqun\Notifications\Notification;
+use Xelqun\Panels\Auth\Notifications\EmailChangeRequested;
+use Xelqun\Panels\Auth\Notifications\VerifyEmailChange;
+use Xelqun\Panels\Panels;
 
 /**
  * The signed-in user's own details. Whatever key a token holds, the record is
@@ -93,8 +99,13 @@ class EditProfileForm extends Form
     public function mutateBeforeSave(array $attributes): array
     {
         $user = $this->resolveUser();
+        $isChangingEmail = ($attributes['email'] ?? $user->getAttribute('email')) !== $user->getAttribute('email');
 
-        if (($attributes['email'] ?? $user->getAttribute('email')) !== $user->getAttribute('email')) {
+        if ($isChangingEmail && app(Panels::class)->current()?->hasEmailChangeVerification()) {
+            // The address stays as it is until the link sent to the new one is opened.
+            $this->pendingEmail = $attributes['email'];
+            unset($attributes['email']);
+        } elseif ($isChangingEmail) {
             $attributes['email_verified_at'] = null;
         }
 
@@ -105,8 +116,19 @@ class EditProfileForm extends Form
         return $attributes;
     }
 
+    private ?string $pendingEmail = null;
+
     public function afterCommit(Model $record, array $data): void
     {
+        if ($this->pendingEmail !== null) {
+            $panel = app(Panels::class)->current();
+            $url = URL::temporarySignedRoute($panel->routeName('auth.email-change.verify'), now()->addHour(), ['id' => $record->getKey(), 'email' => $this->pendingEmail]);
+
+            NotificationFacade::route('mail', $this->pendingEmail)->notify(new VerifyEmailChange($url));
+            NotificationFacade::route('mail', (string) $record->getAttribute('email'))->notify(new EmailChangeRequested($this->pendingEmail));
+            Notification::make()->title(__('xelqun-panels::auth.email_change.sent', ['email' => $this->pendingEmail]))->info()->send();
+        }
+
         if ($record->wasChanged('email') && $record instanceof MustVerifyEmail) {
             $record->sendEmailVerificationNotification();
         }

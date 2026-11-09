@@ -3,6 +3,7 @@
 return [
 
     'new' => 'New :label',
+    'create_another' => 'Create & create another',
     'create' => 'Create :label',
     'edit' => 'Edit :label',
     'view' => 'View :label',

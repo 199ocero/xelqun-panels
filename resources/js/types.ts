@@ -180,6 +180,8 @@ export type PanelContent =
           action: string;
           method: 'post' | 'put' | 'patch';
           submitLabel: string;
+          /** A second button that saves and starts a new one. */
+          createAnotherLabel?: string;
           revision: string;
       };
 

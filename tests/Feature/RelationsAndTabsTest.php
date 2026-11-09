@@ -346,6 +346,18 @@ describe('infolists', function () {
             ->and(collect($tags->toProps($this->post->fresh())['rows'])->pluck('0.cell.state')->all())->toBe(['Red', 'Blue']);
     });
 
+    it('takes a text column\'s options, and its own hint, label, affixes and HTML', function () {
+        $record = new Post(['title' => 'A rather long title', 'body' => '<p>Hi</p><script>x</script>', 'status' => '**bold**']);
+
+        expect(TextEntry::make('title')->limit(8)->description('About it')->copyable()->hint('Public')->inlineLabel()->prefix('#')->suffix('!')->toProps($record))
+            ->toMatchArray(['hint' => 'Public', 'inlineLabel' => true, 'prefix' => '#', 'suffix' => '!'])
+            ->and(TextEntry::make('title')->limit(8)->toProps($record)['cell'])->toMatchArray(['state' => 'A rather...', 'tooltip' => 'A rather long title'])
+            ->and(TextEntry::make('title')->description('About it')->toProps($record)['cell']['description'])->toBe('About it')
+            ->and(TextEntry::make('secret')->placeholder('None yet')->toProps($record)['column']['props']->placeholder)->toBe('None yet')
+            ->and(TextEntry::make('body')->html()->toProps($record)['html'])->toBe('<p>Hi</p>')
+            ->and(TextEntry::make('status')->markdown()->toProps($record)['html'])->toContain('<strong>bold</strong>');
+    });
+
     it('lists an array as keys and values, and as code', function () {
         $record = new Post(['tags' => ['size' => 'L', 'stock' => 2]]);
 

@@ -442,6 +442,32 @@ describe('an infolist entry', () => {
         expect(text).toContain('Live');
     });
 
+    it('shows a placeholder, a description, a hint, affixes and cleaned HTML', () => {
+        expect(
+            entry('text-column', { state: null }, { placeholder: 'None yet' })
+                .find('[data-xq-entry-placeholder]')
+                .text(),
+        ).toBe('None yet');
+
+        const wrapper = entry(
+            'text-column',
+            { state: 'Live', description: 'Since May', tooltip: 'Full' },
+            { copyable: true },
+            { hint: 'Public', prefix: '#', suffix: '!' },
+        );
+
+        expect(wrapper.text()).toContain('#Live!');
+        expect(wrapper.text()).toContain('Since May');
+        expect(wrapper.find('[data-xq-entry-hint]').text()).toBe('Public');
+        expect(wrapper.find('[data-xq-entry]').attributes('title')).toBe('Full');
+        expect(wrapper.find('[data-xq-entry-copy]').exists()).toBe(true);
+        expect(
+            entry('text-column', { state: 'x' }, {}, { html: '<b>Hi</b>' })
+                .find('[data-xq-entry-html] b')
+                .text(),
+        ).toBe('Hi');
+    });
+
     it('joins a list', () => {
         expect(entry('text-column', { state: ['Red', 'Blue'] }).text()).toContain('Red, Blue');
     });

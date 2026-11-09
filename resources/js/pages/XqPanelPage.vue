@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { XqActions, XqForm, XqTabGlide, cn } from '@xelqun/forms';
+import { XqActions, XqButton, XqForm, XqTabGlide, cn } from '@xelqun/forms';
 import type { FormStore } from '@xelqun/forms';
 import { XqTable } from '@xelqun/tables';
 import XqPanelHook from '../components/XqPanelHook.vue';
@@ -250,7 +250,32 @@ const badgeColors: Record<string, string> = {
                     :submit-label="item.submitLabel"
                     :preserve-state="keepsPage"
                     class="max-w-2xl"
-                />
+                >
+                    <template
+                        v-if="item.createAnotherLabel"
+                        #actions="{ store, processing, submit }"
+                    >
+                        <div class="gap-3 flex items-center justify-end">
+                            <XqButton
+                                type="button"
+                                variant="outline"
+                                :disabled="processing"
+                                data-xq-create-another
+                                @click="
+                                    store.submit(`${item.action}?another=1`, {
+                                        method: item.method,
+                                        preserveState: keepsPage,
+                                    })
+                                "
+                            >
+                                {{ item.createAnotherLabel }}
+                            </XqButton>
+                            <XqButton type="button" :disabled="processing" @click="submit">
+                                {{ item.submitLabel }}
+                            </XqButton>
+                        </div>
+                    </template>
+                </XqForm>
             </div>
             <XqActions v-else :actions="item.schema" />
         </template>

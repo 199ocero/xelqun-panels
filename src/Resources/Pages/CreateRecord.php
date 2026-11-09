@@ -15,6 +15,9 @@ use Xelqun\Panels\Resources\ResourceForm;
  */
 class CreateRecord extends ResourcePage
 {
+    /** Offer a button that saves and opens a new, empty form. */
+    protected static bool $canCreateAnother = true;
+
     public function getHeading(): string
     {
         return __('xelqun-panels::resources.create', ['label' => $this->resource::getModelLabel()]);
@@ -32,6 +35,7 @@ class CreateRecord extends ResourcePage
             $this->resource::getUrl('store'),
             'post',
             $this->getHeading(),
+            static::$canCreateAnother ? __('xelqun-panels::resources.create_another') : null,
         )];
     }
 
@@ -48,7 +52,7 @@ class CreateRecord extends ResourcePage
             ->success()
             ->send();
 
-        return redirect()->to($this->getRedirectUrl($record));
+        return redirect()->to(static::$canCreateAnother && $request->boolean('another') ? $this->resource::getUrl('create') : $this->getRedirectUrl($record));
     }
 
     /**

@@ -161,6 +161,8 @@ final class Panel
     /** @var array<int, NavigationItem> */
     private array $userMenuItems = [];
 
+    private bool $hasEmailChangeVerification = false;
+
     /** @var array<string, NavigationGroup> By label, for the groups given as objects. */
     private array $navigationGroupDetails = [];
 
@@ -712,6 +714,22 @@ final class Panel
      * Require a verified email address. The user model must implement
      * MustVerifyEmail, or nobody can get in.
      */
+    /**
+     * A new email address on the profile waits until a link sent to it is
+     * opened, and the old address hears of the change.
+     */
+    public function emailChangeVerification(bool $condition = true): self
+    {
+        $this->hasEmailChangeVerification = $condition;
+
+        return $this;
+    }
+
+    public function hasEmailChangeVerification(): bool
+    {
+        return $this->hasEmailChangeVerification && $this->profileForm !== null;
+    }
+
     public function emailVerification(): self
     {
         $this->requiresEmailVerification = true;

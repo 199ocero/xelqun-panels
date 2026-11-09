@@ -62,6 +62,19 @@ return [
         'saved' => 'Your profile is saved.',
     ],
 
+    'email_change' => [
+        'sent' => 'Open the link we sent to :email to finish changing your email address.',
+        'verify_subject' => 'Confirm your new email address',
+        'verify_line' => 'Open this link to make this your account\'s email address.',
+        'verify_action' => 'Confirm the address',
+        'verify_footer' => 'The link works for an hour. If you didn\'t ask for this, ignore this email.',
+        'notice_subject' => 'Your email address is changing',
+        'notice_line' => 'Someone asked to change your account\'s email address to :email.',
+        'notice_footer' => 'If it wasn\'t you, sign in and change your password.',
+        'done' => 'Your email address is changed.',
+        'taken' => 'That email address is taken now, so nothing changed.',
+    ],
+
     'mfa' => [
         'heading' => 'Two-factor authentication',
         'description' => 'Enter the 6 digit code from your authenticator app, or a recovery code.',

@@ -22,6 +22,9 @@ This needs `xelqun/forms` 0.9 and `xelqun/tables` 0.7.
 - **`$pollingInterval`** on a widget reloads the page's widgets that often, in seconds.
 - **`getFooterWidgets()`** puts widgets below a page's content.
 - **Relation managers:** `getBadge()` and `getBadgeColor()` on the tab, `$isLazy` to load the rows after the page renders, `isReadOnly()` to override the page, `RelationGroup::make('Contacts', [...])` for several under one tab, and `Resource::getRelationManagersLayout()` returning `stacked` to show every table at once.
+- **Infolist entries** take a text column's options: `description()`, `placeholder()`, `limit()`, `words()`, `lineClamp()`, `copyable()`, `tooltip()`, `numeric()`, `since()` and more. Entries add **`hint()`** and **`inlineLabel()`**, and `TextEntry` adds **`html()`**, **`markdown()`** (both cleaned on the server), **`prefix()`** and **`suffix()`**.
+- **"Create & create another"** on create pages, which saves and opens a new form. Turn it off with `protected static bool $canCreateAnother = false` on a `CreateRecord`.
+- **`Panel::emailChangeVerification()`** keeps a new email address on the profile waiting until a link sent to it is opened, and tells the old address about the change.
 - **`getGlobalSearchResultActions()`** adds links under a search result, and **`$globalSearchResultsLimit`** sets how many results a resource gives.
 
 ## 0.4.2 - 2026-11-08

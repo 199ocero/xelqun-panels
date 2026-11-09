@@ -16,6 +16,8 @@ final class FormContent
         public readonly string $action,
         public readonly string $method = 'post',
         public readonly ?string $submitLabel = null,
+        /** A second button that saves and starts a new one, as "Create & create another". */
+        public readonly ?string $createAnotherLabel = null,
     ) {}
 
     /**
@@ -31,6 +33,7 @@ final class FormContent
             'action' => $this->action,
             'method' => $this->method,
             'submitLabel' => $this->submitLabel,
+            ...($this->createAnotherLabel === null ? [] : ['createAnotherLabel' => $this->createAnotherLabel]),
             // Changes after a save, so password boxes empty, but not after a failed one.
             'revision' => md5((string) json_encode([$schema['state'], $this->form->getRecord()?->getAttribute('updated_at')])),
         ];

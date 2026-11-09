@@ -11,6 +11,8 @@ return [
     'Breadcrumb' => 'Breadcrumb',
     'Clear' => 'Clear',
     'Collapse sidebar' => 'Collapse sidebar',
+    'Copied' => 'Copied',
+    'Copy' => 'Copy',
     'Dark' => 'Dark',
     'Expand sidebar' => 'Expand sidebar',
     'Go to a page or a record of this panel.' => 'Go to a page or a record of this panel.',
