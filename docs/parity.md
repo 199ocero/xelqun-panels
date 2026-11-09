@@ -10,29 +10,29 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 | ------------------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
 | List, create, edit, view  | Yes        | One class, with no page files.                                                                        |
 | Deleting and soft deletes | Yes        |                                                                                                       |
-| Managing relationships    | Yes        | Has-many, many-to-many, attach, detach, associate and dissociate, on tabs when there are several.     |
+| Managing relationships    | Yes        | Has-many, many-to-many, attach, detach, associate and dissociate. Tabs or stacked, `RelationGroup`, badges, lazy loading, and `ManageRelatedRecords` for a page of its own. |
 | Nested resources          | Yes        |                                                                                                       |
 | Singular resources        | Yes        | `ManageSingleRecord`.                                                                                 |
 | Simple resources          | Yes        | `ManageRecords`.                                                                                      |
-| Global search             | Yes        |                                                                                                       |
+| Global search             | Yes        | Result details and actions, and `$globalSearchResultsLimit`.                                           |
 | Widgets on resource pages | Yes        | On lists, and on record pages with the record.                                                        |
-| Custom resource pages     | Yes        |                                                                                                       |
+| Custom resource pages     | Yes        | Any key in `getPages()` gets a route, at `$routePath` or its key.                                      |
 
 ## Tables
 
 | Filament              | Xelqun | Notes                                                                 |
 | --------------------- | ------ | --------------------------------------------------------------------- |
-| Text, icon, image     | Yes    |                                                                       |
+| Text, icon, image     | Yes    | Descriptions, placeholders, limits, line clamps, copy, lists, numeric, since and time zones. |
 | Color column          | Yes    |                                                                       |
 | Select, toggle, text input and checkbox columns | Yes | Read-only until `authorize()` says otherwise. |
 | Custom columns        | Yes    |                                                                       |
-| Select, ternary and custom filters | Yes |                                                                 |
+| Select, ternary and custom filters | Yes | Removable chips for active filters, live filters, and ternary labels, `nullable()` and `queries()`. |
 | Query builder         | Partly | Rules match all or any. No nested groups.                             |
-| Filter layout         | Partly | Filters open in one panel. No layout above the table.                 |
-| Actions and bulk actions | Yes |                                                                       |
+| Filter layout         | Partly | Filters open in one panel, with chips for the active ones. No layout above the table. |
+| Actions and bulk actions | Yes | `authorizeIndividualRecords()`, selectable rows and `recordAction()`. |
 | Summaries             | Partly | Sum, average, count and range. No custom scopes or per-group lines.   |
-| Grouping rows         | Partly | A default group in code. The viewer can't choose one.                 |
-| Empty state           | Yes    |                                                                       |
+| Grouping rows         | Yes    | `groups()` the viewer picks from, collapsible.                        |
+| Empty state           | Yes    | Icon and actions.                                                     |
 | Layout                | Partly | `contentGrid()`, `striped()`. No `Split` or `Stack` inside a row.     |
 | Reordering rows       | Partly | Up and down buttons, not drag and drop.                               |
 | Column toggles        | Yes    |                                                                       |
@@ -43,8 +43,8 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 
 | Filament                                              | Xelqun | Notes                         |
 | ----------------------------------------------------- | ------ | ----------------------------- |
-| Every field in Filament's list                        | Yes    | See `xelqun/forms`.           |
-| Sections, tabs, wizards, callouts, empty states, grid | Yes    |                               |
+| Every field in Filament's list                        | Yes    | See `xelqun/forms`. `ModalTableSelect` comes with `xelqun/tables`. |
+| Sections, tabs, wizards, callouts, empty states, grid | Yes    | Section icon, aside, compact, header and footer content, remembered collapse. Tab icons and badges, vertical, contained, `persistTab()`. |
 | Prime components                                      | Yes    | `Text`, `Icon`, `Image`, and more. |
 | Validation                                            | Yes    |                               |
 | Unsaved changes alerts                                | Yes    | `unsavedChangesAlerts()`.     |
@@ -53,15 +53,15 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 
 | Filament                                      | Xelqun | Notes                        |
 | --------------------------------------------- | ------ | ---------------------------- |
-| Text, icon, image, color, code, key-value and repeatable entries | Yes |                 |
+| Text, icon, image, color, code, key-value and repeatable entries | Yes | With the text column's options, plus `hint()`, `inlineLabel()`, `html()`, `markdown()`, `prefix()` and `suffix()`. |
 | Custom entries                                | Yes    | Extend `Entry`.              |
 
 ## Actions
 
 | Filament                              | Xelqun | Notes                                                                 |
 | ------------------------------------- | ------ | --------------------------------------------------------------------- |
-| Modals and grouping                   | Yes    |                                                                       |
-| Create, edit, view and delete         | Yes    |                                                                       |
+| Modals and grouping                   | Yes    | Slide-overs, extra footer actions, nested modals that cancel their parents, wizard steps, `halt()` and `cancel()`. |
+| Create, edit, view and delete         | Yes    | "Create & create another". Saves always run in a transaction, with no switch to turn that off. |
 | Replicate, force delete and restore   | Yes    |                                                                       |
 | Import                                | Partly | CSV, up to 1,000 rows in the request. No queue or column mapping.     |
 | Export                                | Partly | CSV of the list and tab. No queue, XLSX, or table filters.            |
@@ -71,9 +71,12 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 | Filament                 | Xelqun | Notes                                             |
 | ------------------------ | ------ | ------------------------------------------------- |
 | Flash notifications      | Yes    |                                                   |
-| Database notifications   | Yes    |                                                   |
+| Database notifications   | Yes    | The bell shows icons and link actions. Actions that run code stay in the toast. |
 | Broadcast notifications  | Yes    | Needs Laravel Echo in the app.                    |
 | Stats overview           | Yes    |                                                   |
+| Footer widgets           | Yes    | `getFooterWidgets()`.                             |
+| Dashboard filters        | Yes    | `filters()` on a page, read as `$this->pageFilters`. |
+| Widget polling           | Yes    | `$pollingInterval`.                               |
 | Chart widgets            | Partly | Line, bar and doughnut. No filter on a chart, and no radar, scatter or bubble. |
 | Table and custom widgets | Yes    |                                                   |
 
@@ -81,15 +84,15 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 
 | Filament                            | Xelqun     | Notes                                                                 |
 | ----------------------------------- | ---------- | --------------------------------------------------------------------- |
-| Panel configuration                 | Yes        | Brand, logo, favicon, colors, font, width, dark mode.                 |
-| Navigation, groups and badges       | Yes        |                                                                       |
+| Panel configuration                 | Yes        | Brand, logo, favicon, colors, font, width, dark mode, `middleware()` and `authMiddleware()`. |
+| Navigation, groups and badges       | Yes        | Group icons and folding, child items, badge colors and tooltips.     |
 | Top navigation                      | Yes        |                                                                       |
 | User menu                           | Yes        |                                                                       |
 | Clusters                            | Partly     | Members keep their own URLs, with no shared prefix.                   |
 | Sub navigation                      | Yes        |                                                                       |
-| Authentication flows                | Yes        |                                                                       |
+| Authentication flows                | Yes        | Email change verification included.                                   |
 | Multi-factor authentication         | Partly     | App codes, email codes and recovery codes. App setup has no QR code, because that needs a new dependency. |
-| Multi-tenancy                       | Partly     | Everything but tenant billing.                                        |
+| Multi-tenancy                       | Partly     | Tenant middleware, menu items, a route prefix or a domain. No tenant billing. |
 | Colors                              | Yes        | The same names and defaults, apart from a blue primary.               |
 | Icons                               | Yes        | Lucide, by name, not Heroicons.                                       |
 | CSS hooks                           | Partly     | `data-xq-*` attributes and `--xq-*` tokens.                           |
