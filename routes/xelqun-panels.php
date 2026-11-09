@@ -25,7 +25,7 @@ use Xelqun\Panels\Resources\Pages\ManageSingleRecord;
 foreach (app(Panels::class)->all() as $panel) {
     Route::prefix($panel->getPath())
         ->domain($panel->getDomain())
-        ->middleware(['web', EnterPanel::class.':'.$panel->getId()])
+        ->middleware(['web', EnterPanel::class.':'.$panel->getId(), ...$panel->getMiddleware()])
         ->name($panel->routeName(''))
         ->group(function () use ($panel): void {
             if ($panel->getLoginForm() !== null) {
@@ -61,7 +61,7 @@ foreach (app(Panels::class)->all() as $panel) {
 
             Route::post('logout', LogoutController::class)->name('auth.logout');
 
-            Route::middleware(Authenticate::class)->group(function () use ($panel): void {
+            Route::middleware([Authenticate::class, ...$panel->getAuthMiddleware()])->group(function () use ($panel): void {
                 if ($panel->hasTenancy()) {
                     Route::get('', RedirectToTenantController::class)->name('tenant.redirect');
                 }
@@ -71,71 +71,74 @@ foreach (app(Panels::class)->all() as $panel) {
                     Route::post('new-tenant', [TenantController::class, 'register'])->middleware("throttle:6,1,xelqun-panels.{$panel->getId()}.tenant.register.store")->name('tenant.register.store');
                 }
 
-                Route::prefix($panel->hasTenancy() ? '{tenant}' : '')
-                    ->middleware([...($panel->hasTenancy() ? [IdentifyTenant::class] : []), RequireMultiFactorSetup::class])
-                    ->group(function () use ($panel): void {
-                        if ($panel->hasGlobalSearch()) {
-                            // The underscore keeps it clear of a page or resource called search.
-                            Route::post('_search', GlobalSearchController::class)->middleware("throttle:60,1,xelqun-panels.{$panel->getId()}.search")->name('search');
-                        }
+                // Built as attributes, so a panel without a tenant domain keeps its own domain.
+                Route::group(array_filter([
+                    'prefix' => $panel->getTenantRoutePrefix(),
+                    'domain' => $panel->hasTenancy() ? $panel->getTenantDomain() : null,
+                    'middleware' => [...($panel->hasTenancy() ? [IdentifyTenant::class, ...$panel->getTenantMiddleware()] : []), RequireMultiFactorSetup::class],
+                ]), function () use ($panel): void {
+                    if ($panel->hasGlobalSearch()) {
+                        // The underscore keeps it clear of a page or resource called search.
+                        Route::post('_search', GlobalSearchController::class)->middleware("throttle:60,1,xelqun-panels.{$panel->getId()}.search")->name('search');
+                    }
 
-                        if ($panel->hasTenancy()) {
-                            Route::post('_tenants', TenantSearchController::class)->middleware("throttle:60,1,xelqun-panels.{$panel->getId()}.tenant.search")->name('tenant.search');
-                        }
+                    if ($panel->hasTenancy()) {
+                        Route::post('_tenants', TenantSearchController::class)->middleware("throttle:60,1,xelqun-panels.{$panel->getId()}.tenant.search")->name('tenant.search');
+                    }
 
-                        if ($panel->getTenantProfileForm() !== null) {
-                            Route::get('tenant-profile', [TenantController::class, 'showProfile'])->name('tenant.profile');
-                            Route::put('tenant-profile', [TenantController::class, 'updateProfile'])->name('tenant.profile.update');
-                        }
+                    if ($panel->getTenantProfileForm() !== null) {
+                        Route::get('tenant-profile', [TenantController::class, 'showProfile'])->name('tenant.profile');
+                        Route::put('tenant-profile', [TenantController::class, 'updateProfile'])->name('tenant.profile.update');
+                    }
 
-                        if ($panel->hasDatabaseNotifications()) {
-                            Route::prefix('_notifications')->middleware("throttle:120,1,xelqun-panels.{$panel->getId()}.notifications")->name('notifications.')->group(function (): void {
-                                Route::post('', [NotificationController::class, 'index'])->name('index');
-                                Route::post('read-all', [NotificationController::class, 'readAll'])->name('read-all');
-                                Route::post('clear', [NotificationController::class, 'clear'])->name('clear');
-                                Route::post('{notification}/read', [NotificationController::class, 'read'])->name('read');
-                            });
-                        }
+                    if ($panel->hasDatabaseNotifications()) {
+                        Route::prefix('_notifications')->middleware("throttle:120,1,xelqun-panels.{$panel->getId()}.notifications")->name('notifications.')->group(function (): void {
+                            Route::post('', [NotificationController::class, 'index'])->name('index');
+                            Route::post('read-all', [NotificationController::class, 'readAll'])->name('read-all');
+                            Route::post('clear', [NotificationController::class, 'clear'])->name('clear');
+                            Route::post('{notification}/read', [NotificationController::class, 'read'])->name('read');
+                        });
+                    }
 
-                        if ($panel->getProfileForm() !== null) {
-                            Route::get('profile', [ProfileController::class, 'show'])->name('auth.profile');
-                            Route::put('profile', [ProfileController::class, 'update'])->name('auth.profile.update');
-                        }
+                    if ($panel->getProfileForm() !== null) {
+                        Route::get('profile', [ProfileController::class, 'show'])->name('auth.profile');
+                        Route::put('profile', [ProfileController::class, 'update'])->name('auth.profile.update');
+                    }
 
-                        foreach ($panel->getPages() as $page) {
-                            Route::get($page::getSlug(), $page)->name($page::getRouteName());
-                        }
+                    foreach ($panel->getPages() as $page) {
+                        Route::get($page::getSlug(), $page)->name($page::getRouteName());
+                    }
 
-                        foreach ($panel->getResources() as $resource) {
-                            $pages = $resource::getPages();
-                            $slug = $resource::getSlug();
+                    foreach ($panel->getResources() as $resource) {
+                        $pages = $resource::getPages();
+                        $slug = $resource::getSlug();
 
-                            $parent = $resource::getParentResource();
+                        $parent = $resource::getParentResource();
 
-                            Route::prefix($parent === null ? $slug : $parent::getSlug()."/{parentRecord}/{$slug}")->name("resources.{$slug}.")->group(function () use ($pages, $resource, $panel): void {
-                                Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
-                                Route::get('_export', ExportController::class)->middleware("throttle:10,1,xelqun-panels.{$panel->getId()}.export")->name('export')->defaults('resource', $resource);
+                        Route::prefix($parent === null ? $slug : $parent::getSlug()."/{parentRecord}/{$slug}")->name("resources.{$slug}.")->group(function () use ($pages, $resource, $panel): void {
+                            Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
+                            Route::get('_export', ExportController::class)->middleware("throttle:10,1,xelqun-panels.{$panel->getId()}.export")->name('export')->defaults('resource', $resource);
 
-                                if (is_subclass_of($pages['index'], ManageSingleRecord::class) || $pages['index'] === ManageSingleRecord::class) {
-                                    Route::put('', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
-                                }
+                            if (is_subclass_of($pages['index'], ManageSingleRecord::class) || $pages['index'] === ManageSingleRecord::class) {
+                                Route::put('', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
+                            }
 
-                                if (isset($pages['create'])) {
-                                    Route::get('create', $pages['create'])->name('create')->defaults('resource', $resource);
-                                    Route::post('', [ResourceRecordController::class, 'store'])->name('store')->defaults('resource', $resource);
-                                }
+                            if (isset($pages['create'])) {
+                                Route::get('create', $pages['create'])->name('create')->defaults('resource', $resource);
+                                Route::post('', [ResourceRecordController::class, 'store'])->name('store')->defaults('resource', $resource);
+                            }
 
-                                if (isset($pages['view'])) {
-                                    Route::get('{record}', $pages['view'])->name('view')->defaults('resource', $resource);
-                                }
+                            if (isset($pages['view'])) {
+                                Route::get('{record}', $pages['view'])->name('view')->defaults('resource', $resource);
+                            }
 
-                                if (isset($pages['edit'])) {
-                                    Route::get('{record}/edit', $pages['edit'])->name('edit')->defaults('resource', $resource);
-                                    Route::put('{record}', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
-                                }
-                            });
-                        }
-                    });
+                            if (isset($pages['edit'])) {
+                                Route::get('{record}/edit', $pages['edit'])->name('edit')->defaults('resource', $resource);
+                                Route::put('{record}', [ResourceRecordController::class, 'update'])->name('update')->defaults('resource', $resource);
+                            }
+                        });
+                    }
+                });
             });
         });
 }

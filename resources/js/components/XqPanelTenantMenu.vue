@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
-import { XqMenuGlide, cn, postJson } from '@xelqun/forms';
+import { XqIcon, XqMenuGlide, cn, postJson } from '@xelqun/forms';
 import { Check, ChevronsUpDown } from '@lucide/vue';
 import {
     DropdownMenuContent,
@@ -18,6 +18,7 @@ import {
 import { computed, ref, watch } from 'vue';
 import type { PanelShell, PanelTenantOption } from '../types';
 import { menuClass, menuItemClass, sidebarTooltipClass } from '../ui/classes';
+import { visitUrl } from '../lib/url';
 
 const props = defineProps<{ tenant: NonNullable<PanelShell['tenant']>; collapsed?: boolean }>();
 
@@ -125,8 +126,29 @@ watch(isMenuOpen, (open) => {
                                     aria-hidden="true"
                                 />
                             </DropdownMenuItem>
-                            <template v-if="tenant.profileUrl || tenant.registrationUrl">
+                            <template
+                                v-if="
+                                    tenant.profileUrl ||
+                                    tenant.registrationUrl ||
+                                    tenant.menuItems?.length
+                                "
+                            >
                                 <DropdownMenuSeparator class="my-1 bg-xq-border h-px" />
+                                <DropdownMenuItem
+                                    v-for="item in tenant.menuItems ?? []"
+                                    :key="item.label"
+                                    :class="menuItemClass"
+                                    data-xq-tenant-menu-item
+                                    @select="item.url && visitUrl(item.url)"
+                                >
+                                    <XqIcon
+                                        v-if="item.icon"
+                                        :name="item.icon"
+                                        class="size-4"
+                                        aria-hidden="true"
+                                    />
+                                    {{ item.label }}
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     v-if="tenant.profileUrl"
                                     :class="menuItemClass"

@@ -160,6 +160,22 @@ final class Panel
     /** @var array<int, NavigationItem> */
     private array $userMenuItems = [];
 
+    /** @var array<int, string> */
+    private array $middleware = [];
+
+    /** @var array<int, string> */
+    private array $authMiddleware = [];
+
+    /** @var array<int, string> */
+    private array $tenantMiddleware = [];
+
+    private ?string $tenantRoutePrefix = null;
+
+    private ?string $tenantDomain = null;
+
+    /** @var array<int, NavigationItem> */
+    private array $tenantMenuItems = [];
+
     /** @var array<string, Plugin> */
     private array $plugins = [];
 
@@ -478,6 +494,117 @@ final class Panel
     }
 
     /**
+     * More middleware on every route of the panel, sign in included, such as
+     * one that sets the locale. It runs after the panel is known.
+     *
+     * @param  array<int, string>  $middleware
+     */
+    public function middleware(array $middleware): self
+    {
+        $this->middleware = [...$this->middleware, ...$middleware];
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getMiddleware(): array
+    {
+        return $this->middleware;
+    }
+
+    /**
+     * More middleware on the routes that need a signed-in user, after the check.
+     *
+     * @param  array<int, string>  $middleware
+     */
+    public function authMiddleware(array $middleware): self
+    {
+        $this->authMiddleware = [...$this->authMiddleware, ...$middleware];
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getAuthMiddleware(): array
+    {
+        return $this->authMiddleware;
+    }
+
+    /**
+     * More middleware on the routes inside a tenant, once the tenant is known.
+     *
+     * @param  array<int, string>  $middleware
+     */
+    public function tenantMiddleware(array $middleware): self
+    {
+        $this->tenantMiddleware = [...$this->tenantMiddleware, ...$middleware];
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getTenantMiddleware(): array
+    {
+        return $this->tenantMiddleware;
+    }
+
+    /**
+     * A segment before the tenant in the URL, as in /admin/team/acme.
+     */
+    public function tenantRoutePrefix(?string $prefix): self
+    {
+        $this->tenantRoutePrefix = $prefix === null ? null : trim($prefix, '/');
+
+        return $this;
+    }
+
+    /**
+     * Find the tenant in the host instead of the path, as in '{tenant}.example.com'.
+     * The session cookie has to reach every subdomain, through SESSION_DOMAIN.
+     */
+    public function tenantDomain(?string $domain): self
+    {
+        $this->tenantDomain = $domain === null ? null : str_replace(['http://', 'https://'], '', $domain);
+
+        return $this;
+    }
+
+    public function getTenantDomain(): ?string
+    {
+        return $this->tenantDomain;
+    }
+
+    /**
+     * Where the tenant routes sit under the panel's path.
+     */
+    public function getTenantRoutePrefix(): string
+    {
+        if (! $this->hasTenancy() || $this->tenantDomain !== null) {
+            return '';
+        }
+
+        return ltrim(($this->tenantRoutePrefix ?? '').'/{tenant}', '/');
+    }
+
+    /**
+     * More links in the tenant menu. Use a closure for a route's URL.
+     *
+     * @param  array<int, NavigationItem>  $items
+     */
+    public function tenantMenuItems(array $items): self
+    {
+        $this->tenantMenuItems = [...$this->tenantMenuItems, ...$items];
+
+        return $this;
+    }
+
+    /**
      * Must be a session guard.
      */
     public function authGuard(string $guard): self
@@ -750,7 +877,15 @@ final class Panel
 
     public function getTenantUrl(Model $tenant): string
     {
-        return $this->urlTo($this->path.'/'.$tenant->getAttribute($this->getTenantSlugAttribute()));
+        $slug = (string) $tenant->getAttribute($this->getTenantSlugAttribute());
+
+        if ($this->tenantDomain !== null) {
+            $port = parse_url(url('/'), PHP_URL_PORT);
+
+            return rtrim(url()->formatScheme().str_replace('{tenant}', $slug, $this->tenantDomain).($port === null ? '' : ":{$port}").'/'.$this->path, '/');
+        }
+
+        return $this->urlTo(trim($this->path.'/'.($this->tenantRoutePrefix === null ? '' : $this->tenantRoutePrefix.'/').$slug, '/'));
     }
 
     /**
@@ -1210,6 +1345,7 @@ final class Panel
                 'name' => (string) $tenant->getAttribute('name'),
                 'profileUrl' => $this->tenantProfileForm !== null && Gate::allows('update', $tenant) ? route($this->routeName('tenant.profile')) : null,
                 'registrationUrl' => $this->tenantRegistrationForm !== null ? route($this->routeName('tenant.register')) : null,
+                'menuItems' => array_map(fn (NavigationItem $item): array => $item->toArray(), $this->tenantMenuItems),
                 ...$this->getTenantList($user, $tenant),
             ] : null,
             'brand' => [

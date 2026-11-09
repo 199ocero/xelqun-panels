@@ -76,6 +76,8 @@ export interface PanelShell {
         name: string;
         profileUrl: string | null;
         registrationUrl: string | null;
+        /** More links from tenantMenuItems(). */
+        menuItems?: PanelNavigationItem[];
         tenants: PanelTenantOption[];
         /** Set when the user has more tenants than are listed. */
         searchUrl?: string | null;

@@ -337,3 +337,32 @@ describe('defining it', function () {
         ProjectResource::getEloquentQuery();
     })->throws(HttpException::class);
 });
+
+describe('panel middleware and tenant routes', function () {
+    it('runs the panel\'s middleware, then the signed-in middleware, then the tenant\'s', function () {
+        auth('admin')->logout();
+
+        expect($this->get('/team/login')->headers->get('X-Xq-Middleware'))->toBe('panel');
+
+        $this->actingAs($this->user, 'admin');
+
+        expect($this->get('/team/new-tenant')->headers->get('X-Xq-Middleware'))->toBe('panel,auth')
+            ->and($this->get('/team/red/projects')->headers->get('X-Xq-Middleware'))->toBe('panel,auth,tenant');
+    });
+
+    it('puts the tenant after a prefix, or in the host', function () {
+        $panel = Panel::make()->id('prefixed')->path('app')->tenant(Team::class, slugAttribute: 'slug');
+
+        expect($panel->getTenantRoutePrefix())->toBe('{tenant}')
+            ->and($panel->tenantRoutePrefix('team')->getTenantRoutePrefix())->toBe('team/{tenant}')
+            ->and($panel->getTenantUrl($this->red))->toEndWith('/app/team/red')
+            ->and($panel->tenantDomain('{tenant}.example.test')->getTenantRoutePrefix())->toBe('')
+            ->and($panel->getTenantUrl($this->red))->toBe('http://red.example.test/app');
+    });
+
+    it('lists more links in the tenant menu', function () {
+        $this->get('/team/red/projects')->assertInertia(fn (Assert $page) => $page
+            ->where('xelqunPanel.tenant.menuItems.0.label', 'Billing')
+            ->where('xelqunPanel.tenant.menuItems.0.url', '/billing'));
+    });
+});

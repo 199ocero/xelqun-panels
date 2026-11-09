@@ -2,6 +2,16 @@
 
 Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+This needs `xelqun/forms` 0.9 and `xelqun/tables` 0.7.
+
+### Added
+
+- **`Panel::middleware()`** adds middleware to every route of the panel, **`authMiddleware()`** to the routes behind sign in, and **`tenantMiddleware()`** to the routes inside a tenant, once it's known.
+- **`Panel::tenantRoutePrefix('team')`** puts a segment before the tenant, as in `/admin/team/acme`, and **`tenantDomain('{tenant}.example.com')`** finds the tenant in the host instead.
+- **`Panel::tenantMenuItems()`** adds links to the tenant menu.
+
 ## 0.4.2 - 2026-11-08
 
 ### Fixed
