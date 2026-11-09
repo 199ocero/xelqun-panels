@@ -2,9 +2,14 @@
 
 Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
-## Unreleased
+## 0.5.0 - 2026-11-10
 
-This needs `xelqun/forms` 0.9 and `xelqun/tables` 0.7.
+This needs `xelqun/forms` 0.9 and `xelqun/tables` 0.7: `composer update xelqun/panels xelqun/forms xelqun/tables` and `npm install @xelqun/panels@0.5.0 @xelqun/forms@0.9.0 @xelqun/tables@0.7.0`.
+
+### Upgrading
+
+- `Resource::getPages()` routes every extra key now, so a page you added there that used to be ignored becomes reachable. Give it an `isAccessible()`.
+- Relation tables share one tab bar above them, instead of each carrying its own.
 
 ### Added
 
