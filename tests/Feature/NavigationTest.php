@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Xelqun\Panels\Contracts\Plugin;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
+use Xelqun\Panels\Navigation\NavigationGroup;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Navigation\SidebarCard;
 use Xelqun\Panels\Pages\Page;
@@ -484,4 +485,20 @@ it('leaves out a resource that asks not to be in the navigation', function () {
     } finally {
         TaskResource::$showsInNavigation = true;
     }
+});
+
+it('sends a group\'s icon and folding, nests child items, and colors a badge', function () {
+    $panel = panelWithPages()->navigationGroups([NavigationGroup::make('Help')->icon('life-buoy')->collapsed()])->navigationItems([
+        NavigationItem::make('Docs')->url('https://example.com/docs')->group('Help')->badge(3)->badgeColor('danger')->badgeTooltip('New pages'),
+        NavigationItem::make('API')->url('https://example.com/api')->group('Help')->parentItem('Docs'),
+        NavigationItem::make('Orphan')->url('https://example.com/x')->group('Help')->parentItem('Nobody'),
+    ]);
+    defineNavigationRoutes($panel);
+
+    $help = collect($panel->getNavigation())->firstWhere('label', 'Help');
+
+    expect($help)->toMatchArray(['icon' => 'life-buoy', 'collapsible' => true, 'collapsed' => true])
+        ->and(array_column($help['items'], 'label'))->toBe(['Docs', 'Orphan'])
+        ->and($help['items'][0])->toMatchArray(['badge' => '3', 'badgeColor' => 'danger', 'badgeTooltip' => 'New pages'])
+        ->and(array_column($help['items'][0]['children'], 'label'))->toBe(['API']);
 });

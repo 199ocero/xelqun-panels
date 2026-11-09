@@ -6,7 +6,16 @@ import { isOwnUrl } from '../lib/url';
 import type { PanelNavigationItem } from '../types';
 import { sidebarTooltipClass } from '../ui/classes';
 
-defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
+defineProps<{ item: PanelNavigationItem; collapsed?: boolean; nested?: boolean }>();
+
+const badgeColors: Record<string, string> = {
+    primary: 'rounded-full px-1.5 bg-xq-primary/15 text-xq-primary',
+    danger: 'rounded-full px-1.5 bg-xq-destructive/15 text-xq-destructive',
+    info: 'rounded-full px-1.5 bg-xq-info/15 text-xq-info',
+    success: 'rounded-full px-1.5 bg-xq-success/15 text-xq-success',
+    warning: 'rounded-full px-1.5 bg-xq-warning/15 text-xq-warning',
+    gray: 'rounded-full px-1.5 bg-xq-muted',
+};
 </script>
 
 <template>
@@ -23,18 +32,19 @@ defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
                         'focus-visible:ring-xq-ring focus-visible:ring-2 focus-visible:outline-none',
                         item.active ? 'font-medium text-xq-foreground' : 'text-xq-foreground/80',
                         collapsed && 'px-0 justify-center',
+                        nested && !collapsed && 'pl-9 h-8',
                     )
                 "
             >
                 <XqIcon
-                    v-if="item.icon"
+                    v-if="item.icon && !nested"
                     :name="item.icon"
                     class="size-4.5 text-xq-muted-foreground group-hover:text-xq-foreground shrink-0 transition-[scale,color] duration-(--xq-duration-base) ease-(--xq-ease-spring) group-hover:scale-110"
                     aria-hidden="true"
                 />
                 <!-- An item with no icon keeps its place, so labels line up, and shows its initial when collapsed. -->
                 <span
-                    v-else
+                    v-else-if="!nested"
                     class="size-4.5 text-xs font-medium text-xq-muted-foreground flex shrink-0 items-center justify-center"
                     aria-hidden="true"
                     data-xq-nav-placeholder
@@ -45,7 +55,14 @@ defineProps<{ item: PanelNavigationItem; collapsed?: boolean }>();
                 <span
                     v-if="item.badge && !collapsed"
                     :key="item.badge"
-                    class="text-xs text-xq-muted-foreground ml-auto animate-xq-badge-pop tabular-nums"
+                    :title="item.badgeTooltip"
+                    :class="
+                        cn(
+                            'text-xs text-xq-muted-foreground ml-auto animate-xq-badge-pop tabular-nums',
+                            badgeColors[item.badgeColor ?? ''],
+                        )
+                    "
+                    data-xq-nav-badge
                 >
                     {{ item.badge }}
                 </span>

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
-import { router } from '@inertiajs/vue3';
-import { HttpError, cn, postJson } from '@xelqun/forms';
+import { HttpError, XqIcon, cn, postJson } from '@xelqun/forms';
 import { Bell } from '@lucide/vue';
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { PanelNotification, PanelNotificationList } from '../types';
 import { iconButtonClass } from '../ui/classes';
 import { textToneClasses } from './widgets/tones';
+import { visitUrl } from '../lib/url';
 
 const SIGNED_OUT_STATUSES = [401, 403, 419];
 
@@ -61,7 +61,24 @@ async function openNotification(notification: PanelNotification): Promise<void> 
 
     if (notification.url) {
         open.value = false;
-        router.visit(notification.url);
+        visitUrl(notification.url);
+    }
+}
+
+async function followAction(
+    notification: PanelNotification,
+    action: NonNullable<PanelNotification['actions']>[number],
+): Promise<void> {
+    if (!notification.read) {
+        await send(`/${notification.id}/read`);
+    }
+
+    open.value = false;
+
+    if (action.openInNewTab) {
+        window.open(action.url, '_blank', 'noopener');
+    } else {
+        visitUrl(action.url);
     }
 }
 
@@ -160,6 +177,17 @@ onBeforeUnmount(() => {
                                     )
                                 "
                             ></span>
+                            <XqIcon
+                                v-if="notification.icon"
+                                :name="notification.icon"
+                                :class="
+                                    cn(
+                                        'mt-0.5 size-4 shrink-0',
+                                        textToneClasses[notification.status ?? 'primary'],
+                                    )
+                                "
+                                data-xq-notification-icon
+                            />
                             <span class="min-w-0">
                                 <span class="text-sm font-medium block">
                                     {{ notification.title }}
@@ -178,6 +206,21 @@ onBeforeUnmount(() => {
                                 }}</span>
                             </span>
                         </button>
+                        <div
+                            v-if="notification.actions?.length"
+                            class="gap-3 px-3 pb-2.5 flex flex-wrap pl-[2.375rem]"
+                        >
+                            <button
+                                v-for="action in notification.actions"
+                                :key="action.label"
+                                type="button"
+                                class="text-sm font-medium text-xq-primary cursor-pointer hover:underline"
+                                data-xq-notification-action
+                                @click="followAction(notification, action)"
+                            >
+                                {{ action.label }}
+                            </button>
+                        </div>
                     </li>
                 </ul>
                 <p v-else class="px-3 py-8 text-sm text-xq-muted-foreground text-center">

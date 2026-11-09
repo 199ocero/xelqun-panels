@@ -14,6 +14,11 @@ This needs `xelqun/forms` 0.9 and `xelqun/tables` 0.7.
 - **Pages of a resource's own.** Any extra key in `getPages()` gets a route, at `$routePath` or its key, and `getUrl('key')` links to it. Before, such a page was quietly left without one.
 - **`ManageRelatedRecords`**: one relation manager on a page of its own under the record, at `{record}/key`.
 - **`Resource::shouldRegisterNavigation()`** leaves a resource out of the navigation.
+- **`NavigationGroup::make('Shop')->icon('store')->collapsible()`** in `navigationGroups()`. A collapsible group remembers whether the viewer folded it, and `collapsed()` starts it folded.
+- **`$navigationParentItem`** on a page or resource, or `parentItem()` on a `NavigationItem`, puts an item under another of its group, shown while either is open.
+- **`getNavigationBadgeColor()`** and **`getNavigationBadgeTooltip()`** on pages and resources, and `badgeColor()` and `badgeTooltip()` on a `NavigationItem`.
+- The notification bell shows a notification's icon and its actions that link somewhere. Actions that run code stay in the toast, because their token has expired by the time anyone opens the bell.
+- **`getGlobalSearchResultActions()`** adds links under a search result, and **`$globalSearchResultsLimit`** sets how many results a resource gives.
 
 ## 0.4.2 - 2026-11-08
 

@@ -11,6 +11,7 @@ use Xelqun\Forms\Layouts\Section;
 use Xelqun\Panels\Actions\ExportAction;
 use Xelqun\Panels\Infolists\IconEntry;
 use Xelqun\Panels\Infolists\TextEntry;
+use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Resources\Resource;
 use Xelqun\Panels\Resources\Tab;
 use Xelqun\Panels\Tests\Fixtures\Post;
@@ -87,6 +88,16 @@ class PostResource extends Resource
     public static function getPages(): array
     {
         return [...parent::getPages(), 'sort' => SortPosts::class, 'comments' => ManagePostComments::class];
+    }
+
+    public static bool $hasSearchActions = false;
+
+    public static function getGlobalSearchResultActions(Model $record): array
+    {
+        return static::$hasSearchActions ? [
+            NavigationItem::make('Edit')->url(static::getUrl('edit', ['record' => $record])),
+            NavigationItem::make('Bad')->url('javascript:alert(1)'),
+        ] : [];
     }
 
     public static function getRelations(): array

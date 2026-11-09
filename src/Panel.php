@@ -26,6 +26,7 @@ use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Contracts\Plugin;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\Cluster;
+use Xelqun\Panels\Navigation\NavigationGroup;
 use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Navigation\SidebarCard;
 use Xelqun\Panels\Pages\Page;
@@ -159,6 +160,9 @@ final class Panel
 
     /** @var array<int, NavigationItem> */
     private array $userMenuItems = [];
+
+    /** @var array<string, NavigationGroup> By label, for the groups given as objects. */
+    private array $navigationGroupDetails = [];
 
     /** @var array<int, string> */
     private array $middleware = [];
@@ -1218,11 +1222,18 @@ final class Panel
      * The order of the sidebar's groups. Ungrouped links come first, and a group
      * not named here comes last.
      *
-     * @param  array<int, string>  $groups
+     * @param  array<int, string|NavigationGroup>  $groups
      */
     public function navigationGroups(array $groups): self
     {
-        $this->navigationGroups = $groups;
+        $this->navigationGroups = array_map(fn (string|NavigationGroup $group): string => is_string($group) ? $group : $group->getLabel(), $groups);
+        $this->navigationGroupDetails = [];
+
+        foreach ($groups as $group) {
+            if ($group instanceof NavigationGroup) {
+                $this->navigationGroupDetails[$group->getLabel()] = $group;
+            }
+        }
 
         return $this;
     }
@@ -1263,10 +1274,30 @@ final class Panel
             })
             ->map(fn (Collection $items, string $label): array => [
                 'label' => $label === '' ? null : $label,
-                'items' => $items->map(fn (NavigationItem $item): array => $item->toArray())->values()->all(),
+                ...(isset($this->navigationGroupDetails[$label]) ? $this->navigationGroupDetails[$label]->toArray() : []),
+                'items' => $this->nestChildItems($items),
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * An item with a parentItem() goes under that item, which opens it while
+     * one of them is the current page. A parent that isn't there leaves it on top.
+     *
+     * @param  Collection<int, NavigationItem>  $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function nestChildItems(Collection $items): array
+    {
+        $labels = $items->map(fn (NavigationItem $item): string => $item->getLabel())->all();
+        [$children, $top] = $items->partition(fn (NavigationItem $item): bool => in_array($item->getParentItem(), $labels, true));
+
+        return $top->map(function (NavigationItem $item) use ($children): array {
+            $mine = $children->filter(fn (NavigationItem $child): bool => $child->getParentItem() === $item->getLabel());
+
+            return [...$item->toArray(), ...($mine->isEmpty() ? [] : ['children' => $mine->map(fn (NavigationItem $child): array => $child->toArray())->values()->all()])];
+        })->values()->all();
     }
 
     /**

@@ -180,3 +180,33 @@ describe('discoverResources', function () {
         expect(Panel::make()->discoverResources(in: '/nowhere', for: 'App')->getResources())->toBe([]);
     });
 });
+
+describe('result actions and the limit', function () {
+    beforeEach(function () {
+        $this->user = $this->signIn();
+    });
+
+    afterEach(function () {
+        PostResource::$hasSearchActions = false;
+        (new ReflectionProperty(PostResource::class, 'globalSearchResultsLimit'))->setValue(null, 5);
+    });
+
+    it('links to more than the record, and drops an unsafe link', function () {
+        $post = Post::create(['title' => 'Launch plan', 'status' => 'live']);
+        PostResource::$hasSearchActions = true;
+
+        expect(searchPosts('launch')[0]['results'][0]['actions'])->toBe([
+            ['label' => 'Edit', 'url' => PostResource::getUrl('edit', ['record' => $post], app(Panels::class)->get('admin'))],
+        ]);
+    });
+
+    it('takes as many results from a resource as it allows', function () {
+        foreach (range(1, 4) as $number) {
+            Post::create(['title' => "Plan {$number}", 'status' => 'live']);
+        }
+
+        (new ReflectionProperty(PostResource::class, 'globalSearchResultsLimit'))->setValue(null, 2);
+
+        expect(foundTitles('plan'))->toHaveCount(2);
+    });
+});

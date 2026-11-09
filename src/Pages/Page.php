@@ -36,6 +36,9 @@ abstract class Page
 
     protected static ?string $navigationGroup = null;
 
+    /** The label of another item in its group, to sit under. */
+    protected static ?string $navigationParentItem = null;
+
     protected static int $navigationSort = 0;
 
     /** @var class-string<Cluster>|null */
@@ -95,6 +98,19 @@ abstract class Page
         return true;
     }
 
+    /**
+     * primary, danger, info, success, warning or gray, for the badge.
+     */
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return null;
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return null;
+    }
+
     public static function getNavigationBadge(): string|int|null
     {
         return null;
@@ -108,6 +124,9 @@ abstract class Page
             ->sort(static::$navigationSort)
             ->url(static::getUrl(panel: $panel))
             ->badge(static::getNavigationBadge())
+            ->badgeColor(static::getNavigationBadgeColor())
+            ->badgeTooltip(static::getNavigationBadgeTooltip())
+            ->parentItem(static::$navigationParentItem)
             ->active(request()->routeIs($panel->routeName(static::getRouteName())));
     }
 

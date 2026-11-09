@@ -25,6 +25,12 @@ final class NavigationItem
 
     private bool $isActive = false;
 
+    private ?string $badgeColor = null;
+
+    private ?string $badgeTooltip = null;
+
+    private ?string $parentItem = null;
+
     private function __construct(private readonly string $label) {}
 
     public static function make(string $label): self
@@ -95,6 +101,38 @@ final class NavigationItem
         return $this;
     }
 
+    /**
+     * primary, danger, info, success, warning or gray. Plain text unless you choose.
+     */
+    public function badgeColor(?string $color): self
+    {
+        $this->badgeColor = $color;
+
+        return $this;
+    }
+
+    public function badgeTooltip(?string $tooltip): self
+    {
+        $this->badgeTooltip = $tooltip;
+
+        return $this;
+    }
+
+    /**
+     * Sit under another item of the same group, by its label.
+     */
+    public function parentItem(?string $label): self
+    {
+        $this->parentItem = $label;
+
+        return $this;
+    }
+
+    public function getParentItem(): ?string
+    {
+        return $this->parentItem;
+    }
+
     public function active(bool $isActive = true): self
     {
         $this->isActive = $isActive;
@@ -103,7 +141,7 @@ final class NavigationItem
     }
 
     /**
-     * @return array{label: string, icon: string|null, url: string|null, active: bool, badge: string|null}
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -115,6 +153,7 @@ final class NavigationItem
             'url' => $this->getUrl(),
             'active' => $this->isActive,
             'badge' => $badge === null ? null : (string) $badge,
+            ...array_filter(['badgeColor' => $this->badgeColor, 'badgeTooltip' => $this->badgeTooltip]),
         ];
     }
 }

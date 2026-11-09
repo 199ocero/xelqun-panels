@@ -4,6 +4,7 @@ use Illuminate\Notifications\Notification as LaravelNotification;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
+use Xelqun\Notifications\NotificationAction;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Notifications\DatabaseNotification;
 use Xelqun\Panels\Notifications\StoredNotification;
@@ -133,4 +134,15 @@ it('reads a polling interval in seconds, or none', function () {
     expect(fn () => Panel::make()->databaseNotificationsPolling('often'))->toThrow(PanelDefinitionException::class);
 
     expect(Panel::make()->databaseNotificationsPolling('60s')->databaseNotificationsPolling(null))->toBeInstanceOf(Panel::class);
+});
+
+it('sends the icon and the actions that link somewhere, and leaves out the rest', function () {
+    DatabaseNotification::make()->title('Order paid')->icon('receipt')->actions([
+        NotificationAction::make('view')->label('View order')->url('/admin/posts/1', openInNewTab: true),
+        NotificationAction::make('bad')->url('javascript:alert(1)'),
+    ])->sendToDatabase($this->user);
+
+    $this->postJson('/admin/_notifications')
+        ->assertJsonPath('notifications.0.icon', 'receipt')
+        ->assertJsonPath('notifications.0.actions', [['label' => 'View order', 'url' => '/admin/posts/1', 'openInNewTab' => true]]);
 });

@@ -54,10 +54,34 @@ final class NotificationController
                 'body' => $notification->data['body'] ?? null,
                 'status' => $notification->data['status'] ?? null,
                 'url' => SafeUrl::filter($notification->data['url'] ?? null),
+                'icon' => is_string($icon = $notification->data['icon'] ?? null) ? $icon : null,
+                'actions' => $this->linkActions($notification->data['actions'] ?? []),
                 'read' => $notification->read(),
                 'time' => $notification->getAttribute('created_at')?->diffForHumans(),
             ]),
         ]);
+    }
+
+    /**
+     * Only actions that link somewhere. One that runs code carries a token from
+     * when it was sent, which has expired by the time anyone opens the bell.
+     * Links are checked again, since the row could have been written by anything.
+     *
+     * @return array<int, array{label: string, url: string, openInNewTab: bool}>
+     */
+    private function linkActions(mixed $actions): array
+    {
+        $links = [];
+
+        foreach (is_array($actions) ? $actions : [] as $action) {
+            $url = is_array($action) && is_string($action['url'] ?? null) ? SafeUrl::filter($action['url']) : null;
+
+            if ($url !== null && is_string($action['label'] ?? null)) {
+                $links[] = ['label' => $action['label'], 'url' => $url, 'openInNewTab' => (bool) ($action['openInNewTab'] ?? false)];
+            }
+        }
+
+        return $links;
     }
 
     /**

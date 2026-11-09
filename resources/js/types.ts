@@ -7,10 +7,17 @@ export interface PanelNavigationItem {
     url: string | null;
     active: boolean;
     badge: string | null;
+    badgeColor?: string;
+    badgeTooltip?: string;
+    /** Items that sit under this one, shown while one of them, or this, is open. */
+    children?: PanelNavigationItem[];
 }
 
 export interface PanelNavigationGroup {
     label: string | null;
+    icon?: string;
+    collapsible?: boolean;
+    collapsed?: boolean;
     items: PanelNavigationItem[];
 }
 
@@ -26,6 +33,8 @@ export interface PanelSearchResult {
     details: string;
     /** Falls back to the group's. */
     icon?: string | null;
+    /** Links under the result, from getGlobalSearchResultActions(). */
+    actions?: Array<{ label: string; url: string }>;
 }
 
 /** One resource's matches, as the panel's search route returns them. */
@@ -41,6 +50,9 @@ export interface PanelNotification {
     body: string | null;
     status: string | null;
     url: string | null;
+    icon?: string | null;
+    /** Links to follow from the bell. Actions that run code stay in the toast. */
+    actions?: Array<{ label: string; url: string; openInNewTab: boolean }>;
     read: boolean;
     time: string | null;
 }

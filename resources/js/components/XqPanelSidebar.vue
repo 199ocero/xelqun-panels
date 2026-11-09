@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { Link } from '@inertiajs/vue3';
-import { PanelLeft, Search } from '@lucide/vue';
+import { ChevronDown, PanelLeft, Search } from '@lucide/vue';
+import { XqIcon, cn } from '@xelqun/forms';
 import { TooltipProvider } from 'reka-ui';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useActivePill, useGlidingHover } from '../composables/useGlidingHover';
-import type { PanelShell } from '../types';
+import type { PanelNavigationGroup, PanelNavigationItem, PanelShell } from '../types';
 import { iconButtonClass } from '../ui/classes';
 import XqPanelHook from './XqPanelHook.vue';
 import XqPanelNavItem from './XqPanelNavItem.vue';
@@ -23,6 +24,36 @@ const { activeClass, activeStyle } = useActivePill(list, () => [
     props.panel.navigation,
     props.collapsed,
 ]);
+
+const foldedKey = computed(() => `xq-panel-nav-folded:${props.panel.id}`);
+/** Groups the viewer folded, or that start folded until they open them. */
+const folded = ref<Record<string, boolean>>({});
+
+onMounted(() => {
+    try {
+        folded.value = JSON.parse(localStorage.getItem(foldedKey.value) ?? '{}');
+    } catch {
+        // Nothing remembered.
+    }
+});
+
+function isFolded(group: PanelNavigationGroup): boolean {
+    return !!group.collapsible && (folded.value[group.label ?? ''] ?? !!group.collapsed);
+}
+
+function toggleGroup(group: PanelNavigationGroup): void {
+    folded.value = { ...folded.value, [group.label ?? '']: !isFolded(group) };
+
+    try {
+        localStorage.setItem(foldedKey.value, JSON.stringify(folded.value));
+    } catch {
+        // Not remembered this time.
+    }
+}
+
+function showsChildren(item: PanelNavigationItem): boolean {
+    return !!item.children?.length && (item.active || item.children.some((child) => child.active));
+}
 
 const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase());
 </script>
@@ -138,19 +169,47 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
                         class="mx-2 mb-2 bg-xq-border block h-px"
                         data-xq-nav-divider
                     ></span>
-                    <p
-                        v-if="group.label && !collapsed"
-                        aria-hidden="true"
-                        class="px-2.5 pb-1 text-xs font-medium text-xq-muted-foreground"
+                    <button
+                        v-if="group.label && !collapsed && group.collapsible"
+                        type="button"
+                        class="gap-1.5 px-2.5 pb-1 text-xs font-medium text-xq-muted-foreground hover:text-xq-foreground flex w-full cursor-pointer items-center"
+                        :aria-expanded="!isFolded(group)"
+                        data-xq-nav-group-toggle
+                        @click="toggleGroup(group)"
                     >
+                        <XqIcon v-if="group.icon" :name="group.icon" class="size-3.5" />
+                        {{ group.label }}
+                        <ChevronDown
+                            :class="
+                                cn(
+                                    'size-3.5 ml-auto transition-transform duration-(--xq-duration-base)',
+                                    isFolded(group) && '-rotate-90',
+                                )
+                            "
+                            aria-hidden="true"
+                        />
+                    </button>
+                    <p
+                        v-else-if="group.label && !collapsed"
+                        aria-hidden="true"
+                        class="gap-1.5 px-2.5 pb-1 text-xs font-medium text-xq-muted-foreground flex items-center"
+                    >
+                        <XqIcon v-if="group.icon" :name="group.icon" class="size-3.5" />
                         {{ group.label }}
                     </p>
-                    <XqPanelNavItem
-                        v-for="item in group.items"
-                        :key="item.label"
-                        :item="item"
-                        :collapsed="collapsed"
-                    />
+                    <template v-if="collapsed || !isFolded(group)">
+                        <template v-for="item in group.items" :key="item.label">
+                            <XqPanelNavItem :item="item" :collapsed="collapsed" />
+                            <template v-if="showsChildren(item) && !collapsed">
+                                <XqPanelNavItem
+                                    v-for="child in item.children"
+                                    :key="child.label"
+                                    :item="child"
+                                    nested
+                                />
+                            </template>
+                        </template>
+                    </template>
                 </div>
             </div>
 

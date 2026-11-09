@@ -63,6 +63,49 @@ afterEach(() => {
 });
 
 describe('the sidebar', () => {
+    it('folds a collapsible group, and shows child items under an open parent', async () => {
+        const panel = {
+            ...shell,
+            navigation: [
+                {
+                    label: 'Help',
+                    icon: 'life-buoy',
+                    collapsible: true,
+                    items: [
+                        {
+                            label: 'Docs',
+                            icon: null,
+                            url: '/docs',
+                            active: true,
+                            badge: '3',
+                            badgeColor: 'danger',
+                            badgeTooltip: 'New',
+                            children: [
+                                {
+                                    label: 'API',
+                                    icon: null,
+                                    url: '/api',
+                                    active: false,
+                                    badge: null,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        };
+        const wrapper = mount(XqPanelSidebar, { props: { panel } });
+
+        expect(wrapper.text()).toContain('API');
+        expect(wrapper.find('[data-xq-nav-badge]').attributes('title')).toBe('New');
+        expect(wrapper.find('[data-xq-nav-badge]').classes()).toContain('text-xq-destructive');
+
+        await wrapper.find('[data-xq-nav-group-toggle]').trigger('click');
+
+        expect(wrapper.text()).not.toContain('Docs');
+        localStorage.clear();
+    });
+
     it('marks the current page and names its groups', () => {
         const wrapper = mount(XqPanelSidebar, { props: { panel: shell } });
 

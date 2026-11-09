@@ -117,9 +117,13 @@ function move(step: number): void {
 
 function go(result: PanelSearchResult | undefined): void {
     if (result) {
-        open.value = false;
-        router.visit(result.url);
+        visit(result.url);
     }
+}
+
+function visit(url: string): void {
+    open.value = false;
+    router.visit(url);
 }
 </script>
 
@@ -196,6 +200,21 @@ function go(result: PanelSearchResult | undefined): void {
                                         </span>
                                     </span>
                                 </button>
+                                <div
+                                    v-if="result.actions?.length"
+                                    class="gap-3 px-2.5 pb-1.5 pl-9 flex flex-wrap"
+                                >
+                                    <button
+                                        v-for="action in result.actions"
+                                        :key="action.url"
+                                        type="button"
+                                        class="text-xs font-medium text-xq-primary cursor-pointer hover:underline"
+                                        data-xq-search-action
+                                        @click="visit(action.url)"
+                                    >
+                                        {{ action.label }}
+                                    </button>
+                                </div>
                             </li>
                         </ul>
                     </div>

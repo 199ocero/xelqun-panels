@@ -66,6 +66,9 @@ abstract class Resource
 
     protected static ?string $navigationGroup = null;
 
+    /** The label of another item in its group, to sit under. */
+    protected static ?string $navigationParentItem = null;
+
     protected static int $navigationSort = 0;
 
     /** @var class-string<Cluster>|null */
@@ -90,11 +93,8 @@ abstract class Resource
     /** Overrides the panel's ownership relationship for this model. */
     protected static ?string $tenantOwnershipRelationship = null;
 
-    /** How many records one resource adds to the search results. */
-    private const int GLOBAL_SEARCH_LIMIT = 5;
-
-    /** How many matches go to the policy, so one that refuses a few still leaves a full list. */
-    private const int GLOBAL_SEARCH_CANDIDATES = 20;
+    /** How many records this resource adds to the search results. */
+    protected static int $globalSearchResultsLimit = 5;
 
     /**
      * @return array<int, Component>
@@ -581,12 +581,22 @@ abstract class Resource
     }
 
     /**
+     * Links under a search result, such as one to edit the record. Each needs a url().
+     *
+     * @return array<int, NavigationItem>
+     */
+    public static function getGlobalSearchResultActions(Model $record): array
+    {
+        return [];
+    }
+
+    /**
      * Matching records the current user may view. Only getEloquentQuery() can
      * bring them back, and the policy sees each one before it leaves.
      *
-     * shortcut: a policy that refuses more than the first 20 matches can hide records from search. Page through matches if an app's policies are that narrow.
+     * shortcut: the policy sees four times the limit, so one that refuses more than that can hide records from search. Page through matches if an app's policies are that narrow.
      *
-     * @return array<int, array{title: string, url: string, details: string}>
+     * @return array<int, array{title: string, url: string, details: string, actions?: array<int, array{label: string, url: string}>}>
      */
     public static function getGlobalSearchResults(string $search): array
     {
@@ -613,16 +623,22 @@ abstract class Resource
                     }
                 }
             })
-            ->limit(self::GLOBAL_SEARCH_CANDIDATES)
+            ->limit(static::$globalSearchResultsLimit * 4)
             ->get()
             ->filter(fn (Model $record): bool => static::can('view', $record))
-            ->take(self::GLOBAL_SEARCH_LIMIT)
+            ->take(static::$globalSearchResultsLimit)
             ->map(fn (Model $record): array => [
                 'title' => static::getRecordTitle($record),
                 'url' => static::hasPage('view') ? static::getUrl('view', ['record' => $record]) : static::getUrl(),
                 'details' => collect(static::getGlobalSearchResultDetails($record))
                     ->map(fn (?string $value, string $label): string => "{$label}: {$value}")
                     ->implode(' · '),
+                ...(($actions = static::getGlobalSearchResultActions($record)) === [] ? [] : [
+                    'actions' => array_values(array_filter(array_map(
+                        fn (NavigationItem $action): ?array => $action->getUrl() === null ? null : ['label' => $action->getLabel(), 'url' => $action->getUrl()],
+                        $actions,
+                    ))),
+                ]),
             ])
             ->values()
             ->all();
@@ -699,6 +715,19 @@ abstract class Resource
         return [];
     }
 
+    /**
+     * primary, danger, info, success, warning or gray, for the badge.
+     */
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return null;
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return null;
+    }
+
     public static function getNavigationBadge(): string|int|null
     {
         return null;
@@ -730,6 +759,9 @@ abstract class Resource
             ->sort(static::$navigationSort)
             ->url(static::getUrl(panel: $panel))
             ->badge(static::getNavigationBadge())
+            ->badgeColor(static::getNavigationBadgeColor())
+            ->badgeTooltip(static::getNavigationBadgeTooltip())
+            ->parentItem(static::$navigationParentItem)
             ->active(request()->routeIs($panel->routeName('resources.'.static::getSlug().'.*')));
     }
 }
