@@ -27,17 +27,17 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 | Select, toggle, text input and checkbox columns | Yes | Read-only until `authorize()` says otherwise. |
 | Custom columns        | Yes    |                                                                       |
 | Select, ternary and custom filters | Yes | Removable chips for active filters, live filters, and ternary labels, `nullable()` and `queries()`. |
-| Query builder         | Partly | Rules match all or any. No nested groups.                             |
+| Query builder         | Yes    | Groups of rules, nested up to `maxNestingDepth()`, and `maxRules()`.  |
 | Filter layout         | Partly | Filters open in one panel, with chips for the active ones. No layout above the table. |
 | Actions and bulk actions | Yes | `authorizeIndividualRecords()`, selectable rows and `recordAction()`. |
-| Summaries             | Partly | Sum, average, count and range. No custom scopes or per-group lines.   |
+| Summaries             | Partly | Sum, average, count and range, for all rows and for each group. No custom scopes. |
 | Grouping rows         | Yes    | `groups()` the viewer picks from, collapsible.                        |
 | Empty state           | Yes    | Icon and actions.                                                     |
 | Layout                | Partly | `contentGrid()`, `striped()`. No `Split` or `Stack` inside a row.     |
 | Reordering rows       | Partly | Up and down buttons, not drag and drop.                               |
 | Column toggles        | Yes    |                                                                       |
 | Polling               | Yes    |                                                                       |
-| Custom data           | No     | A table needs an Eloquent query.                                      |
+| Custom data           | Yes    | `records()`, with each row an `ArrayRecord`. Summaries, the query builder and groups need a query. |
 
 ## Forms and layouts
 
@@ -63,7 +63,7 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 | Modals and grouping                   | Yes    | Slide-overs, extra footer actions, nested modals that cancel their parents, wizard steps, `halt()` and `cancel()`. |
 | Create, edit, view and delete         | Yes    | "Create & create another". Saves always run in a transaction, with no switch to turn that off. |
 | Replicate, force delete and restore   | Yes    |                                                                       |
-| Import                                | Partly | CSV, up to 1,000 rows in the request. No queue or column mapping.     |
+| Import                                | Partly | CSV with `ImportColumn` header guesses and rules, and `queue()`. No column picker or failed-rows file. |
 | Export                                | Partly | CSV of the list and tab. No queue, XLSX, or table filters.            |
 
 ## Notifications and widgets
@@ -88,14 +88,14 @@ Xelqun Panels follows [Filament](https://filamentphp.com), for Inertia and Vue. 
 | Navigation, groups and badges       | Yes        | Group icons and folding, child items, badge colors and tooltips.     |
 | Top navigation                      | Yes        |                                                                       |
 | User menu                           | Yes        |                                                                       |
-| Clusters                            | Partly     | Members keep their own URLs, with no shared prefix.                   |
+| Clusters                            | Yes        | Members' URLs start with the cluster's slug.                          |
 | Sub navigation                      | Yes        |                                                                       |
 | Authentication flows                | Yes        | Email change verification included.                                   |
 | Multi-factor authentication         | Partly     | App codes, email codes and recovery codes. App setup has no QR code, because that needs a new dependency. |
 | Multi-tenancy                       | Partly     | Tenant middleware, menu items, a route prefix or a domain. No tenant billing. |
 | Colors                              | Yes        | The same names and defaults, apart from a blue primary.               |
 | Icons                               | Yes        | Lucide, by name, not Heroicons.                                       |
-| CSS hooks                           | Partly     | `data-xq-*` attributes and `--xq-*` tokens.                           |
+| CSS hooks                           | Yes        | Documented `--xq-*` tokens and `data-xq-*` attributes, on the docs site's CSS hooks page. |
 | Render hooks                        | Partly     | Eight places, for Vue components.                                     |
 | Plugins                             | Yes        |                                                                       |
 | SPA mode                            | Not needed | Inertia always works this way.                                        |
