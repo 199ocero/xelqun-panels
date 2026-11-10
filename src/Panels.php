@@ -2,6 +2,8 @@
 
 namespace Xelqun\Panels;
 
+use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
@@ -115,6 +117,51 @@ final class Panels
     public function enterParent(string $key): void
     {
         request()->attributes->set(self::PARENT, $key);
+    }
+
+    /**
+     * Run the callback as $user, inside this panel, tenant and parent, then put
+     * back what was there before. For a queued job, whose worker runs other
+     * jobs after it in the same process.
+     *
+     * @internal
+     *
+     * @template TResult
+     *
+     * @param  Closure(): TResult  $callback
+     * @return TResult
+     */
+    public function within(Panel $panel, Authenticatable $user, ?Model $tenant, ?string $parentKey, Closure $callback): mixed
+    {
+        $attributes = request()->attributes;
+        // All of them, not just the panel's three: records found inside, such as an authorized parent, are kept there too.
+        $previous = $attributes->all();
+        $previousGuard = config('auth.defaults.guard');
+        $previousTenantDefault = URL::getDefaultParameters()['tenant'] ?? null;
+        $guard = Auth::guard($panel->getAuthGuard());
+
+        try {
+            $this->enter($panel);
+            $guard->setUser($user);
+
+            if ($tenant !== null) {
+                $this->enterTenant($tenant);
+            }
+
+            if ($parentKey !== null) {
+                $this->enterParent($parentKey);
+            }
+
+            return $callback();
+        } finally {
+            $attributes->replace($previous);
+
+            if (method_exists($guard, 'forgetUser')) {
+                $guard->forgetUser();
+            }
+            Auth::shouldUse($previousGuard);
+            URL::defaults(['tenant' => $previousTenantDefault]);
+        }
     }
 
     /**

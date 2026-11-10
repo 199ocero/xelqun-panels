@@ -1,9 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Xelqun\Panels\Actions\ImportAction;
+use Xelqun\Panels\Actions\ImportRecords;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
@@ -364,5 +367,34 @@ describe('panel middleware and tenant routes', function () {
         $this->get('/team/red/projects')->assertInertia(fn (Assert $page) => $page
             ->where('xelqunPanel.tenant.menuItems.0.label', 'Billing')
             ->where('xelqunPanel.tenant.menuItems.0.url', '/billing'));
+    });
+});
+
+describe('a queued import', function () {
+    it('creates the rows in the tenant it started in, and leaves no tenant behind', function () {
+        Storage::disk(ImportAction::DISK)->put($path = 'xelqun-imports/team.csv', "name\nBlue project\n");
+
+        (new ImportRecords(ImportAction::class, ProjectResource::class, $path, 'team', $this->user->getKey(), $this->red->getKey(), null))->handle(app(Panels::class));
+
+        // The same name as Blue's project, which only clashes inside one tenant.
+        expect(Project::where('team_id', $this->red->id)->where('name', 'Blue project')->exists())->toBeTrue()
+            ->and(app(Panels::class)->tenant())->toBeNull();
+    });
+
+    it('imports nothing without a tenant on a panel that has them', function () {
+        Storage::disk(ImportAction::DISK)->put($path = 'xelqun-imports/team.csv', "name\nTenantless\n");
+
+        (new ImportRecords(ImportAction::class, ProjectResource::class, $path, 'team', $this->user->getKey(), null, null))->handle(app(Panels::class));
+
+        expect(Project::where('name', 'Tenantless')->exists())->toBeFalse();
+    });
+
+    it('imports nothing into a tenant the user has left', function () {
+        Storage::disk(ImportAction::DISK)->put($path = 'xelqun-imports/team.csv', "name\nIntruder\n");
+
+        (new ImportRecords(ImportAction::class, ProjectResource::class, $path, 'team', $this->user->getKey(), $this->green->getKey(), null))->handle(app(Panels::class));
+
+        expect(Project::where('name', 'Intruder')->exists())->toBeFalse()
+            ->and($this->user->notifications()->sole()->data['status'])->toBe('danger');
     });
 });

@@ -1,9 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Xelqun\Actions\Halt;
 use Xelqun\Notifications\NotificationQueue;
 use Xelqun\Panels\Actions\ImportAction;
+use Xelqun\Panels\Actions\ImportColumn;
+use Xelqun\Panels\Actions\ImportRecords;
 use Xelqun\Panels\Http\Controllers\ExportController;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Tests\Fixtures\Note;
@@ -33,6 +39,21 @@ class ExposedImport extends ImportAction
     {
         static::report($counts);
     }
+}
+
+class GuessingTaskResource extends TaskResource
+{
+    public static function getImportColumns(): array
+    {
+        return [ImportColumn::make('title')->guesses(['task name'])->rules(['min:3'])->requiredMapping()];
+    }
+}
+
+function storedCsv(string $content): string
+{
+    Storage::disk(ImportAction::DISK)->put($path = 'xelqun-imports/'.Str::random(8).'.csv', $content);
+
+    return $path;
 }
 
 class NarrowTaskResource extends TaskResource
@@ -181,5 +202,100 @@ describe('importing', function () {
 
     it('offers the form\'s fields by default', function () {
         expect(TaskResource::getImportColumns())->toBe(['title']);
+    });
+});
+
+describe('matching headers', function () {
+    it('matches a header by label or guess, whatever its case, spaces or dashes', function () {
+        expect(ExposedImport::importFile(TaskResource::class, csv("TITLE\nOne\n"))['imported'])->toBe(1)
+            ->and(ExposedImport::importFile(GuessingTaskResource::class, csv("Task-Name\nLong one\nAb\n")))->toBe(['imported' => 1, 'failed' => 1, 'skipped' => 0]);
+    });
+
+    it('refuses a file with no header for a required column, before reading a row', function () {
+        $path = storedCsv("other\nOne\n");
+
+        expect(fn () => ImportAction::for(GuessingTaskResource::class)->import(GuessingTaskResource::class, $path))->toThrow(Halt::class)
+            ->and(Task::count())->toBe(0)
+            ->and(Storage::disk(ImportAction::DISK)->exists($path))->toBeFalse();
+    });
+});
+
+describe('queued importing', function () {
+    it('queues the file for a job as the user, in the panel', function () {
+        Queue::fake();
+        $path = storedCsv("title\nOne\n");
+
+        ImportAction::for(TaskResource::class)->queue()->import(TaskResource::class, $path);
+
+        Queue::assertPushed(ImportRecords::class, fn (ImportRecords $job): bool => $job->resource === TaskResource::class
+            && $job->path === $path
+            && $job->panel === 'admin'
+            && $job->userKey === auth()->id());
+        expect(Task::count())->toBe(0)
+            ->and(Storage::disk(ImportAction::DISK)->exists($path))->toBeTrue();
+    });
+
+    it('imports every row in the job, tells the user in their bell, and leaves no file or context behind', function () {
+        $user = auth()->user();
+        $path = storedCsv("title\n".implode("\n", array_map(fn (int $index): string => "Task {$index}", range(1, 1005)))."\n");
+        app(Panels::class)->enter(app(Panels::class)->get('admin'));
+        $before = app(Panels::class)->current();
+
+        (new ImportRecords(ImportAction::class, TaskResource::class, $path, 'admin', $user->getKey(), null, null))->handle(app(Panels::class));
+
+        expect(Task::count())->toBe(1005)
+            ->and($user->notifications()->sole()->data['title'])->toBe('1005 imported, 0 failed.')
+            ->and(Storage::disk(ImportAction::DISK)->exists($path))->toBeFalse()
+            ->and(app(Panels::class)->current())->toBe($before);
+    });
+
+    it('imports nothing for a user who can no longer create records', function () {
+        $user = auth()->user();
+        TaskPolicy::$denied = ['create'];
+        $path = storedCsv("title\nOne\n");
+
+        (new ImportRecords(ImportAction::class, TaskResource::class, $path, 'admin', $user->getKey(), null, null))->handle(app(Panels::class));
+
+        expect(Task::count())->toBe(0)
+            ->and($user->notifications()->sole()->data['status'])->toBe('danger')
+            ->and(Storage::disk(ImportAction::DISK)->exists($path))->toBeFalse();
+    });
+
+    it('leaves nothing found inside the job for the next one, such as an authorized parent', function () {
+        $panels = app(Panels::class);
+
+        $panels->within($panels->get('admin'), auth()->user(), null, '5', fn () => request()->attributes->set('xelqun-panels.parent.Projects.5', 'authorized for this user'));
+
+        expect(request()->attributes->has('xelqun-panels.parent.Projects.5'))->toBeFalse();
+    });
+
+    it('imports nothing for a user who can no longer reach the panel', function () {
+        User::$allowed = false;
+        $path = storedCsv("title\nOne\n");
+
+        try {
+            (new ImportRecords(ImportAction::class, TaskResource::class, $path, 'admin', auth()->id(), null, null))->handle(app(Panels::class));
+        } finally {
+            User::$allowed = true;
+        }
+
+        expect(Task::count())->toBe(0)->and(Storage::disk(ImportAction::DISK)->exists($path))->toBeFalse();
+    });
+
+    it('tells the user when the job fails part way', function () {
+        $path = storedCsv("title\nOne\n");
+
+        (new ImportRecords(ImportAction::class, TaskResource::class, $path, 'admin', auth()->id(), null, null))->failed();
+
+        expect(auth()->user()->notifications()->sole()->data['status'])->toBe('danger')
+            ->and(Storage::disk(ImportAction::DISK)->exists($path))->toBeFalse();
+    });
+
+    it('stops for a user who is gone', function () {
+        $path = storedCsv("title\nOne\n");
+
+        (new ImportRecords(ImportAction::class, TaskResource::class, $path, 'admin', 999, null, null))->handle(app(Panels::class));
+
+        expect(Task::count())->toBe(0)->and(Storage::disk(ImportAction::DISK)->exists($path))->toBeFalse();
     });
 });

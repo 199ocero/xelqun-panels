@@ -20,6 +20,7 @@ use Xelqun\Forms\Components\Field;
 use Xelqun\Panels\Actions\DeleteAction;
 use Xelqun\Panels\Actions\EditAction;
 use Xelqun\Panels\Actions\ForceDeleteAction;
+use Xelqun\Panels\Actions\ImportColumn;
 use Xelqun\Panels\Actions\RestoreAction;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Navigation\Cluster;
@@ -162,9 +163,9 @@ abstract class Resource
     /**
      * What ImportAction takes from a file. Anything else in it is ignored, so a
      * file can't set a column you didn't list. By default, the form's top-level
-     * fields.
+     * fields. Give an ImportColumn for a label, header guesses or rules.
      *
-     * @return array<int, string>
+     * @return array<int, string|ImportColumn>
      */
     public static function getImportColumns(): array
     {
