@@ -139,6 +139,8 @@ final class Panels
         $previousGuard = config('auth.defaults.guard');
         $previousTenantDefault = URL::getDefaultParameters()['tenant'] ?? null;
         $guard = Auth::guard($panel->getAuthGuard());
+        // On a sync queue the job runs inside a request whose user must still be signed in after it.
+        $previousUser = $guard->hasUser() ? $guard->user() : null;
 
         try {
             $this->enter($panel);
@@ -156,7 +158,9 @@ final class Panels
         } finally {
             $attributes->replace($previous);
 
-            if (method_exists($guard, 'forgetUser')) {
+            if ($previousUser !== null) {
+                $guard->setUser($previousUser);
+            } elseif (method_exists($guard, 'forgetUser')) {
                 $guard->forgetUser();
             }
             Auth::shouldUse($previousGuard);

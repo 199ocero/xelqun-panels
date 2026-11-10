@@ -269,6 +269,15 @@ describe('queued importing', function () {
         expect(request()->attributes->has('xelqun-panels.parent.Projects.5'))->toBeFalse();
     });
 
+    it('keeps the signed-in user of the request it ran in, as on a sync queue', function () {
+        $user = auth('admin')->user();
+        $panels = app(Panels::class);
+
+        $panels->within($panels->get('admin'), $user, null, null, fn () => null);
+
+        expect(auth('admin')->user()?->is($user))->toBeTrue();
+    });
+
     it('imports nothing for a user who can no longer reach the panel', function () {
         User::$allowed = false;
         $path = storedCsv("title\nOne\n");

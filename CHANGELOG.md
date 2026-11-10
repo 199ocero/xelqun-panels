@@ -2,6 +2,12 @@
 
 Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+### Fixed
+
+- **A queued import on the `sync` queue no longer signs the viewer out** for the rest of the request that started it. The job now puts back the user the request had.
+
 ## 0.6.0 - 2026-11-10
 
 Update both halves together: `composer update xelqun/panels xelqun/tables xelqun/forms` and `npm install @xelqun/panels@0.6.0 @xelqun/tables@0.8.0 @xelqun/forms@0.10.0`.
