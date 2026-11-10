@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
 import { router } from '@inertiajs/vue3';
-import { HttpError, XqIcon, XqMenuGlide, cn, postJson } from '@xelqun/forms';
+import { XqIcon, XqMenuGlide, cn } from '@xelqun/forms';
+import { HttpError, postJson } from '@xelqun/forms/internal';
 import { Search } from '@lucide/vue';
 import {
     DialogContent,

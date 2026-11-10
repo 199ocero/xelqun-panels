@@ -4,8 +4,13 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 
 ## Unreleased
 
+### Upgrading
+
+- **Requires `xelqun/forms` ^0.10 and `xelqun/tables` ^0.8**, and the same `@xelqun/forms` and `@xelqun/tables` on npm. Their upgrade notes apply too.
+
 ### Changed
 
+- `panelsPlugin()` no longer registers the icons that forms already ships (`eye`, `link`, `mail`, `map-pin`, `settings`, `tag`, `users`). The same icons still show.
 - **Dashboard filters** sit in one row above the widgets, each field at a set width with the Apply button beside them, instead of in a card across the whole page.
 
 ## 0.5.0 - 2026-11-10

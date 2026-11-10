@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { t } from '../composables/useMessages';
-import { HttpError, XqIcon, cn, postJson } from '@xelqun/forms';
+import { XqIcon, cn } from '@xelqun/forms';
+import { HttpError, postJson } from '@xelqun/forms/internal';
 import { Bell } from '@lucide/vue';
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
