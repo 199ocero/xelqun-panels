@@ -19,7 +19,7 @@ use Xelqun\Panels\Exceptions\PanelDefinitionException;
  */
 final class Panels
 {
-    public const string VERSION = '0.6.0';
+    public const string VERSION = '0.6.1';
 
     private const string CURRENT = 'xelqun-panels.current';
 
