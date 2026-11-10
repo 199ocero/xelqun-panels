@@ -44,7 +44,7 @@ abstract class Entry extends Component
 
     public function getType(): string
     {
-        return 'xelqun-panels/entry';
+        return 'xelqun/entry';
     }
 
     /**

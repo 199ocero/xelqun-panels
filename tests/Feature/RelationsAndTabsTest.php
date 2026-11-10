@@ -323,7 +323,7 @@ describe('infolists', function () {
         $this->post->update(['status' => 'live', 'created_at' => '2026-01-02 03:04:05']);
 
         $this->get("/admin/posts/{$this->post->id}")->assertInertia(fn (Assert $page) => $page
-            ->where('page.content.0.schema.components.0.children.0.type', 'xelqun-panels/entry')
+            ->where('page.content.0.schema.components.0.children.0.type', 'xelqun/entry')
             ->where('page.content.0.schema.components.0.children.0.props.cell.state', 'Mine')
             ->where('page.content.0.schema.components.0.children.0.props.cell.color', 'success')
             ->where('page.content.0.schema.components.0.children.1.props.column.label', 'Written by')

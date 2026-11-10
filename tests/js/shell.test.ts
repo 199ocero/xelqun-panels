@@ -427,7 +427,7 @@ describe('an infolist entry', () => {
             props: {
                 node: {
                     key: 'a',
-                    type: 'xelqun-panels/entry',
+                    type: 'xelqun/entry',
                     hidden: false,
                     props: { column: { label: 'Status', type, props }, cell, ...extra },
                     children: [],

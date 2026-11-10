@@ -29,7 +29,7 @@ import XqPanelEntry from './components/XqPanelEntry.vue';
 export function panelsPlugin(): XelqunPlugin {
     return {
         id: 'xelqun/panels',
-        components: { 'xelqun-panels/entry': XqPanelEntry },
+        components: { 'xelqun/entry': XqPanelEntry },
         icons: {
             bell: Bell,
             'chart-column': ChartColumn,

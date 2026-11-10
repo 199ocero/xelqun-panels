@@ -11,6 +11,7 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 
 ### Upgrading (names)
 
+- **An infolist entry's schema type is now `xelqun/entry`**, not `xelqun-panels/entry`, so every Xelqun type has the same vendor prefix. A plugin that replaces the entry renderer should list the new name.
 - **`Page::headerActions()` is now `getHeaderActions()`**, as in Filament and like `Resource::getHeaderActions()`. Rename the method on your pages. A table's and a relation manager's `headerActions()` stay as they are.
 
 ### Upgrading (clusters)
