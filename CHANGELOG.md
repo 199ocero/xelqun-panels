@@ -2,6 +2,12 @@
 
 Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+### Changed
+
+- **Dashboard filters** sit in one row above the widgets, each field at a set width with the Apply button beside them, instead of in a card across the whole page.
+
 ## 0.5.0 - 2026-11-10
 
 This needs `xelqun/forms` 0.9 and `xelqun/tables` 0.7: `composer update xelqun/panels xelqun/forms xelqun/tables` and `npm install @xelqun/panels@0.5.0 @xelqun/forms@0.9.0 @xelqun/tables@0.7.0`.

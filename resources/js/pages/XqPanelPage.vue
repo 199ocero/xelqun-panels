@@ -159,23 +159,17 @@ const badgeColors: Record<string, string> = {
             </ul>
         </section>
         <XqPanelTabs v-if="page.tabs.length > 0" :tabs="page.tabs" />
-        <section
-            v-if="page.filters"
-            class="p-4 rounded-xq-lg border-xq-border bg-xq-card border"
-            data-xq-page-filters
-        >
-            <XqForm :form="page.filters" @submit="applyFilters">
+        <!-- One row of fields at a set width, so a single filter doesn't stretch across the page. -->
+        <section v-if="page.filters" data-xq-page-filters>
+            <XqForm
+                :form="page.filters"
+                class="gap-3 sm:[&>.xq-grid>*]:w-60 flex flex-wrap items-end [&>.xq-grid]:contents! [&>.xq-grid>*]:w-full"
+                @submit="applyFilters"
+            >
                 <template #actions="{ submit }">
-                    <div class="flex justify-end">
-                        <button
-                            type="button"
-                            class="text-sm font-medium text-xq-primary cursor-pointer hover:underline"
-                            data-xq-apply-filters
-                            @click="submit"
-                        >
-                            {{ t('Apply filters') }}
-                        </button>
-                    </div>
+                    <XqButton type="button" variant="outline" data-xq-apply-filters @click="submit">
+                        {{ t('Apply filters') }}
+                    </XqButton>
                 </template>
             </XqForm>
         </section>
