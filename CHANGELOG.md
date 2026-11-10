@@ -6,6 +6,7 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 
 ### Fixed
 
+- The import modal's button says "Import", not "Save".
 - **A queued import on the `sync` queue no longer signs the viewer out** for the rest of the request that started it. The job now puts back the user the request had.
 
 ## 0.6.0 - 2026-11-10

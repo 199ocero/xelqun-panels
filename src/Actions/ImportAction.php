@@ -46,6 +46,7 @@ class ImportAction extends Action
             ->icon('upload')
             ->color('gray')
             ->authorize('create')
+            ->modalSubmitActionLabel(__('xelqun-panels::resources.import'))
             ->modalDescription(__('xelqun-panels::resources.import_description', ['columns' => implode(', ', array_map(
                 fn (ImportColumn $column): string => $column->getLabel(),
                 static::getColumns($resource),
