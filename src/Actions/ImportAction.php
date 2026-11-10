@@ -59,13 +59,13 @@ class ImportAction extends Action
 
     /**
      * @param  class-string<\Xelqun\Panels\Resources\Resource>  $resource
-     * @return array{imported: int, failed: int}
+     * @return array{imported: int, failed: int, skipped: int}
      */
     protected static function importRows(string $resource, string $path): array
     {
         $file = fopen($path, 'r');
         $columns = array_map(fn (mixed $name): string => trim((string) $name, " \t\n\r\0\x0B\xEF\xBB\xBF"), fgetcsv($file, escape: '') ?: []);
-        $counts = ['imported' => 0, 'failed' => 0];
+        $counts = ['imported' => 0, 'failed' => 0, 'skipped' => 0];
 
         for ($row = 0; $row < self::MAX_ROWS && ($values = fgetcsv($file, escape: '')) !== false; $row++) {
             if (count($values) !== count($columns)) {
@@ -84,18 +84,28 @@ class ImportAction extends Action
             }
         }
 
+        // Counted, so the viewer learns the file was cut short instead of thinking it all went in.
+        while (fgetcsv($file, escape: '') !== false) {
+            $counts['skipped']++;
+        }
+
         fclose($file);
 
         return $counts;
     }
 
     /**
-     * @param  array{imported: int, failed: int}  $counts
+     * @param  array{imported: int, failed: int, skipped?: int}  $counts
      */
     protected static function report(array $counts): void
     {
-        $notification = Notification::make()->title(__('xelqun-panels::resources.imported', $counts));
+        $skipped = $counts['skipped'] ?? 0;
+        $notification = Notification::make()->title(__('xelqun-panels::resources.imported', ['imported' => $counts['imported'], 'failed' => $counts['failed']]));
 
-        ($counts['failed'] > 0 ? $notification->warning() : $notification->success())->send();
+        if ($skipped > 0) {
+            $notification->body(__('xelqun-panels::resources.import_skipped', ['skipped' => $skipped, 'max' => self::MAX_ROWS]));
+        }
+
+        ($counts['failed'] > 0 || $skipped > 0 ? $notification->warning() : $notification->success())->send();
     }
 }

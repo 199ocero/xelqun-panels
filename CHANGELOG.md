@@ -8,6 +8,10 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 
 - **Requires `xelqun/forms` ^0.10 and `xelqun/tables` ^0.8**, and the same `@xelqun/forms` and `@xelqun/tables` on npm. Their upgrade notes apply too.
 
+### Fixed
+
+- **An import past 1,000 rows says so.** The rows after the first 1,000 used to be dropped without a word. They're now counted and named in the notification, which turns into a warning. `importRows()` returns a `skipped` count too.
+
 ### Changed
 
 - `panelsPlugin()` no longer registers the icons that forms already ships (`eye`, `link`, `mail`, `map-pin`, `settings`, `tag`, `users`). The same icons still show.

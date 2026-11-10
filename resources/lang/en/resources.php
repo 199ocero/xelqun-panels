@@ -22,6 +22,7 @@ return [
     'import_file' => 'CSV file',
     'import_description' => 'The first row names the columns: :columns.',
     'imported' => ':imported imported, :failed failed.',
+    'import_skipped' => ':skipped rows after the first :max were not imported. Split the file and import the rest.',
     'attach' => 'Attach',
     'attached' => 'Attached.',
     'detach' => 'Detach',

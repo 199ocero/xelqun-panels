@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Xelqun\Notifications\NotificationQueue;
 use Xelqun\Panels\Actions\ImportAction;
 use Xelqun\Panels\Http\Controllers\ExportController;
 use Xelqun\Panels\Panels;
@@ -17,11 +19,19 @@ class ExposedImport extends ImportAction
 {
     /**
      * @param  class-string<Xelqun\Panels\Resources\Resource>  $resource
-     * @return array{imported: int, failed: int}
+     * @return array{imported: int, failed: int, skipped: int}
      */
     public static function importFile(string $resource, string $path): array
     {
         return static::importRows($resource, $path);
+    }
+
+    /**
+     * @param  array{imported: int, failed: int, skipped?: int}  $counts
+     */
+    public static function reportCounts(array $counts): void
+    {
+        static::report($counts);
     }
 }
 
@@ -117,7 +127,7 @@ describe('importing', function () {
     it('creates a record for each row', function () {
         $counts = ExposedImport::importFile(TaskResource::class, csv("title\nOne\nTwo\n"));
 
-        expect($counts)->toBe(['imported' => 2, 'failed' => 0])
+        expect($counts)->toBe(['imported' => 2, 'failed' => 0, 'skipped' => 0])
             ->and(Task::pluck('title')->all())->toBe(['One', 'Two']);
     });
 
@@ -128,7 +138,7 @@ describe('importing', function () {
     it('counts a row that fails validation, and keeps the rest', function () {
         $counts = ExposedImport::importFile(TaskResource::class, csv("title\nGood\n\"\"\nAlso good\n"));
 
-        expect($counts)->toBe(['imported' => 2, 'failed' => 1]);
+        expect($counts)->toBe(['imported' => 2, 'failed' => 1, 'skipped' => 0]);
     });
 
     it('counts a row with the wrong number of cells', function () {
@@ -144,11 +154,29 @@ describe('importing', function () {
     });
 
     it('reads no column a resource leaves off its list, even one in the form', function () {
-        expect(ExposedImport::importFile(NarrowTaskResource::class, csv("title\nOne\n")))->toBe(['imported' => 0, 'failed' => 1]);
+        expect(ExposedImport::importFile(NarrowTaskResource::class, csv("title\nOne\n")))->toBe(['imported' => 0, 'failed' => 1, 'skipped' => 0]);
     });
 
     it('runs the resource\'s rules', function () {
         expect(ExposedImport::importFile(PostResource::class, csv('title'."\n".str_repeat('a', 51)."\n"))['failed'])->toBe(1);
+    });
+
+    it('counts the rows past the limit instead of dropping them without a word', function () {
+        // Rows with too many cells fail before any save, so a big file stays fast.
+        $counts = ExposedImport::importFile(TaskResource::class, csv("title\n".str_repeat("One,extra\n", 1003)));
+
+        expect($counts)->toBe(['imported' => 0, 'failed' => 1000, 'skipped' => 3]);
+    });
+
+    it('warns about the rows it skipped', function () {
+        // A notification outside Xelqun's endpoints is flashed, which needs a session.
+        request()->setLaravelSession(app('session.store'));
+        ExposedImport::reportCounts(['imported' => 1000, 'failed' => 0, 'skipped' => 3]);
+
+        expect(Inertia::getFlashed()[NotificationQueue::FLASH_KEY][0])->toMatchArray([
+            'status' => 'warning',
+            'body' => '3 rows after the first 1000 were not imported. Split the file and import the rest.',
+        ]);
     });
 
     it('offers the form\'s fields by default', function () {
