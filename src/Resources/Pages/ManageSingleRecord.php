@@ -32,7 +32,7 @@ class ManageSingleRecord extends EditRecord
         return [...$this->getClusterBreadcrumbs(), ['label' => $this->getHeading()]];
     }
 
-    public function headerActions(): array
+    public function getHeaderActions(): array
     {
         return [];
     }

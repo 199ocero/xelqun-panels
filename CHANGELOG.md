@@ -9,12 +9,18 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 - `getImportColumns()` may return `ImportColumn` objects as well as names. Code that reads it should allow for both, or use `ImportAction::getColumns()`. A header that only differs in case or spacing now matches, where before it was ignored.
 - **Requires `xelqun/forms` ^0.10 and `xelqun/tables` ^0.8**, and the same `@xelqun/forms` and `@xelqun/tables` on npm. Their upgrade notes apply too.
 
+### Upgrading (names)
+
+- **`Page::headerActions()` is now `getHeaderActions()`**, as in Filament and like `Resource::getHeaderActions()`. Rename the method on your pages. A table's and a relation manager's `headerActions()` stay as they are.
+
 ### Upgrading (clusters)
 
 - **A cluster's members live under its slug**, as in Filament: a page `Billing` in the cluster `Settings` moves from `/admin/billing` to `/admin/settings/billing`. A cluster's slug defaults to its class name in kebab case. Set `protected static ?string $slug` to change it. Their route names gain the cluster too, as in `xelqun-panels.admin.pages.settings.billing` and `xelqun-panels.admin.resources.settings.countries.index`. `getUrl()` builds the new URLs, so only hard-coded paths and route names need changing. Two clusters can now have members with the same slug, and a page or resource outside a cluster that takes the cluster's slug fails while the routes register, instead of catching its members' URLs.
 
 ### Added
 
+- **`$navigationLabel` on a resource**, as on a page and in Filament.
+- **`TextEntry::hint()` and `inlineLabel()` take a closure**, which gets `$record`, as `Field`'s do.
 - **`ImportColumn`**, as in Filament. `getImportColumns()` can return `ImportColumn::make('sku')->label('SKU')->guesses(['item code'])->rules(['max:20'])->requiredMapping()` beside plain names. A CSV header now matches a column by its name, label or guesses, ignoring case, spaces, dashes and underscores, so `Product Name` fills `product_name`. A file with no header for a required column is refused before a row is read. A column's rules come on top of the form's.
 - **`ImportAction::for(...)->queue()`** reads the whole file in a queued job, with no row limit, as the user who started it, in their panel, tenant and parent record. The job checks again that they can still reach the panel and the tenant and create records, then tells them the result in their bell, or that it stopped part way if the job fails. The panel needs `databaseNotifications()`. The job runs once and never retries, so a crash can't import rows twice.
 

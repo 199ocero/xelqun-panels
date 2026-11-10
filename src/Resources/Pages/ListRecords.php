@@ -27,7 +27,7 @@ class ListRecords extends ResourcePage
         return $this->resource::can('viewAny');
     }
 
-    public function headerActions(): array
+    public function getHeaderActions(): array
     {
         return [
             ...$this->resource::getHeaderActions(),

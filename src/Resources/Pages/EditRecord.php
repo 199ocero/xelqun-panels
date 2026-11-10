@@ -25,7 +25,7 @@ class EditRecord extends ResourcePage
         return $this->resource::can('update', $this->record);
     }
 
-    public function headerActions(): array
+    public function getHeaderActions(): array
     {
         return [
             DeleteAction::for($this->resource)

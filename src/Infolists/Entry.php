@@ -26,9 +26,9 @@ abstract class Entry extends Component
 {
     private Column $column;
 
-    protected ?string $hint = null;
+    protected string|Closure|null $hint = null;
 
-    protected bool $hasInlineLabel = false;
+    protected bool|Closure $hasInlineLabel = false;
 
     final public function __construct(string $name)
     {
@@ -65,7 +65,7 @@ abstract class Entry extends Component
     /**
      * A short note beside the label.
      */
-    public function hint(?string $hint): static
+    public function hint(string|Closure|null $hint): static
     {
         $this->hint = $hint;
 
@@ -75,7 +75,7 @@ abstract class Entry extends Component
     /**
      * Put the label beside the value instead of above it.
      */
-    public function inlineLabel(bool $condition = true): static
+    public function inlineLabel(bool|Closure $condition = true): static
     {
         $this->hasInlineLabel = $condition;
 
@@ -104,8 +104,19 @@ abstract class Entry extends Component
             'display' => $this->getDisplay(),
             'column' => $this->column->toDefinition(),
             'cell' => $this->column->toCell($record),
-            ...array_filter(['hint' => $this->hint, 'inlineLabel' => $this->hasInlineLabel]),
+            ...array_filter([
+                'hint' => $this->evaluateFor($this->hint, $record),
+                'inlineLabel' => (bool) $this->evaluateFor($this->hasInlineLabel, $record),
+            ]),
         ];
+    }
+
+    /**
+     * A closure gets $record, like a column's. An entry can be drawn outside a form, where evaluate() can't run.
+     */
+    private function evaluateFor(mixed $value, Model $record): mixed
+    {
+        return $value instanceof Closure ? app()->call($value, ['record' => $record]) : $value;
     }
 
     protected function getProps(): array

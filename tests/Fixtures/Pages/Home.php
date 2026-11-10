@@ -18,7 +18,7 @@ class Home extends Page
         return self::$allowed;
     }
 
-    public function headerActions(): array
+    public function getHeaderActions(): array
     {
         return [
             Action::make('publish')->authorize(true)->action(function (): void {

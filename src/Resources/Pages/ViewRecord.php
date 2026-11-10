@@ -23,7 +23,7 @@ class ViewRecord extends ResourcePage
         return $this->resource::can('view', $this->record);
     }
 
-    public function headerActions(): array
+    public function getHeaderActions(): array
     {
         return ! $this->resource::hasPage('edit') ? [] : [EditAction::for($this->resource)->button()];
     }

@@ -355,7 +355,9 @@ describe('infolists', function () {
             ->and(TextEntry::make('title')->description('About it')->toProps($record)['cell']['description'])->toBe('About it')
             ->and(TextEntry::make('secret')->placeholder('None yet')->toProps($record)['column']['props']->placeholder)->toBe('None yet')
             ->and(TextEntry::make('body')->html()->toProps($record)['html'])->toBe('<p>Hi</p>')
-            ->and(TextEntry::make('status')->markdown()->toProps($record)['html'])->toContain('<strong>bold</strong>');
+            ->and(TextEntry::make('status')->markdown()->toProps($record)['html'])->toContain('<strong>bold</strong>')
+            ->and(TextEntry::make('title')->hint(fn (Post $record): string => "{$record->status} hint")->inlineLabel(fn (): bool => true)->toProps($record))
+            ->toMatchArray(['hint' => '**bold** hint', 'inlineLabel' => true]);
     });
 
     it('lists an array as keys and values, and as code', function () {

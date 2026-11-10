@@ -28,7 +28,7 @@ final class PageActionSet extends ActionSet
 
     public function actions(): array
     {
-        return $this->getPage()->headerActions();
+        return $this->getPage()->getHeaderActions();
     }
 
     public function authorize(?Authenticatable $user, ?Model $record): bool

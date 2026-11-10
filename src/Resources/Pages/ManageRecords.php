@@ -14,7 +14,7 @@ use Xelqun\Panels\Resources\ResourceForm;
  */
 class ManageRecords extends ListRecords
 {
-    public function headerActions(): array
+    public function getHeaderActions(): array
     {
         $resource = $this->resource;
 

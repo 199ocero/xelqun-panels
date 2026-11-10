@@ -73,6 +73,8 @@ abstract class Resource
     protected static int $navigationSort = 0;
 
     /** @var class-string<Cluster>|null */
+    protected static ?string $navigationLabel = null;
+
     protected static ?string $cluster = null;
 
     /**
@@ -777,7 +779,7 @@ abstract class Resource
 
     public static function getNavigationLabel(): string
     {
-        return Str::headline(static::getPluralModelLabel());
+        return static::$navigationLabel ?? Str::headline(static::getPluralModelLabel());
     }
 
     public static function getNavigationItem(Panel $panel): NavigationItem

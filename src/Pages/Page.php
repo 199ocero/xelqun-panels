@@ -199,7 +199,7 @@ abstract class Page
      *
      * @return array<int, Action|ActionGroup>
      */
-    public function headerActions(): array
+    public function getHeaderActions(): array
     {
         return [];
     }
@@ -391,7 +391,7 @@ abstract class Page
             'subNavigation' => $this->getSubNavigation(),
             'notice' => null,
             ...($this->getRelationsLayout() === 'tabs' ? [] : ['relationsLayout' => $this->getRelationsLayout()]),
-            'headerActions' => $this->headerActions() === [] ? null : PageActionSet::for($this)->toSchema(),
+            'headerActions' => $this->getHeaderActions() === [] ? null : PageActionSet::for($this)->toSchema(),
             'content' => array_map(fn (Table|ActionSet|FormContent $item): array => match (true) {
                 $item instanceof Table => [
                     'type' => 'table',

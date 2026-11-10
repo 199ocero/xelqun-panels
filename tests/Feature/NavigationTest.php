@@ -408,6 +408,16 @@ describe('clusters', function () {
         panelWithPages()->pages([Billing::class, $page::class])->assertClusterSlugsAreFree();
     })->throws(PanelDefinitionException::class, 'both use the slug [settings]');
 
+    it('takes a resource\'s own navigation label', function () {
+        $resource = new class extends TaskResource
+        {
+            protected static ?string $navigationLabel = 'To-dos';
+        };
+
+        expect($resource::getNavigationLabel())->toBe('To-dos')
+            ->and(TaskResource::getNavigationLabel())->toBe('Tasks');
+    });
+
     it('has no sub navigation outside a cluster', function () {
         $this->get('/admin')->assertInertia(fn (Assert $page) => $page->where('page.subNavigation', []));
     });
