@@ -568,6 +568,25 @@ abstract class Resource
     }
 
     /**
+     * The slug, after its cluster's slug when it has one.
+     */
+    public static function getPathInPanel(): string
+    {
+        $cluster = static::getCluster();
+
+        return $cluster === null ? static::getSlug() : $cluster::getSlug().'/'.static::getSlug();
+    }
+
+    /**
+     * What each of its route names starts with, as in resources.settings.countries.
+     * Dots, because a host's Wayfinder can't put a slash in a name.
+     */
+    public static function getRouteBaseName(): string
+    {
+        return 'resources.'.str_replace('/', '.', static::getPathInPanel());
+    }
+
+    /**
      * The columns the ⌘K palette looks in, with `author.name` to reach through a
      * relation. By default that's the record title, so a title that's an accessor
      * needs this overridden. Return nothing to keep a resource out of search.
@@ -685,13 +704,12 @@ abstract class Resource
     public static function getUrl(string $page = 'index', array $parameters = [], ?Panel $panel = null): string
     {
         $panel ??= app(Panels::class)->current() ?? self::findOnlyPanel();
-        $slug = static::getSlug();
 
         if (static::isNested()) {
             $parameters['parentRecord'] ??= app(Panels::class)->parentKey();
         }
 
-        return route($panel->routeName("resources.{$slug}.{$page}"), array_map(
+        return route($panel->routeName(static::getRouteBaseName().".{$page}"), array_map(
             fn (mixed $value): mixed => $value instanceof Model ? $value->getKey() : $value,
             $parameters,
         ));
@@ -772,6 +790,6 @@ abstract class Resource
             ->badgeColor(static::getNavigationBadgeColor())
             ->badgeTooltip(static::getNavigationBadgeTooltip())
             ->parentItem(static::$navigationParentItem)
-            ->active(request()->routeIs($panel->routeName('resources.'.static::getSlug().'.*')));
+            ->active(request()->routeIs($panel->routeName(static::getRouteBaseName().'.*')));
     }
 }

@@ -6,13 +6,16 @@ use Illuminate\Support\Str;
 
 /**
  * One sidebar link for several pages and resources, which then get tabs between
- * them. Set $cluster on each of them to this class. It has no page of its own, so
- * its link goes to the first member the user can reach.
+ * them. Set $cluster on each of them to this class. Their URLs start with its
+ * slug. It has no page of its own, so its link goes to the first member the user
+ * can reach.
  *
  * @api
  */
 abstract class Cluster
 {
+    protected static ?string $slug = null;
+
     protected static ?string $navigationLabel = null;
 
     protected static ?string $navigationIcon = null;
@@ -20,6 +23,14 @@ abstract class Cluster
     protected static ?string $navigationGroup = null;
 
     protected static int $navigationSort = 0;
+
+    /**
+     * What every member's URL starts with, as in /admin/settings/billing.
+     */
+    public static function getSlug(): string
+    {
+        return static::$slug ?? Str::kebab(class_basename(static::class));
+    }
 
     public static function getLabel(): string
     {

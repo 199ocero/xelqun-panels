@@ -12,6 +12,8 @@ use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Support\Colors\Color;
+use Xelqun\Panels\Tests\Fixtures\Clusters\Billing;
+use Xelqun\Panels\Tests\Fixtures\Clusters\ClusteredTaskResource;
 use Xelqun\Panels\Tests\Fixtures\Note;
 use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\TaskPolicy;
@@ -355,14 +357,14 @@ describe('clusters', function () {
             $items = collect($groups)->flatMap(fn (array $group): array => $group['items'])->keyBy('label');
 
             return $items->has('Settings')
-                && $items->get('Settings')['url'] === url('/admin/billing')
+                && $items->get('Settings')['url'] === url('/admin/settings/billing')
                 && ! $items->has('Billing')
                 && ! $items->has('Team');
         }));
     });
 
     it('links between the members, and marks the cluster as where you are', function () {
-        $this->get('/admin/billing')->assertInertia(fn (Assert $page) => $page
+        $this->get('/admin/settings/billing')->assertInertia(fn (Assert $page) => $page
             ->where('page.subNavigation.0.label', 'Billing')
             ->where('page.subNavigation.0.active', true)
             ->where('page.subNavigation.1.label', 'Team')
@@ -370,14 +372,41 @@ describe('clusters', function () {
     });
 
     it('names the cluster in the breadcrumbs', function () {
-        $this->get('/admin/billing')->assertInertia(fn (Assert $page) => $page->where('page.breadcrumbs.0.label', 'Settings'));
+        $this->get('/admin/settings/billing')->assertInertia(fn (Assert $page) => $page->where('page.breadcrumbs.0.label', 'Settings'));
     });
 
     it('leaves out a member the user can\'t reach', function () {
         config(['testing.team_settings' => false]);
 
-        $this->get('/admin/billing')->assertInertia(fn (Assert $page) => $page->has('page.subNavigation', 1));
+        $this->get('/admin/settings/billing')->assertInertia(fn (Assert $page) => $page->has('page.subNavigation', 1));
     });
+
+    it('puts its members\' URLs under its slug, a resource\'s too', function () {
+        Gate::policy(Task::class, TaskPolicy::class);
+        TaskPolicy::$denied = [];
+
+        expect(Billing::getUrl(panel: app(Panels::class)->get('admin')))->toBe(url('/admin/settings/billing'))
+            ->and(ClusteredTaskResource::getUrl())->toBe(url('/admin/settings/tasks'))
+            ->and(TaskResource::getUrl())->toBe(url('/admin/tasks'))
+            // Dots, not slashes, because a host's Wayfinder turns route names into TypeScript keys.
+            ->and(Billing::getRouteName())->toBe('pages.settings.billing')
+            ->and(ClusteredTaskResource::getRouteBaseName())->toBe('resources.settings.tasks');
+
+        $this->get('/admin/billing')->assertNotFound();
+        $this->get('/admin/settings/tasks')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('page.breadcrumbs.0.label', 'Settings')
+            ->where('page.subNavigation.2.label', 'Tasks')
+            ->where('page.subNavigation.2.active', true));
+    });
+
+    it('refuses a page or resource whose slug is a cluster\'s', function () {
+        $page = new class extends Page
+        {
+            protected static ?string $slug = 'settings';
+        };
+
+        panelWithPages()->pages([Billing::class, $page::class])->assertClusterSlugsAreFree();
+    })->throws(PanelDefinitionException::class, 'both use the slug [settings]');
 
     it('has no sub navigation outside a cluster', function () {
         $this->get('/admin')->assertInertia(fn (Assert $page) => $page->where('page.subNavigation', []));

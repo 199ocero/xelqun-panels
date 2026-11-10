@@ -1199,6 +1199,35 @@ final class Panel
     }
 
     /**
+     * A cluster's slug starts its members' URLs, so a page or resource outside
+     * it with that slug would catch them. Fails while the routes register.
+     *
+     * @internal
+     */
+    public function assertClusterSlugsAreFree(): void
+    {
+        $members = [...$this->getPages(), ...$this->getResources()];
+        $clusters = [];
+
+        foreach ($members as $member) {
+            $cluster = $member::getCluster();
+
+            if ($cluster !== null) {
+                $clusters[$cluster::getSlug()] = $cluster;
+            }
+        }
+
+        foreach ($members as $member) {
+            $isNested = is_subclass_of($member, Resources\Resource::class) && $member::getParentResource() !== null;
+            $slug = Str::before($member::getPathInPanel(), '/');
+
+            if ($member::getCluster() === null && ! $isNested && isset($clusters[$slug])) {
+                throw new PanelDefinitionException("The cluster [{$clusters[$slug]}] and [{$member}] both use the slug [{$slug}] in the panel [{$this->id}]. Change one of them with \$slug.");
+            }
+        }
+    }
+
+    /**
      * What this user can start from the sidebar's New menu.
      *
      * @return array<int, array{label: string, icon: string|null, url: string}>

@@ -8,6 +8,10 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 
 - **Requires `xelqun/forms` ^0.10 and `xelqun/tables` ^0.8**, and the same `@xelqun/forms` and `@xelqun/tables` on npm. Their upgrade notes apply too.
 
+### Upgrading (clusters)
+
+- **A cluster's members live under its slug**, as in Filament: a page `Billing` in the cluster `Settings` moves from `/admin/billing` to `/admin/settings/billing`. A cluster's slug defaults to its class name in kebab case. Set `protected static ?string $slug` to change it. Their route names gain the cluster too, as in `xelqun-panels.admin.pages.settings.billing` and `xelqun-panels.admin.resources.settings.countries.index`. `getUrl()` builds the new URLs, so only hard-coded paths and route names need changing. Two clusters can now have members with the same slug, and a page or resource outside a cluster that takes the cluster's slug fails while the routes register, instead of catching its members' URLs.
+
 ### Fixed
 
 - **An import past 1,000 rows says so.** The rows after the first 1,000 used to be dropped without a word. They're now counted and named in the notification, which turns into a warning. `importRows()` returns a `skipped` count too.

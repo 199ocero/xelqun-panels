@@ -24,6 +24,8 @@ use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\Pages\ManageSingleRecord;
 
 foreach (app(Panels::class)->all() as $panel) {
+    $panel->assertClusterSlugsAreFree();
+
     Route::prefix($panel->getPath())
         ->domain($panel->getDomain())
         ->middleware(['web', EnterPanel::class.':'.$panel->getId(), ...$panel->getMiddleware()])
@@ -112,7 +114,7 @@ foreach (app(Panels::class)->all() as $panel) {
                     }
 
                     foreach ($panel->getPages() as $page) {
-                        Route::get($page::getSlug(), $page)->name($page::getRouteName());
+                        Route::get($page::getPathInPanel(), $page)->name($page::getRouteName());
                     }
 
                     foreach ($panel->getResources() as $resource) {
@@ -121,7 +123,7 @@ foreach (app(Panels::class)->all() as $panel) {
 
                         $parent = $resource::getParentResource();
 
-                        Route::prefix($parent === null ? $slug : $parent::getSlug()."/{parentRecord}/{$slug}")->name("resources.{$slug}.")->group(function () use ($pages, $resource, $panel): void {
+                        Route::prefix($parent === null ? $resource::getPathInPanel() : $parent::getPathInPanel()."/{parentRecord}/{$slug}")->name($resource::getRouteBaseName().'.')->group(function () use ($pages, $resource, $panel): void {
                             Route::get('', $pages['index'])->name('index')->defaults('resource', $resource);
                             Route::get('_export', ExportController::class)->middleware("throttle:10,1,xelqun-panels.{$panel->getId()}.export")->name('export')->defaults('resource', $resource);
 

@@ -142,9 +142,22 @@ abstract class Page
         return static::$slug ?? Str::kebab(class_basename(static::class));
     }
 
+    /**
+     * The slug, after its cluster's slug when it has one.
+     */
+    public static function getPathInPanel(): string
+    {
+        $cluster = static::getCluster();
+
+        return $cluster === null ? static::getSlug() : trim($cluster::getSlug().'/'.static::getSlug(), '/');
+    }
+
+    /**
+     * Dots where the path has slashes, which a host's Wayfinder can't put in a name.
+     */
     public static function getRouteName(): string
     {
-        return 'pages.'.(static::getSlug() === '' ? 'home' : static::getSlug());
+        return 'pages.'.(static::getPathInPanel() === '' ? 'home' : str_replace('/', '.', static::getPathInPanel()));
     }
 
     /**
