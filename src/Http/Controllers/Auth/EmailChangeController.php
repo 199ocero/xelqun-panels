@@ -10,7 +10,8 @@ use Xelqun\Notifications\Notification;
 
 /**
  * Opens the link sent to a new address and makes the change. The link is
- * signed and short-lived, and only works for the user it was made for.
+ * signed and short-lived, and only works for the user it was made for, while
+ * their address is still the one it was made from.
  */
 final class EmailChangeController extends AuthController
 {
@@ -22,6 +23,9 @@ final class EmailChangeController extends AuthController
         $email = $request->query('email');
 
         abort_unless($user instanceof Model && (string) $user->getKey() === (string) $request->query('id') && is_string($email), 403);
+
+        // A link made before the address last changed is spent.
+        abort_unless(hash_equals(hash('sha256', (string) $user->getAttribute('email')), (string) $request->query('from')), 403);
 
         // Someone may have taken the address since the link was sent.
         $isTaken = Validator::make(['email' => $email], ['email' => ['required', 'email', 'unique:'.$user->getTable().',email,'.$user->getKey().','.$user->getKeyName()]])->fails();

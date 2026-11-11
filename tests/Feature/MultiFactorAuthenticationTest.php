@@ -164,9 +164,23 @@ describe('signing in', function () {
         }
 
         $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.99']);
-        answerChallenge(currentCode())->assertSessionHasErrors('data.code');
+        answerChallenge(currentCode())->assertRedirect('/admin/login');
 
         $this->assertGuest('admin');
+    });
+
+    it('turns the challenge on its own code into needing the password again after 5 tries', function () {
+        passPassword();
+
+        foreach (range(1, 4) as $attempt) {
+            answerChallenge('000000')->assertSessionHasErrors('data.code');
+        }
+
+        answerChallenge('000000')->assertRedirect('/admin/login');
+        $this->travel(16)->minutes();
+        passPassword();
+
+        answerChallenge(currentCode())->assertRedirect('/admin');
     });
 
     it('stops guessing after 5 tries', function () {
@@ -176,7 +190,7 @@ describe('signing in', function () {
             answerChallenge('000000');
         }
 
-        answerChallenge(currentCode())->assertSessionHasErrors('data.code');
+        answerChallenge(currentCode())->assertRedirect('/admin/login');
 
         $this->assertGuest('admin');
     });
@@ -260,10 +274,10 @@ describe('signing in another way', function () {
     it('keeps the session that just turned it on', function () {
         $this->user->saveAppAuthentication(null);
         app(Panels::class)->enter(app(Panels::class)->get('admin'));
-        runProfileAction($this->user, 'enable', ['code' => '000000']);
+        runProfileAction($this->user, 'enable', ['code' => '000000', 'current_password' => 'secret']);
         $secret = session('xelqun-panels.pending-secret');
 
-        runProfileAction($this->user, 'enable', ['code' => Totp::codeAt($secret, (int) floor(now()->getTimestamp() / 30))])->assertOk();
+        runProfileAction($this->user, 'enable', ['code' => Totp::codeAt($secret, (int) floor(now()->getTimestamp() / 30)), 'current_password' => 'secret'])->assertOk();
 
         $this->get('/admin/profile')->assertOk();
     });
@@ -290,15 +304,24 @@ describe('the profile page', function () {
         ]);
     }
 
+    it('asks for the password to turn it on', function () {
+        runProfileAction($this->user, 'enable', ['code' => '000000'])->assertUnprocessable()->assertJsonValidationErrors('data.current_password');
+        $secret = session('xelqun-panels.pending-secret');
+
+        runProfileAction($this->user, 'enable', ['code' => Totp::codeAt($secret, (int) floor(now()->getTimestamp() / 30)), 'current_password' => 'wrong'])->assertUnprocessable();
+
+        expect($this->user->fresh()->getAppAuthenticationSecret())->toBeNull();
+    });
+
     it('offers setup, and turns it on only for a code from the shown key', function () {
         $this->get('/admin/profile')->assertInertia(fn (Assert $page) => $page->where('page.headerActions.components.0.key', fn ($key) => str_contains((string) $key, 'enable')));
 
-        runProfileAction($this->user, 'enable', ['code' => '000000'])->assertUnprocessable();
+        runProfileAction($this->user, 'enable', ['code' => '000000', 'current_password' => 'secret'])->assertUnprocessable();
         expect($this->user->fresh()->getAppAuthenticationSecret())->toBeNull();
 
         $secret = session('xelqun-panels.pending-secret');
 
-        runProfileAction($this->user, 'enable', ['code' => Totp::codeAt($secret, (int) floor(now()->getTimestamp() / 30))])->assertOk();
+        runProfileAction($this->user, 'enable', ['code' => Totp::codeAt($secret, (int) floor(now()->getTimestamp() / 30)), 'current_password' => 'secret'])->assertOk();
 
         expect($this->user->fresh()->getAppAuthenticationSecret())->toBe($secret)
             ->and(session('xelqun-panels.pending-secret'))->toBeNull();

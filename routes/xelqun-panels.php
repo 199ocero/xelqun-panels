@@ -17,6 +17,7 @@ use Xelqun\Panels\Http\Controllers\RedirectToTenantController;
 use Xelqun\Panels\Http\Controllers\ResourceRecordController;
 use Xelqun\Panels\Http\Controllers\TenantSearchController;
 use Xelqun\Panels\Http\Middleware\Authenticate;
+use Xelqun\Panels\Http\Middleware\AuthenticatePanelSession;
 use Xelqun\Panels\Http\Middleware\EnterPanel;
 use Xelqun\Panels\Http\Middleware\IdentifyTenant;
 use Xelqun\Panels\Http\Middleware\RequireMultiFactorSetup;
@@ -33,7 +34,7 @@ foreach (app(Panels::class)->all() as $panel) {
         ->group(function () use ($panel): void {
             if ($panel->getLoginForm() !== null) {
                 Route::get('login', [LoginController::class, 'show'])->name('auth.login');
-                Route::post('login', [LoginController::class, 'store'])->name('auth.login.store');
+                Route::post('login', [LoginController::class, 'store'])->middleware("throttle:20,1,xelqun-panels.{$panel->getId()}.auth.login")->name('auth.login.store');
             }
 
             if ($panel->hasMultiFactorAuthentication() || $panel->hasEmailAuthentication()) {
@@ -64,7 +65,7 @@ foreach (app(Panels::class)->all() as $panel) {
 
             Route::post('logout', LogoutController::class)->name('auth.logout');
 
-            Route::middleware([Authenticate::class, ...$panel->getAuthMiddleware()])->group(function () use ($panel): void {
+            Route::middleware([Authenticate::class, AuthenticatePanelSession::class, ...$panel->getAuthMiddleware()])->group(function () use ($panel): void {
                 if ($panel->hasTenancy()) {
                     Route::get('', RedirectToTenantController::class)->name('tenant.redirect');
                 }

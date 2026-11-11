@@ -80,6 +80,7 @@ final class ProfileActions extends ActionSet
                 Text::make(fn (): HtmlString => $this->setupLink()),
                 Text::make(__('xelqun-panels::auth.mfa.key', ['key' => $this->pendingSecret()]))->fontFamily('mono'),
                 TextInput::make('code')->label(__('xelqun-panels::auth.mfa.code'))->required()->maxLength(6)->autocomplete('one-time-code'),
+                $this->passwordField(),
             ])
             ->successNotificationTitle(__('xelqun-panels::auth.mfa.enabled'))
             ->successRedirectUrl(fn (): string => $this->profileUrl())

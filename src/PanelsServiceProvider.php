@@ -19,6 +19,7 @@ use Xelqun\Panels\Commands\MakePanelCommand;
 use Xelqun\Panels\Commands\MakeRelationManagerCommand;
 use Xelqun\Panels\Commands\MakeResourceCommand;
 use Xelqun\Panels\Commands\MakeWidgetCommand;
+use Xelqun\Panels\Http\Middleware\AuthenticatePanelSession;
 
 class PanelsServiceProvider extends ServiceProvider
 {
@@ -126,13 +127,10 @@ class PanelsServiceProvider extends ServiceProvider
     {
         $middleware = [
             ...$panel->getMiddleware(),
-            ...($isSignedIn ? $panel->getAuthMiddleware() : []),
+            // A password changed elsewhere signs this session out here too.
+            ...($isSignedIn ? [AuthenticatePanelSession::class, ...$panel->getAuthMiddleware()] : []),
             ...($isInTenant ? $panel->getTenantMiddleware() : []),
         ];
-
-        if ($middleware === []) {
-            return;
-        }
 
         $passed = new Response;
 

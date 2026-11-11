@@ -85,6 +85,7 @@ return [
         'resend' => 'Send a new code',
         'resent' => 'We emailed you a new code.',
         'invalid' => 'That code didn\'t work.',
+        'too_many' => 'Too many wrong codes. Sign in again.',
         'required' => 'Set up two-factor authentication to continue.',
         'enable' => 'Set up two-factor',
         'enable_description' => 'Add this account to your authenticator app, then enter the code it shows.',

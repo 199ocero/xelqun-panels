@@ -83,6 +83,7 @@ class EditProfileForm extends Form
                     ->password()
                     ->autocomplete('current-password')
                     ->requiredWith('password')
+                    ->requiredUnless('email', (string) $user->getAttribute('email'))
                     ->rules(["current_password:{$guard}"])
                     ->saved(false),
             ]),
@@ -122,7 +123,7 @@ class EditProfileForm extends Form
     {
         if ($this->pendingEmail !== null) {
             $panel = app(Panels::class)->current();
-            $url = URL::temporarySignedRoute($panel->routeName('auth.email-change.verify'), now()->addHour(), ['id' => $record->getKey(), 'email' => $this->pendingEmail]);
+            $url = URL::temporarySignedRoute($panel->routeName('auth.email-change.verify'), now()->addHour(), ['id' => $record->getKey(), 'email' => $this->pendingEmail, 'from' => hash('sha256', (string) $record->getAttribute('email'))]);
 
             NotificationFacade::route('mail', $this->pendingEmail)->notify(new VerifyEmailChange($url));
             NotificationFacade::route('mail', (string) $record->getAttribute('email'))->notify(new EmailChangeRequested($this->pendingEmail));

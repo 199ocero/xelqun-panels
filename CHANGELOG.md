@@ -11,6 +11,11 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 - **`AttachAction`, `DetachAction`, `AssociateAction` and `DissociateAction` ask the related model's policy** for `attach`, `detach`, `associate` and `dissociate`, on top of `update` on the parent. A policy without the method refuses, so add them to the policies of related models you link, or pass `->authorize(true)` to keep the old behavior. The attach and associate lists also only offer records the user may `view`.
 - **A `ResourcePage` of your own needs `viewAny`, or `view` on its record**, where before it was open to anyone in the panel. Override `isAccessible()` to change that.
 - **`ManageSingleRecord` asks `create` until its record exists**, then `update`. Before, the first save needed `update` on an unsaved model.
+- **Changing or resetting a password signs out every other session**, through Laravel's `AuthenticateSession`, which panels now run on their signed-in routes and on the form and table endpoints. The session that made the change stays signed in.
+- **Turning on app two-factor and changing the email address ask for the current password.**
+- **Five wrong two-factor codes end the challenge**, so the password has to be entered again, and a user then waits 15 minutes for more guesses, where before it was one minute.
+- `POST login` is also limited to 20 tries a minute from one address, across all accounts.
+- An email-change link only works while the address is still the one it was sent from, so an older link is spent once the address changes.
 - Tokens issued before this version are refused, so a page that was open across the upgrade asks to be reloaded.
 
 ### Fixed

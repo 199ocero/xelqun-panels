@@ -25,6 +25,9 @@ final class MultiFactorChallengeController extends AuthController
 {
     private const int MAX_ATTEMPTS = 5;
 
+    /** Long enough that guessing a 6 digit code takes years, not weeks. */
+    private const int LOCKOUT_SECONDS = 900;
+
     private const int EXPIRES_IN_SECONDS = 300;
 
     public function show(Request $request): Response|RedirectResponse
@@ -102,7 +105,18 @@ final class MultiFactorChallengeController extends AuthController
         $user = $guard->getProvider()->retrieveById($pending['id']);
 
         if (! $panel->allows($user) || ! $this->passes($user, $pending, (string) $data['code'])) {
-            RateLimiter::hit($rateLimitKey);
+            RateLimiter::hit($rateLimitKey, self::LOCKOUT_SECONDS);
+            $failures = ($pending['failures'] ?? 0) + 1;
+
+            // Back to the password, so an emailed code can't take more guesses than this, resent or not.
+            if ($failures >= self::MAX_ATTEMPTS) {
+                $request->session()->forget($this->sessionKey());
+                Notification::make()->title(__('xelqun-panels::auth.mfa.too_many'))->danger()->send();
+
+                return redirect()->to($panel->getLoginUrl());
+            }
+
+            $request->session()->put($this->sessionKey(), [...$pending, 'failures' => $failures]);
 
             throw ValidationException::withMessages(['data.code' => __('xelqun-panels::auth.mfa.invalid')]);
         }
@@ -159,7 +173,7 @@ final class MultiFactorChallengeController extends AuthController
     }
 
     /**
-     * @return array{id: mixed, remember: bool, expires: int, emailCode: string|null}|null
+     * @return array{id: mixed, remember: bool, expires: int, emailCode: string|null, failures?: int}|null
      */
     private function pending(Request $request): ?array
     {
@@ -171,7 +185,7 @@ final class MultiFactorChallengeController extends AuthController
     /**
      * An emailed code goes when the challenge does, so it works once.
      *
-     * @param  array{id: mixed, remember: bool, expires: int, emailCode: string|null}  $pending
+     * @param  array{id: mixed, remember: bool, expires: int, emailCode: string|null, failures?: int}  $pending
      */
     private function passes(?Authenticatable $user, array $pending, string $code): bool
     {

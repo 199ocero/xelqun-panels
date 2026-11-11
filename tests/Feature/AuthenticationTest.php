@@ -202,6 +202,14 @@ describe('the rate limit', function () {
         login()->assertRedirect('/admin');
     });
 
+    it('stops one address trying many accounts', function () {
+        foreach (range(1, 20) as $attempt) {
+            $this->post('/admin/login', ['data' => ['email' => "user{$attempt}@example.com", 'password' => 'nope']]);
+        }
+
+        $this->post('/admin/login', ['data' => ['email' => 'ada@example.com', 'password' => 'secret']])->assertTooManyRequests();
+    });
+
     it('counts each panel on its own', function () {
         expect(RateLimiter::attempts('xelqun-panels:login:staff:ada@example.com|127.0.0.1'))->toBe(0);
 

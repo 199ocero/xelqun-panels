@@ -350,6 +350,21 @@ describe('the profile page', function () {
             ->and($this->user->fresh()->remember_token)->not->toBeNull();
     });
 
+    it('keeps this session signed in after its own password change, and signs the others out', function () {
+        $this->get('/admin/profile')->assertOk();
+        $token = $this->get('/admin/profile')->viewData('page')['props']['page']['content'][0]['schema']['token'];
+        $otherSession = session()->all();
+
+        saveProfile(['password' => 'new-password-123', 'password_confirmation' => 'new-password-123', 'current_password' => 'old-password'])->assertSessionHasNoErrors();
+        $this->get('/admin/profile')->assertOk();
+
+        $this->flushSession()->withSession($otherSession);
+        $this->postJson(route('xelqun.forms.update'), ['token' => $token, 'seq' => 1, 'state' => ['data' => []], 'changed' => [], 'deps' => (object) []])->assertUnauthorized();
+
+        $this->withSession($otherSession);
+        $this->get('/admin/profile')->assertRedirect('/admin/login');
+    });
+
     it('refuses a new password with a missing or wrong current one', function (array $current) {
         saveProfile(['password' => 'new-password-123', 'password_confirmation' => 'new-password-123', ...$current])
             ->assertSessionHasErrors('data.current_password');
@@ -360,11 +375,18 @@ describe('the profile page', function () {
         'wrong' => [['current_password' => 'nope']],
     ]);
 
+    it('asks for the current password to change the address', function () {
+        saveProfile(['email' => 'new@example.com'])->assertSessionHasErrors('data.current_password');
+        saveProfile(['email' => 'new@example.com', 'current_password' => 'nope'])->assertSessionHasErrors('data.current_password');
+
+        expect($this->user->fresh()->email)->toBe('ada@example.com');
+    });
+
     it('clears verification when the address changes, and asks again', function () {
         Notification::fake();
         $this->user->markEmailAsVerified();
 
-        saveProfile(['email' => 'new@example.com']);
+        saveProfile(['email' => 'new@example.com', 'current_password' => 'old-password']);
 
         expect($this->user->fresh()->hasVerifiedEmail())->toBeFalse();
         Notification::assertSentTo($this->user->fresh(), VerifyEmail::class);
@@ -422,11 +444,11 @@ describe('changing the email address', function () {
 
     function changeEmailLink(User $user, string $email): string
     {
-        return URL::temporarySignedRoute('xelqun-panels.admin.auth.email-change.verify', now()->addHour(), ['id' => $user->getKey(), 'email' => $email]);
+        return URL::temporarySignedRoute('xelqun-panels.admin.auth.email-change.verify', now()->addHour(), ['id' => $user->getKey(), 'email' => $email, 'from' => hash('sha256', (string) $user->email)]);
     }
 
     it('keeps the old address until the link to the new one is opened, and tells both', function () {
-        test()->from('/admin/profile')->put('/admin/profile', ['data' => ['name' => 'Ada', 'email' => 'new@example.com']])->assertSessionHasNoErrors();
+        test()->from('/admin/profile')->put('/admin/profile', ['data' => ['name' => 'Ada', 'email' => 'new@example.com', 'current_password' => 'old-password']])->assertSessionHasNoErrors();
 
         expect($this->user->fresh()->email)->toBe('ada@example.com');
         Notification::assertSentOnDemand(VerifyEmailChange::class, fn ($notification, array $channels, object $notifiable): bool => $notifiable->routes['mail'] === 'new@example.com');
@@ -436,6 +458,15 @@ describe('changing the email address', function () {
 
         expect($this->user->fresh()->email)->toBe('new@example.com')
             ->and($this->user->fresh()->email_verified_at)->not->toBeNull();
+    });
+
+    it('refuses a link made before the address last changed', function () {
+        $link = changeEmailLink($this->user, 'first@example.com');
+        $this->get(changeEmailLink($this->user, 'second@example.com'))->assertRedirect('/admin/profile');
+
+        $this->get($link)->assertForbidden();
+
+        expect($this->user->fresh()->email)->toBe('second@example.com');
     });
 
     it('refuses a link for someone else, one that was changed, and an address taken since', function () {
