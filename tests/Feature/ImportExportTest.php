@@ -2,15 +2,19 @@
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Xelqun\Actions\Halt;
 use Xelqun\Notifications\NotificationQueue;
+use Xelqun\Panels\Actions\ExportAction;
 use Xelqun\Panels\Actions\ImportAction;
 use Xelqun\Panels\Actions\ImportColumn;
 use Xelqun\Panels\Actions\ImportRecords;
 use Xelqun\Panels\Http\Controllers\ExportController;
+use Xelqun\Panels\Http\Middleware\Authenticate;
+use Xelqun\Panels\Http\Middleware\EnterPanel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Tests\Fixtures\Note;
 use Xelqun\Panels\Tests\Fixtures\Post;
@@ -20,6 +24,7 @@ use Xelqun\Panels\Tests\Fixtures\Resources\TaskPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\TaskResource;
 use Xelqun\Panels\Tests\Fixtures\Task;
 use Xelqun\Panels\Tests\Fixtures\User;
+use Xelqun\Tables\Columns\TextColumn;
 
 class ExposedImport extends ImportAction
 {
@@ -62,6 +67,34 @@ class NarrowTaskResource extends TaskResource
     {
         return [];
     }
+}
+
+class LockedExportTaskResource extends TaskResource
+{
+    public static function getHeaderActions(): array
+    {
+        return [ExportAction::for(static::class)->authorize(fn (): bool => false)];
+    }
+}
+
+class MaskedTaskResource extends TaskResource
+{
+    public static function columns(): array
+    {
+        return [TextColumn::make('title')->formatStateUsing(fn (string $state): string => '***'.substr($state, -2))];
+    }
+}
+
+/**
+ * @param  class-string<Xelqun\Panels\Resources\Resource>  $resource
+ */
+function exportRoute(string $resource): string
+{
+    Route::get('/probe/tasks/_export', ExportController::class)
+        ->middleware(['web', EnterPanel::class.':admin', Authenticate::class])
+        ->defaults('resource', $resource);
+
+    return '/probe/tasks/_export';
 }
 
 function csv(string $content): string
@@ -123,6 +156,24 @@ describe('exporting', function () {
 
         expect($neutralize->invoke(null, $post->cover))->toBe('')
             ->and($neutralize->invoke(null, $post->author))->toBe((string) $user->id);
+    });
+
+    it('refuses whoever the export button refuses', function () {
+        Task::create(['title' => 'Secret row']);
+
+        $this->get(exportRoute(LockedExportTaskResource::class))->assertForbidden();
+    });
+
+    it('refuses whoever can\'t open the list', function () {
+        TaskPolicy::$denied = ['viewAny'];
+
+        $this->get('/admin/tasks/_export')->assertForbidden();
+    });
+
+    it('writes what a table column shows, not what it hides', function () {
+        Task::create(['title' => 'Card 1234']);
+
+        expect($this->get(exportRoute(MaskedTaskResource::class))->streamedContent())->toBe("Title\n***34\n");
     });
 
     it('has no export for a resource that doesn\'t offer one', function () {
