@@ -19,5 +19,9 @@ interface HasTenants
      */
     public function getTenants(Panel $panel): Collection;
 
+    /**
+     * Check the tenant's class as well as its key: with two tenant panels, one
+     * asks about its own model, and a team and an organization can share an id.
+     */
     public function canAccessTenant(Model $tenant): bool;
 }

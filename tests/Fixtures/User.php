@@ -52,6 +52,6 @@ class User extends Authenticatable implements HasAppAuthentication, HasEmailAuth
 
     public function canAccessTenant(Model $tenant): bool
     {
-        return $this->teams()->whereKey($tenant->getKey())->exists();
+        return $tenant instanceof Team && $this->teams()->whereKey($tenant->getKey())->exists();
     }
 }

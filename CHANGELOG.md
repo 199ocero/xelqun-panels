@@ -13,6 +13,7 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 
 ### Fixed
 
+- **Check the class in your `canAccessTenant()`.** The documented example only compared keys, so with two tenant panels on different models (say teams and organizations), a member of team 3 could open organization 3. Use `$tenant instanceof Team && $this->teams()->whereKey($tenant)->exists()`.
 - **Linking and unlinking in a relation manager never asked a policy** about the related record, so anyone who could update the parent could attach any record the list offered, such as an admin role.
 - **`_export` ignored the export button's own checks.** It only asked `viewAny`, so `ExportAction::for(...)->authorize(...)`, `visible()` and `hidden()`, and a stricter `isAccessible()` on the list page, could be skipped by opening the URL. It also wrote values a column masks for display. It now asks everything the button asks.
 - **The form and table endpoints skipped the panel's middleware**, so a user an app's middleware turned away (a suspended account, a lapsed subscription, an IP allow-list) could keep loading rows and running actions with a token from a page they had open. A user who still has to set up two-factor can likewise only use the profile page's tokens now.
