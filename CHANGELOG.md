@@ -2,7 +2,7 @@
 
 Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
-## Unreleased
+## 0.7.0 - 2026-11-11
 
 ### Upgrading
 

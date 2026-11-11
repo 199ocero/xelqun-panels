@@ -83,6 +83,10 @@ abstract class Resource
      * parent's related records. A relation manager with $relatedResource set to
      * it links to its pages.
      *
+     * Its pages need the parent's `view`, and changes are then up to this
+     * resource's own policy. Unlike a relation manager, the parent's `update` isn't
+     * asked, so someone can add a comment to a post they can't edit.
+     *
      * @var class-string<\Xelqun\Panels\Resources\Resource>|null
      */
     protected static ?string $parentResource = null;
