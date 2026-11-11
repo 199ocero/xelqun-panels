@@ -698,6 +698,9 @@ abstract class Resource
      */
     public static function findRecord(int|string $key): Model
     {
+        // MySQL would read "5abc" as 5.
+        abort_if((new (static::$model))->getKeyType() === 'int' && ! ctype_digit((string) $key), 404);
+
         return static::getEloquentQuery()->whereKey($key)->firstOrFail();
     }
 

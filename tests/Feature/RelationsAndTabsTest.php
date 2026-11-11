@@ -514,6 +514,16 @@ describe('pages of a resource\'s own', function () {
         $this->get('/admin/posts/sort')->assertOk()->assertInertia(fn (Assert $page) => $page->where('page.title', 'Sort posts'));
     });
 
+    it('needs viewAny by default, as the list does', function () {
+        PostPolicy::$denied = ['viewAny'];
+
+        $this->get('/admin/posts/sort')->assertForbidden();
+    });
+
+    it('answers a key that isn\'t a whole number with a 404', function () {
+        $this->get("/admin/posts/{$this->post->id}abc/edit")->assertNotFound();
+    });
+
     it('manages one relationship on a page under the record', function () {
         expect(PostResource::getUrl('comments', ['record' => $this->post]))->toEndWith("/admin/posts/{$this->post->id}/comments");
 

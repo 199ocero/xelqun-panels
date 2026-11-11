@@ -74,6 +74,15 @@ abstract class ResourcePage extends Page
         return false;
     }
 
+    /**
+     * A page of your own needs what the resource's list or record does: viewAny,
+     * or view on its record. Override it to ask for more, or for less.
+     */
+    public function isAccessible(): bool
+    {
+        return static::canAccess() && ($this->record === null ? $this->resource::can('viewAny') : $this->resource::can('view', $this->record));
+    }
+
     public function __invoke(): Response
     {
         $this->mountFromRoute();

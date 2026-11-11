@@ -78,11 +78,12 @@ final class ResourceForm extends Form
 
     public function authorize(?Authenticatable $user, ?Model $record): bool
     {
-        return $this->getResource()::can(match ($this->getOperation()) {
-            self::CREATE => 'create',
-            self::VIEW => 'view',
-            default => 'update',
-        }, $record);
+        // An edit form on a record not yet saved, as ManageSingleRecord's first one, creates it.
+        if ($this->getOperation() === self::CREATE || $record?->exists === false) {
+            return $this->getResource()::can('create');
+        }
+
+        return $this->getResource()::can($this->getOperation() === self::VIEW ? 'view' : 'update', $record);
     }
 
     public function getId(): string

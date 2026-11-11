@@ -286,6 +286,15 @@ describe('queued importing', function () {
             ->and(Storage::disk(ImportAction::DISK)->exists($path))->toBeTrue();
     });
 
+    it('runs no class the job\'s payload names unless it\'s an import and a resource', function () {
+        $path = storedCsv("title\nOne\n");
+
+        (new ImportRecords(Task::class, TaskResource::class, $path, 'admin', auth()->id(), null, null))->handle(app(Panels::class));
+
+        expect(Task::count())->toBe(0)
+            ->and(Storage::disk(ImportAction::DISK)->exists($path))->toBeFalse();
+    });
+
     it('imports every row in the job, tells the user in their bell, and leaves no file or context behind', function () {
         $user = auth()->user();
         $path = storedCsv("title\n".implode("\n", array_map(fn (int $index): string => "Task {$index}", range(1, 1005)))."\n");

@@ -22,6 +22,14 @@ class ManageSingleRecord extends EditRecord
         $this->record = $this->resource::getSingularRecord();
     }
 
+    /**
+     * Until the record is first saved, saving it is creating it.
+     */
+    public function isAccessible(): bool
+    {
+        return $this->record?->exists === true ? parent::isAccessible() : $this->resource::can('create');
+    }
+
     public function getHeading(): string
     {
         return Str::headline($this->resource::getModelLabel());

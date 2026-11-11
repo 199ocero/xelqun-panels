@@ -442,13 +442,23 @@ describe('a singular resource', function () {
         $this->get('/admin/site/create')->assertNotFound();
     });
 
-    it('needs update in the policy', function () {
-        RelatedPolicy::$denied = ['update'];
+    it('needs create in the policy until the record exists', function () {
+        RelatedPolicy::$denied = ['create'];
 
         $this->get('/admin/site')->assertForbidden();
         $this->put('/admin/site', ['data' => ['name' => 'Taken']])->assertForbidden();
 
         expect(Note::count())->toBe(0);
+    });
+
+    it('needs update in the policy once it does', function () {
+        Note::create(['name' => 'Site']);
+        RelatedPolicy::$denied = ['update'];
+
+        $this->get('/admin/site')->assertForbidden();
+        $this->put('/admin/site', ['data' => ['name' => 'Taken']])->assertForbidden();
+
+        expect(Note::sole()->name)->toBe('Site');
     });
 });
 

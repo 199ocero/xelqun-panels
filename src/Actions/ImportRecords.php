@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Xelqun\Panels\Notifications\DatabaseNotification;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
+use Xelqun\Panels\Resources\Resource;
 
 /**
  * A queued import: the whole file, as the user who started it, in their panel,
@@ -45,6 +46,11 @@ class ImportRecords implements ShouldQueue
     public function handle(Panels $panels): void
     {
         try {
+            // A payload is only as safe as the queue it sat in.
+            if (! is_a($this->action, ImportAction::class, true) || ! is_subclass_of($this->resource, Resource::class)) {
+                return;
+            }
+
             $panel = $panels->get($this->panel);
             $user = $this->findUser($panel);
             $tenantModel = $panel?->getTenantModel();

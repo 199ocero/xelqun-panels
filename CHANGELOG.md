@@ -9,10 +9,14 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 - **A panel's `middleware()`, `authMiddleware()` and `tenantMiddleware()` now also run on the form and table endpoints** (`/_xelqun/forms/*` and `/_xelqun/tables/*`) for every token issued inside the panel. Middleware there sees the endpoint's route, which has no route parameters, so middleware that reads one has to allow for that. A middleware that answers itself, such as a redirect, refuses the request with a 403.
 - **An export writes what the table shows.** A heading from `getExportColumns()` that names one of the table's columns now gets that column's `state()` and formatting, such as `money()`, `date()` or `formatStateUsing()`. An attribute that isn't a table column is still written as stored.
 - **`AttachAction`, `DetachAction`, `AssociateAction` and `DissociateAction` ask the related model's policy** for `attach`, `detach`, `associate` and `dissociate`, on top of `update` on the parent. A policy without the method refuses, so add them to the policies of related models you link, or pass `->authorize(true)` to keep the old behavior. The attach and associate lists also only offer records the user may `view`.
+- **A `ResourcePage` of your own needs `viewAny`, or `view` on its record**, where before it was open to anyone in the panel. Override `isAccessible()` to change that.
+- **`ManageSingleRecord` asks `create` until its record exists**, then `update`. Before, the first save needed `update` on an unsaved model.
 - Tokens issued before this version are refused, so a page that was open across the upgrade asks to be reloaded.
 
 ### Fixed
 
+- A record URL with a key that isn't a whole number, such as `/posts/5abc`, is a 404 for a model with integer keys. MySQL used to read it as post 5.
+- A queued import does nothing unless its payload names an `ImportAction` and a `Resource`.
 - **A form field for the tenant's or parent's key could move a record.** The tenant and parent were set before the form's values, so a `team_id` field, or a relationship `Select` for it, could put a new record in another tenant or move an existing one. They're now set again after the form saves.
 - **Check the class in your `canAccessTenant()`.** The documented example only compared keys, so with two tenant panels on different models (say teams and organizations), a member of team 3 could open organization 3. Use `$tenant instanceof Team && $this->teams()->whereKey($tenant)->exists()`.
 - **Linking and unlinking in a relation manager never asked a policy** about the related record, so anyone who could update the parent could attach any record the list offered, such as an admin role.

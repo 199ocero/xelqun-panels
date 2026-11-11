@@ -13,11 +13,6 @@ class SortPosts extends ResourcePage
         return 'Sort posts';
     }
 
-    public function isAccessible(): bool
-    {
-        return $this->resource::can('viewAny');
-    }
-
     public function content(): array
     {
         return [];
