@@ -30,8 +30,7 @@ class ImportRecords implements ShouldQueue
     public int $tries = 1;
 
     /**
-     * @param  class-string<ImportAction>  $action
-     * @param  class-string<\Xelqun\Panels\Resources\Resource>  $resource
+     * The classes are plain strings, because a queued payload can say anything; handle() checks them.
      */
     public function __construct(
         public string $action,
