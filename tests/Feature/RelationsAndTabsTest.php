@@ -210,6 +210,34 @@ describe('relation managers', function () {
         expect($this->comment->fresh()->post_id)->toBeNull();
     });
 
+    it('asks the related model\'s policy before linking or unlinking', function () {
+        $labels = RelationTable::for(PostResource::class, LabelsRelationManager::class, $this->post, false);
+        $attached = Label::create(['name' => 'Attached']);
+        $free = Label::create(['name' => 'Free']);
+        $this->post->labels()->attach($attached);
+        $loose = Comment::create(['body' => 'Loose']);
+        RelatedPolicy::$denied = ['attach', 'detach', 'associate', 'dissociate'];
+
+        $this->runTableAction($labels, 'attach', null, ['record' => $free->id])->assertForbidden();
+        $this->runTableAction($labels, 'detach', $attached->id)->assertForbidden();
+        $this->runTableAction(commentsTable($this->post), 'associate', null, ['record' => $loose->id])->assertForbidden();
+        $this->runTableAction(commentsTable($this->post), 'dissociate', $this->comment->id)->assertForbidden();
+
+        expect($this->post->labels()->pluck('name')->all())->toBe(['Attached'])
+            ->and($loose->fresh()->post_id)->toBeNull()
+            ->and($this->comment->fresh()->post_id)->toBe($this->post->id);
+    });
+
+    it('can\'t attach a record the user can\'t view', function () {
+        $table = RelationTable::for(PostResource::class, LabelsRelationManager::class, $this->post, false);
+        $hidden = Label::create(['name' => 'Hidden']);
+        RelatedPolicy::$denied = ['view'];
+
+        $this->runTableAction($table, 'attach', null, ['record' => $hidden->id])->assertStatus(422);
+
+        expect($this->post->labels()->count())->toBe(0);
+    });
+
     it('needs update on the parent to link anything', function () {
         PostPolicy::$denied = ['update'];
         $free = Comment::create(['body' => 'Free']);

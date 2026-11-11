@@ -37,4 +37,24 @@ class RelatedPolicy
     {
         return ! in_array('delete', self::$denied, true);
     }
+
+    public function attach(User $user): bool
+    {
+        return ! in_array('attach', self::$denied, true);
+    }
+
+    public function detach(User $user, Model $record): bool
+    {
+        return ! in_array('detach', self::$denied, true);
+    }
+
+    public function associate(User $user): bool
+    {
+        return ! in_array('associate', self::$denied, true);
+    }
+
+    public function dissociate(User $user, Model $record): bool
+    {
+        return ! in_array('dissociate', self::$denied, true);
+    }
 }

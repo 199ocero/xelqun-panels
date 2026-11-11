@@ -25,7 +25,7 @@ class DissociateAction extends Action
             ->icon('unlink')
             ->iconButton()
             ->color('danger')
-            ->authorize(true)
+            ->authorize('dissociate')
             ->requiresConfirmation()
             ->successNotificationTitle(__('xelqun-panels::resources.dissociated'))
             ->action(function (Model $record) use ($manager, $owner): void {

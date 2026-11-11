@@ -28,7 +28,7 @@ class AssociateAction extends Action
             ->label(__('xelqun-panels::resources.associate'))
             ->icon('link')
             ->successNotificationTitle(__('xelqun-panels::resources.associated'))
-            ->action(fn (array $data) => static::relation($manager, $owner)->save(static::available($manager, $owner)->whereKey($data['record'])->firstOrFail()));
+            ->action(fn (array $data) => static::relation($manager, $owner)->save(static::chosen(static::available($manager, $owner), $data['record'])));
     }
 
     /**

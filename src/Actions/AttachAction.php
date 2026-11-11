@@ -29,7 +29,7 @@ class AttachAction extends Action
             ->label(__('xelqun-panels::resources.attach'))
             ->icon('link')
             ->successNotificationTitle(__('xelqun-panels::resources.attached'))
-            ->action(fn (array $data) => static::relation($manager, $owner)->attach(static::available($manager, $owner)->whereKey($data['record'])->firstOrFail()));
+            ->action(fn (array $data) => static::relation($manager, $owner)->attach(static::chosen(static::available($manager, $owner), $data['record'])));
     }
 
     /**

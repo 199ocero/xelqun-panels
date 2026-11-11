@@ -24,7 +24,7 @@ class DetachAction extends Action
             ->icon('unlink')
             ->iconButton()
             ->color('danger')
-            ->authorize(true)
+            ->authorize('detach')
             ->requiresConfirmation()
             ->successNotificationTitle(__('xelqun-panels::resources.detached'))
             ->action(function (Model $record) use ($manager, $owner): void {
