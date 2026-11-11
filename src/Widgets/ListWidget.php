@@ -2,6 +2,7 @@
 
 namespace Xelqun\Panels\Widgets;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Xelqun\Tables\Columns\TextColumn;
 use Xelqun\Tables\Table;
@@ -34,6 +35,15 @@ abstract class ListWidget extends Table implements PanelWidget
      * @param  TModel  $record
      */
     abstract protected function title(Model $record): string;
+
+    /**
+     * Its rows and actions come through the table endpoints, which ask this, so
+     * a widget the user can't see can't be read that way either.
+     */
+    public function authorize(?Authenticatable $user): bool
+    {
+        return static::canView();
+    }
 
     /**
      * @param  TModel  $record

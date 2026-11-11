@@ -314,7 +314,7 @@ describe('after the page has loaded', function () {
         $this->get('/admin/login');
         $token = $tokens->encrypt(new FormToken(LoginForm::class, null, null));
 
-        expect($tokens->decrypt($token)->scope)->toBe('["admin",null,null,false]')
+        expect($tokens->decrypt($token)->scope)->toBe('["admin",null,null,null]')
             ->and($tokens->resolveForm($token))->toBeInstanceOf(LoginForm::class);
     });
 });

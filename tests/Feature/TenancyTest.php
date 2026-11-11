@@ -315,6 +315,16 @@ describe('a tenant\'s profile', function () {
         expect($this->red->fresh()->name)->toBe('Red');
     });
 
+    it('stops its form\'s endpoints once the user can\'t update the tenant', function () {
+        Gate::policy(Team::class, RelatedPolicy::class);
+        $token = $this->get('/team/red/tenant-profile')->viewData('page')['props']['page']['content'][0]['schema']['token'];
+        $update = fn (): TestResponse => $this->postJson(route('xelqun.forms.update'), ['token' => $token, 'seq' => 1, 'state' => ['data' => []], 'changed' => [], 'deps' => (object) []]);
+
+        $update()->assertOk();
+        RelatedPolicy::$denied = ['update'];
+        $update()->assertForbidden();
+    });
+
     it('saves, and follows a changed slug', function () {
         Gate::policy(Team::class, RelatedPolicy::class);
 
@@ -437,6 +447,13 @@ describe('panel middleware and tenant routes', function () {
 
         RefusesAfterTag::$refused = 'none';
         $this->postJson(route('xelqun.tables.query'), ['token' => $token, 'query' => []])->assertOk();
+    });
+
+    it('keeps a tenant domain on its own host, whatever the slug', function () {
+        $panel = Panel::make()->id('hosted')->path('app')->tenant(Team::class, slugAttribute: 'slug')->tenantDomain('{tenant}.example.test');
+        $this->red->slug = 'evil.com/';
+
+        expect($panel->getTenantUrl($this->red))->toBe('http://evil.com%2F.example.test/app');
     });
 
     it('lists more links in the tenant menu', function () {

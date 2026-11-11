@@ -9,6 +9,7 @@ use Illuminate\Http\Response;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Xelqun\Forms\Exceptions\InvalidFormToken;
@@ -23,7 +24,11 @@ use Xelqun\Panels\Http\Middleware\AuthenticatePanelSession;
 
 class PanelsServiceProvider extends ServiceProvider
 {
-    private const string PROFILE_TOKEN = 'xelqun-panels.profile-token';
+    private const string TOKEN_PAGE = 'xelqun-panels.token-page';
+
+    private const string PROFILE = 'profile';
+
+    private const string TENANT_PROFILE = 'tenant-profile';
 
     public function register(): void
     {
@@ -40,8 +45,12 @@ class PanelsServiceProvider extends ServiceProvider
                     $panels->current()->getId(),
                     $panels->tenant()?->getKey(),
                     $panels->parentKey(),
-                    // A token from the profile page, or rebuilt from one, still works while two-factor setup is due.
-                    request()->routeIs($panels->current()->routeName('auth.profile*')) || request()->attributes->get(self::PROFILE_TOKEN) === true,
+                    // A token from the profile or tenant-profile page, or rebuilt from one, says so.
+                    match (true) {
+                        request()->routeIs($panels->current()->routeName('auth.profile*')) => self::PROFILE,
+                        request()->routeIs($panels->current()->routeName('tenant.profile*')) => self::TENANT_PROFILE,
+                        default => request()->attributes->get(self::TOKEN_PAGE),
+                    },
                 ]),
                 function (?string $scope) use ($panels): void {
                     if ($scope === null) {
@@ -54,7 +63,7 @@ class PanelsServiceProvider extends ServiceProvider
                         throw InvalidFormToken::make('the token is from an older version, reload the page', 419);
                     }
 
-                    [$id, $tenantKey, $parentKey, $isProfileToken] = $parts;
+                    [$id, $tenantKey, $parentKey, $page] = $parts;
                     $panel = $panels->get((string) $id) ?? throw InvalidFormToken::make('the token belongs to an unknown panel');
                     $panels->enter($panel);
                     $user = auth()->user();
@@ -79,10 +88,16 @@ class PanelsServiceProvider extends ServiceProvider
                         $panels->enterParent((string) $parentKey);
                     }
 
-                    request()->attributes->set(self::PROFILE_TOKEN, $isProfileToken === true);
+                    request()->attributes->set(self::TOKEN_PAGE, in_array($page, [self::PROFILE, self::TENANT_PROFILE], true) ? $page : null);
 
-                    if ($user !== null && $isProfileToken !== true && $panel->mustSetUpMultiFactorAuthentication($user)) {
+                    // The profile page is where two-factor gets set up.
+                    if ($user !== null && $page !== self::PROFILE && $panel->mustSetUpMultiFactorAuthentication($user)) {
                         throw InvalidFormToken::make('two-factor setup is due first');
+                    }
+
+                    // The tenant-profile form is the app's own, so its authorize() can't be relied on to ask this.
+                    if ($page === self::TENANT_PROFILE && ! Gate::allows('update', $panels->tenant())) {
+                        throw InvalidFormToken::make('this user can no longer change the tenant');
                     }
 
                     $this->runPanelMiddleware($panel, $user !== null, $panels->tenant() !== null);

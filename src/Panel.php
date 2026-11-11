@@ -904,7 +904,8 @@ final class Panel
         if ($this->tenantDomain !== null) {
             $port = parse_url(url('/'), PHP_URL_PORT);
 
-            return rtrim(url()->formatScheme().str_replace('{tenant}', $slug, $this->tenantDomain).($port === null ? '' : ":{$port}").'/'.$this->path, '/');
+            // Encoded, so a slug like "evil.com/" can't turn the host into someone else's.
+            return rtrim(url()->formatScheme().str_replace('{tenant}', rawurlencode($slug), $this->tenantDomain).($port === null ? '' : ":{$port}").'/'.$this->path, '/');
         }
 
         return $this->urlTo(trim($this->path.'/'.($this->tenantRoutePrefix === null ? '' : $this->tenantRoutePrefix.'/').$slug, '/'));

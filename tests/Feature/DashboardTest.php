@@ -12,6 +12,14 @@ use Xelqun\Panels\Tests\Fixtures\Widgets\PendingPosts;
 use Xelqun\Panels\Tests\Fixtures\Widgets\RecordStats;
 use Xelqun\Panels\Tests\Fixtures\Widgets\SalesChart;
 
+class InvisibleList extends PendingPosts
+{
+    public static function canView(): bool
+    {
+        return false;
+    }
+}
+
 beforeEach(function () {
     PendingPosts::$canApprove = true;
     $this->user = $this->signIn();
@@ -126,6 +134,15 @@ describe('a list widget', function () {
 
         expect($this->draft->fresh()->status)->toBe('live');
         $this->queryTable($table)->assertJsonCount(0, 'rows');
+    });
+
+    it('refuses its rows and actions to someone who can\'t see it', function () {
+        $table = InvisibleList::make();
+
+        $this->queryTable($table)->assertForbidden();
+        $this->runTableAction($table, 'approve', $this->draft->id)->assertForbidden();
+
+        expect($this->draft->fresh()->status)->toBe('draft');
     });
 
     it('refuses a record its query leaves out', function () {

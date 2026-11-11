@@ -16,10 +16,13 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 - **Five wrong two-factor codes end the challenge**, so the password has to be entered again, and a user then waits 15 minutes for more guesses, where before it was one minute.
 - `POST login` is also limited to 20 tries a minute from one address, across all accounts.
 - An email-change link only works while the address is still the one it was sent from, so an older link is spent once the address changes.
+- **A `ListWidget`'s rows and actions ask `canView()`**, where before its table endpoints let anyone in the panel read them. A `TableWidget` still asks its table's own `authorize()`, so make that match `canView()`.
 - Tokens issued before this version are refused, so a page that was open across the upgrade asks to be reloaded.
 
 ### Fixed
 
+- **The tenant-profile form's endpoints didn't ask `update` on the tenant**, so live updates, uploads and modal actions kept working for up to the token's 12 hours after the user lost it. The page and its save already asked.
+- A tenant slug is URL-encoded in a `tenantDomain()`, so a slug like `evil.com/` can't make the tenant switcher link to another host.
 - A record URL with a key that isn't a whole number, such as `/posts/5abc`, is a 404 for a model with integer keys. MySQL used to read it as post 5.
 - A queued import does nothing unless its payload names an `ImportAction` and a `Resource`.
 - **A form field for the tenant's or parent's key could move a record.** The tenant and parent were set before the form's values, so a `team_id` field, or a relationship `Select` for it, could put a new record in another tenant or move an existing one. They're now set again after the form saves.
