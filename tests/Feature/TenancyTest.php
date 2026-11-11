@@ -8,6 +8,7 @@ use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Xelqun\Forms\Components\TextInput;
 use Xelqun\Panels\Actions\ImportAction;
 use Xelqun\Panels\Actions\ImportRecords;
 use Xelqun\Panels\Exceptions\PanelDefinitionException;
@@ -15,6 +16,7 @@ use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\Resource;
+use Xelqun\Panels\Resources\ResourceForm;
 use Xelqun\Panels\Resources\ResourceTable;
 use Xelqun\Panels\Testing\InteractsWithPanels;
 use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
@@ -58,6 +60,14 @@ class UnscopedProjectResource extends Resource
     public static function columns(): array
     {
         return [];
+    }
+}
+
+class TeamFieldProjectResource extends ProjectResource
+{
+    public static function form(): array
+    {
+        return [TextInput::make('name'), TextInput::make('team_id')];
     }
 }
 
@@ -189,6 +199,16 @@ describe('creating', function () {
         saveProject($this->red, ['name' => 'New', 'team_id' => $this->blue->id])->assertRedirect();
 
         expect(Project::where('name', 'New')->sole()->team_id)->toBe($this->red->id);
+    });
+
+    it('keeps a record in its tenant when the form has a field for the tenant\'s key', function () {
+        inTeam($this->red);
+
+        $created = ResourceForm::for(TeamFieldProjectResource::class, ResourceForm::CREATE)->persist(['name' => 'Moved', 'team_id' => $this->blue->id]);
+        ResourceForm::for(TeamFieldProjectResource::class, ResourceForm::EDIT, $this->redProject)->persist(['name' => 'Red project', 'team_id' => $this->blue->id]);
+
+        expect($created->fresh()->team_id)->toBe($this->red->id)
+            ->and($this->redProject->fresh()->team_id)->toBe($this->red->id);
     });
 
     it('attaches a new record to a many-to-many tenant', function () {

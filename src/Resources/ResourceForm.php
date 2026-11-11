@@ -116,6 +116,13 @@ final class ResourceForm extends Form
     {
         $resource = $this->getResource();
 
+        // A field for the tenant's or parent's key, or a relationship Select for it, could have moved the record.
+        $resource::assignToTenant($record);
+
+        if ($record->isDirty()) {
+            $record->save();
+        }
+
         if ($this->getOperation() === self::CREATE) {
             $resource::attachToTenant($record);
             $resource::afterCreate($record, $data);
