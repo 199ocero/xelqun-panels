@@ -17,6 +17,7 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 - `POST login` is also limited to 20 tries a minute from one address, across all accounts.
 - An email-change link only works while the address is still the one it was sent from, so an older link is spent once the address changes.
 - **A `ListWidget`'s rows and actions ask `canView()`**, where before its table endpoints let anyone in the panel read them. A `TableWidget` still asks its table's own `authorize()`, so make that match `canView()`.
+- A resource nested in a resource that is nested itself now fails when the routes register. Only one level was ever supported, and the grandparent was looked up with the parent's key.
 - Tokens issued before this version are refused, so a page that was open across the upgrade asks to be reloaded.
 
 ### Fixed

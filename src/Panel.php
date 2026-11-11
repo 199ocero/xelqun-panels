@@ -1229,6 +1229,23 @@ final class Panel
     }
 
     /**
+     * A nested resource's URL carries one parent key, so its parent can't be
+     * nested too. Fails while the routes register.
+     *
+     * @internal
+     */
+    public function assertNestingIsOneLevel(): void
+    {
+        foreach ($this->getResources() as $resource) {
+            $parent = $resource::getParentResource();
+
+            if ($parent !== null && $parent::isNested()) {
+                throw new PanelDefinitionException("[{$resource}] is nested in [{$parent}], which is nested itself. Only one level of nesting is supported.");
+            }
+        }
+    }
+
+    /**
      * What this user can start from the sidebar's New menu.
      *
      * @return array<int, array{label: string, icon: string|null, url: string}>

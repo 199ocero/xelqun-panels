@@ -26,6 +26,7 @@ use Xelqun\Panels\Resources\Pages\ManageSingleRecord;
 
 foreach (app(Panels::class)->all() as $panel) {
     $panel->assertClusterSlugsAreFree();
+    $panel->assertNestingIsOneLevel();
 
     Route::prefix($panel->getPath())
         ->domain($panel->getDomain())

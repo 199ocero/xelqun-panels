@@ -3,10 +3,12 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Testing\AssertableInertia as Assert;
+use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Infolists\CodeEntry;
 use Xelqun\Panels\Infolists\KeyValueEntry;
 use Xelqun\Panels\Infolists\RepeatableEntry;
 use Xelqun\Panels\Infolists\TextEntry;
+use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\RelationTable;
 use Xelqun\Panels\Resources\ResourceTable;
@@ -24,6 +26,13 @@ use Xelqun\Panels\Tests\Fixtures\Resources\PostPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\PostResource;
 use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\ScopedLabelsManager;
+
+class ReplyResource extends PostCommentResource
+{
+    protected static ?string $slug = 'replies';
+
+    protected static ?string $parentResource = PostCommentResource::class;
+}
 
 beforeEach(function () {
     Gate::policy(Post::class, PostPolicy::class);
@@ -405,6 +414,10 @@ describe('infolists', function () {
 });
 
 describe('nested resources', function () {
+    it('refuses a second level of nesting', function () {
+        Panel::make()->id('deep')->path('deep')->resources([PostResource::class, PostCommentResource::class, ReplyResource::class])->assertNestingIsOneLevel();
+    })->throws(PanelDefinitionException::class, 'Only one level of nesting');
+
     beforeEach(function () {
         $this->other = Post::create(['title' => 'Other']);
         $this->othersComment = $this->other->comments()->create(['body' => 'Not mine']);
