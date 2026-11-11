@@ -1,9 +1,12 @@
 <?php
 
+use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Xelqun\Panels\Actions\ImportAction;
 use Xelqun\Panels\Actions\ImportRecords;
@@ -15,6 +18,7 @@ use Xelqun\Panels\Resources\Resource;
 use Xelqun\Panels\Resources\ResourceTable;
 use Xelqun\Panels\Testing\InteractsWithPanels;
 use Xelqun\Panels\Tests\Fixtures\Resources\RelatedPolicy;
+use Xelqun\Panels\Tests\Fixtures\TagsResponse;
 use Xelqun\Panels\Tests\Fixtures\Team;
 use Xelqun\Panels\Tests\Fixtures\Tenancy\Client;
 use Xelqun\Panels\Tests\Fixtures\Tenancy\ClientProjectsManager;
@@ -54,6 +58,17 @@ class UnscopedProjectResource extends Resource
     public static function columns(): array
     {
         return [];
+    }
+}
+
+/** Stands in for an app's own check, such as an active subscription, on one group of the panel's middleware. */
+class RefusesAfterTag
+{
+    public static string $refused = 'none';
+
+    public function handle(Request $request, Closure $next, string $tag): Response
+    {
+        return $tag === self::$refused ? redirect('/billing') : $next($request);
     }
 }
 
@@ -389,6 +404,19 @@ describe('panel middleware and tenant routes', function () {
             ->and($panel->getTenantUrl($this->red))->toEndWith('/app/team/red')
             ->and($panel->tenantDomain('{tenant}.example.test')->getTenantRoutePrefix())->toBe('')
             ->and($panel->getTenantUrl($this->red))->toBe('http://red.example.test/app');
+    });
+
+    it('runs the panel\'s middleware on the form and table endpoints too', function () {
+        $token = $this->get('/team/red/projects')->viewData('page')['props']['page']['content'][0]['schema']['token'];
+        app()->bind(TagsResponse::class, RefusesAfterTag::class);
+        RefusesAfterTag::$refused = 'tenant';
+
+        $this->postJson(route('xelqun.tables.query'), ['token' => $token, 'query' => []])->assertForbidden();
+        $this->postJson(route('xelqun.tables.action'), ['token' => $token, 'action' => 'delete', 'kind' => 'record', 'phase' => 'run', 'record' => (string) $this->redProject->id])->assertForbidden();
+        expect(Project::withoutGlobalScopes()->find($this->redProject->id))->not->toBeNull();
+
+        RefusesAfterTag::$refused = 'none';
+        $this->postJson(route('xelqun.tables.query'), ['token' => $token, 'query' => []])->assertOk();
     });
 
     it('lists more links in the tenant menu', function () {

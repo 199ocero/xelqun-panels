@@ -5,6 +5,9 @@ namespace Xelqun\Panels;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Response;
+use Illuminate\Pipeline\Pipeline;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -19,6 +22,8 @@ use Xelqun\Panels\Commands\MakeWidgetCommand;
 
 class PanelsServiceProvider extends ServiceProvider
 {
+    private const string PROFILE_TOKEN = 'xelqun-panels.profile-token';
+
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/xelqun-panels.php', 'xelqun-panels');
@@ -30,14 +35,26 @@ class PanelsServiceProvider extends ServiceProvider
             $panels = $this->app->make(Panels::class);
 
             $tokens->scopeUsing(
-                fn (): ?string => $panels->current() === null ? null : rtrim(implode(':', [$panels->current()->getId(), $panels->tenant()?->getKey(), $panels->parentKey()]), ':'),
+                fn (): ?string => $panels->current() === null ? null : (string) json_encode([
+                    $panels->current()->getId(),
+                    $panels->tenant()?->getKey(),
+                    $panels->parentKey(),
+                    // A token from the profile page, or rebuilt from one, still works while two-factor setup is due.
+                    request()->routeIs($panels->current()->routeName('auth.profile*')) || request()->attributes->get(self::PROFILE_TOKEN) === true,
+                ]),
                 function (?string $scope) use ($panels): void {
                     if ($scope === null) {
                         return;
                     }
 
-                    [$id, $tenantKey, $parentKey] = array_pad(explode(':', $scope, 3), 3, '');
-                    $panel = $panels->get($id) ?? throw InvalidFormToken::make('the token belongs to an unknown panel');
+                    $parts = json_decode($scope, true);
+
+                    if (! is_array($parts) || ! array_is_list($parts) || count($parts) !== 4) {
+                        throw InvalidFormToken::make('the token is from an older version, reload the page', 419);
+                    }
+
+                    [$id, $tenantKey, $parentKey, $isProfileToken] = $parts;
+                    $panel = $panels->get((string) $id) ?? throw InvalidFormToken::make('the token belongs to an unknown panel');
                     $panels->enter($panel);
                     $user = auth()->user();
 
@@ -47,7 +64,7 @@ class PanelsServiceProvider extends ServiceProvider
                     }
 
                     // No tenant is fine, for what sits outside one, like starting a tenant. Resources refuse without one.
-                    if ($panel->hasTenancy() && $tenantKey !== '') {
+                    if ($panel->hasTenancy() && $tenantKey !== null) {
                         $tenant = (new ($panel->getTenantModel()))->newQuery()->find($tenantKey);
 
                         if ($tenant === null || ($user !== null && ! $panel->canAccessTenant($user, $tenant))) {
@@ -57,9 +74,17 @@ class PanelsServiceProvider extends ServiceProvider
                         $panels->enterTenant($tenant);
                     }
 
-                    if ($parentKey !== '') {
-                        $panels->enterParent($parentKey);
+                    if ($parentKey !== null) {
+                        $panels->enterParent((string) $parentKey);
                     }
+
+                    request()->attributes->set(self::PROFILE_TOKEN, $isProfileToken === true);
+
+                    if ($user !== null && $isProfileToken !== true && $panel->mustSetUpMultiFactorAuthentication($user)) {
+                        throw InvalidFormToken::make('two-factor setup is due first');
+                    }
+
+                    $this->runPanelMiddleware($panel, $user !== null, $panels->tenant() !== null);
                 },
             );
         });
@@ -89,6 +114,35 @@ class PanelsServiceProvider extends ServiceProvider
             ], 'xelqun-panels-mfa');
 
             $this->commands([InstallCommand::class, MakePageCommand::class, MakePanelCommand::class, MakeRelationManagerCommand::class, MakeResourceCommand::class, MakeWidgetCommand::class]);
+        }
+    }
+
+    /**
+     * The endpoints of forms and tables sit outside the panel's routes, so the
+     * middleware an app put on the panel runs here, in the order the panel's own
+     * routes run it. It sees the endpoint's route, which has no parameters.
+     */
+    private function runPanelMiddleware(Panel $panel, bool $isSignedIn, bool $isInTenant): void
+    {
+        $middleware = [
+            ...$panel->getMiddleware(),
+            ...($isSignedIn ? $panel->getAuthMiddleware() : []),
+            ...($isInTenant ? $panel->getTenantMiddleware() : []),
+        ];
+
+        if ($middleware === []) {
+            return;
+        }
+
+        $passed = new Response;
+
+        $response = (new Pipeline($this->app))
+            ->send(request())
+            ->through($this->app->make(Router::class)->resolveMiddleware($middleware))
+            ->then(fn (): Response => $passed);
+
+        if ($response !== $passed) {
+            throw InvalidFormToken::make('the panel\'s middleware turned the request away');
         }
     }
 

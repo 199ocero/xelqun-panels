@@ -4,8 +4,14 @@ Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and 
 
 ## Unreleased
 
+### Upgrading
+
+- **A panel's `middleware()`, `authMiddleware()` and `tenantMiddleware()` now also run on the form and table endpoints** (`/_xelqun/forms/*` and `/_xelqun/tables/*`) for every token issued inside the panel. Middleware there sees the endpoint's route, which has no route parameters, so middleware that reads one has to allow for that. A middleware that answers itself, such as a redirect, refuses the request with a 403.
+- Tokens issued before this version are refused, so a page that was open across the upgrade asks to be reloaded.
+
 ### Fixed
 
+- **The form and table endpoints skipped the panel's middleware**, so a user an app's middleware turned away (a suspended account, a lapsed subscription, an IP allow-list) could keep loading rows and running actions with a token from a page they had open. A user who still has to set up two-factor can likewise only use the profile page's tokens now.
 - **A tenant scope now applies only in the panel that added it.** All panels used to share one global scope name, so with a model in two tenancy panels, the last panel to add its scope replaced the other's. A scope also stayed on the model after a request moved to another panel, which matters under Octane. Each panel now adds its own `xelqun-panels.tenant.{panel id}` scope, and it does nothing outside that panel.
 
 ## 0.6.1 - 2026-11-10

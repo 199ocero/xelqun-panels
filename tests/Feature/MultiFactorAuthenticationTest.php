@@ -472,6 +472,21 @@ describe('requiring it', function () {
     it('refuses json outright', function () {
         $this->postJson('/admin/_search', ['q' => 'x'])->assertForbidden();
     });
+
+    it('keeps the endpoints to the profile page\'s tokens until it is set up', function () {
+        $panel = app(Panels::class)->get('admin');
+        $panel->multiFactorAuthentication();
+        $homeToken = $this->get('/admin')->viewData('page')['props']['page']['headerActions']['token'];
+        $panel->multiFactorAuthentication(isRequired: true);
+        $profileToken = $this->get('/admin/profile')->viewData('page')['props']['page']['headerActions']['token'];
+
+        $run = fn (string $token, string $action): TestResponse => $this->postJson(route('xelqun.forms.action'), [
+            'token' => $token, 'action' => "data#{$action}", 'phase' => 'run', 'state' => ['data' => []], 'data' => ['code' => '000000'], 'deps' => (object) [],
+        ]);
+
+        $run($homeToken, 'publish')->assertForbidden();
+        $run($profileToken, 'enable')->assertUnprocessable();
+    });
 });
 
 it('needs a profile page to require it', function () {
