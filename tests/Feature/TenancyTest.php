@@ -40,6 +40,23 @@ class RelationlessResource extends Resource
     }
 }
 
+class UnscopedProjectResource extends Resource
+{
+    protected static string $model = Project::class;
+
+    protected static bool $isScopedToTenant = false;
+
+    public static function form(): array
+    {
+        return [];
+    }
+
+    public static function columns(): array
+    {
+        return [];
+    }
+}
+
 function inTeam(Team $team): void
 {
     $panels = app(Panels::class);
@@ -137,6 +154,17 @@ describe('what a tenant can see', function () {
         expect(Project::count())->toBe(1);
 
         request()->attributes->remove('xelqun-panels.tenant');
+        expect(Project::count())->toBe(3);
+    });
+
+    it('keeps one panel\'s tenant scope out of another panel', function () {
+        inTeam($this->red);
+        expect(Project::count())->toBe(1);
+
+        $panels = app(Panels::class);
+        $panels->enter(Panel::make()->id('other')->path('other')->tenant(Team::class)->resources([UnscopedProjectResource::class]));
+        $panels->enterTenant($this->blue);
+
         expect(Project::count())->toBe(3);
     });
 });

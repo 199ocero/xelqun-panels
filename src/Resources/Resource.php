@@ -366,10 +366,14 @@ abstract class Resource
             throw new PanelDefinitionException('['.static::$model."] needs a [{$relationship}] relationship to belong to a tenant. Set \$isScopedToTenant to false if it doesn't.");
         }
 
-        static::$model::addGlobalScope('xelqun-panels.tenant', function (Builder $query) use ($relationship): void {
-            $tenant = app(Panels::class)->tenant();
+        $panelId = $panel->getId();
 
-            if ($tenant === null) {
+        // One scope per panel, and only in that panel: a model's scopes outlive the request.
+        static::$model::addGlobalScope("xelqun-panels.tenant.{$panelId}", function (Builder $query) use ($relationship, $panelId): void {
+            $panels = app(Panels::class);
+            $tenant = $panels->tenant();
+
+            if ($tenant === null || $panels->current()?->getId() !== $panelId) {
                 return;
             }
 

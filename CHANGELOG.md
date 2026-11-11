@@ -2,6 +2,12 @@
 
 Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+### Fixed
+
+- **A tenant scope now applies only in the panel that added it.** All panels used to share one global scope name, so with a model in two tenancy panels, the last panel to add its scope replaced the other's. A scope also stayed on the model after a request moved to another panel, which matters under Octane. Each panel now adds its own `xelqun-panels.tenant.{panel id}` scope, and it does nothing outside that panel.
+
 ## 0.6.1 - 2026-11-10
 
 ### Fixed
