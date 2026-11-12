@@ -51,11 +51,6 @@ function toggleGroup(group: PanelNavigationGroup): void {
     }
 }
 
-/** A group's icon would sit right above its links' own icons, so it shows only for links without them. */
-function showsGroupIcon(group: PanelNavigationGroup): boolean {
-    return !!group.icon && !group.items.some((item) => item.icon);
-}
-
 function showsChildren(item: PanelNavigationItem): boolean {
     return !!item.children?.length && (item.active || item.children.some((child) => child.active));
 }
@@ -182,12 +177,7 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
                         data-xq-nav-group-toggle
                         @click="toggleGroup(group)"
                     >
-                        <XqIcon
-                            v-if="showsGroupIcon(group)"
-                            :name="group.icon!"
-                            class="size-3.5"
-                            data-xq-nav-group-icon
-                        />
+                        <XqIcon v-if="group.icon" :name="group.icon" class="size-3.5" />
                         {{ group.label }}
                         <ChevronDown
                             :class="
@@ -204,12 +194,7 @@ const brandInitial = computed(() => props.panel.brand.name.charAt(0).toUpperCase
                         aria-hidden="true"
                         class="gap-1.5 px-2.5 pb-1 text-xs font-medium text-xq-muted-foreground flex items-center"
                     >
-                        <XqIcon
-                            v-if="showsGroupIcon(group)"
-                            :name="group.icon!"
-                            class="size-3.5"
-                            data-xq-nav-group-icon
-                        />
+                        <XqIcon v-if="group.icon" :name="group.icon" class="size-3.5" />
                         {{ group.label }}
                     </p>
                     <template v-if="collapsed || !isFolded(group)">
