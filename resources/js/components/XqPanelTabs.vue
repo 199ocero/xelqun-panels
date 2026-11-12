@@ -32,7 +32,7 @@ defineProps<{ tabs: PanelTab[] }>();
             {{ tab.label }}
             <span
                 v-if="tab.badge"
-                class="px-1.5 text-xs bg-xq-muted text-xq-muted-foreground rounded-full"
+                class="px-1.5 text-xs bg-xq-secondary text-xq-secondary-foreground rounded-(--xq-pill-radius)"
             >
                 {{ tab.badge }}
             </span>

@@ -17,7 +17,7 @@ import { menuClass, menuItemClass } from '../ui/classes';
 defineProps<{ navigation: PanelNavigationGroup[] }>();
 
 const itemClass =
-    'gap-1.5 px-3 py-1.5 text-sm font-medium flex shrink-0 cursor-pointer items-center rounded-full whitespace-nowrap transition-colors hover:bg-xq-nav-hover';
+    'gap-1.5 px-3 py-1.5 text-sm font-medium flex shrink-0 cursor-pointer items-center rounded-(--xq-pill-radius) whitespace-nowrap transition-colors hover:bg-xq-nav-hover';
 </script>
 
 <template>

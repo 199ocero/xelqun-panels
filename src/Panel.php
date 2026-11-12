@@ -32,6 +32,7 @@ use Xelqun\Panels\Navigation\NavigationItem;
 use Xelqun\Panels\Navigation\SidebarCard;
 use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Support\Colors\Color;
+use Xelqun\Panels\Support\Preset;
 use Xelqun\Panels\View\RenderHook;
 use Xelqun\Panels\Widgets\PanelWidget;
 
@@ -52,7 +53,7 @@ final class Panel
 
     private const string FONT = '/^[A-Za-z0-9 ]+$/';
 
-    /** Filament's semantic defaults. colors() changes only the ones it names. */
+    /** The semantic defaults. colors() changes only the ones it names, and secondary is gray unless it's named. */
     private const array DEFAULT_COLORS = [
         'primary' => '#0071e3',
         'danger' => Color::Red,
@@ -154,6 +155,10 @@ final class Panel
     private string $defaultThemeMode = 'system';
 
     private bool $hasAnimations = true;
+
+    private Preset|Closure $preset = Preset::Default;
+
+    private bool $hasThemeSwitcher = false;
 
     private bool $hasGlobalSearch = true;
 
@@ -285,10 +290,12 @@ final class Panel
     }
 
     /**
-     * The panel's colors, by name: primary, danger, gray, info, success and
-     * warning. Each is a Color or a hex value, and any left out keep their
-     * default. Text stays readable in both themes, whichever you pick. A closure
-     * runs on every request, so a color can come from a setting.
+     * The panel's colors, by name: primary, secondary, danger, gray, info,
+     * success and warning. Each is a Color or a hex value, and any left out keep
+     * their default. Primary is the brand color. Secondary is a soft tint for
+     * secondary buttons, badges and chips, and is gray unless it's named. Text
+     * stays readable in both themes, whichever you pick. A closure runs on every
+     * request, so a color can come from a setting.
      *
      * @param  array<string, mixed>|Closure(): array<string, mixed>  $colors  Each a Color or a hex value, checked by getThemeVariables().
      */
@@ -318,16 +325,16 @@ final class Panel
         foreach ([...self::DEFAULT_COLORS, ...$colors] as $name => $color) {
             $hex = $color instanceof Color ? $color->value : $color;
 
-            if (! isset(self::DEFAULT_COLORS[$name]) || ! is_string($hex) || preg_match(self::HEX_COLOR, $hex) !== 1) {
-                throw new PanelDefinitionException('colors() takes primary, danger, gray, info, success and warning, each a Color or a hex value.');
+            if ((! isset(self::DEFAULT_COLORS[$name]) && $name !== 'secondary') || ! is_string($hex) || preg_match(self::HEX_COLOR, $hex) !== 1) {
+                throw new PanelDefinitionException('colors() takes primary, secondary, danger, gray, info, success and warning, each a Color or a hex value.');
             }
 
-            $variables["--xq-panel-{$name}"] = $hex;
+            $variables["--xq-color-{$name}"] = $hex;
 
             if ($name === 'primary') {
                 $solid = Color::solidFor($hex);
-                $variables['--xq-panel-primary-fill'] = $solid['fill'];
-                $variables['--xq-panel-primary-foreground'] = $solid['text'];
+                $variables['--xq-color-primary-fill'] = $solid['fill'];
+                $variables['--xq-color-primary-foreground'] = $solid['text'];
             }
         }
 
@@ -467,6 +474,63 @@ final class Panel
     public function hasAnimations(): bool
     {
         return $this->hasAnimations;
+    }
+
+    /**
+     * The panel's style. A closure runs on every request, so it can come from a
+     * setting.
+     *
+     * @param  Preset|Closure(): Preset  $preset
+     */
+    public function preset(Preset|Closure $preset): self
+    {
+        $this->preset = $preset;
+
+        return $this;
+    }
+
+    public function getPreset(): Preset
+    {
+        $preset = $this->preset instanceof Closure ? ($this->preset)() : $this->preset;
+
+        if (! $preset instanceof Preset) {
+            throw new PanelDefinitionException('preset() takes a Preset.');
+        }
+
+        return $preset;
+    }
+
+    /**
+     * Lets anyone pick a style, a primary color and a secondary gray from the
+     * user menu. The gray is the neutral family: badges, counts, chips and the
+     * page's grays follow it. The choice is kept in their browser.
+     */
+    public function themeSwitcher(bool $condition = true): self
+    {
+        $this->hasThemeSwitcher = $condition;
+
+        return $this;
+    }
+
+    /**
+     * What the user menu offers, or null when it's off. Each color comes with its
+     * solid fill and text, so a pick reads as well as one set in colors().
+     *
+     * @return array{presets: list<string>, palette: list<array{name: string, hex: string, fill: string, text: string, gray: bool}>}|null
+     */
+    public function getThemeSwitcher(): ?array
+    {
+        if (! $this->hasThemeSwitcher) {
+            return null;
+        }
+
+        return [
+            'presets' => array_column(Preset::cases(), 'value'),
+            'palette' => array_map(
+                fn (Color $color): array => ['name' => $color->name, 'hex' => $color->value, ...Color::solidFor($color->value), 'gray' => $color->isGray()],
+                Color::cases(),
+            ),
+        ];
     }
 
     public function globalSearch(bool $condition = true): self
@@ -1460,6 +1524,8 @@ final class Panel
                 'default' => $this->defaultThemeMode,
                 'forced' => $this->getForcedThemeMode(),
                 'animations' => $this->hasAnimations,
+                'preset' => $this->getPreset()->value,
+                'switcher' => $this->getThemeSwitcher(),
             ],
             'breadcrumbs' => $this->hasBreadcrumbs,
             'userMenuItems' => $isInside ? array_map(fn (NavigationItem $item): array => $item->toArray(), $this->userMenuItems) : [],

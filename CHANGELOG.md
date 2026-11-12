@@ -2,6 +2,21 @@
 
 Xelqun Panels is beta. Until 1.0, a patch release never breaks existing code except to fix a security issue, and a minor release can, with each break listed here under "Upgrading". See [version support](https://xelqun.com/introduction/version-support).
 
+## Unreleased
+
+### Upgrading
+
+- **The color variables on `<html>` are renamed** from `--xq-panel-{name}` to `--xq-color-{name}` (primary, primary-fill, primary-foreground, danger, gray, info, success, warning), as forms now derives every token from them. `--xq-panel-font` and `--xq-panel-content-width` are unchanged.
+- **Gray badges and counts follow secondary**: navigation, page tabs, relation tabs, widget cards, sidebar card and table badges. Sharp squares them off with the other pills.
+- **Buttons are no longer pills.** They take the panel's radius. `->preset(Preset::Soft)` brings pills back.
+- The dark theme is lighter: a dim gray rather than near-black. See the forms changelog.
+
+### Added
+
+- **`colors(['secondary' => ...])`.** Secondary is a soft tint for secondary buttons, badges and chips, and is gray unless it's named. Primary stays the brand color.
+- **`->preset(Preset::Soft)`**, with `Default`, `Soft`, `Sharp` and `Mono`, free. A closure works too, so the style can come from a setting.
+- **`->themeSwitcher()`** lets anyone pick a style, a primary color and a secondary gray from the user menu. The secondary gray sets the neutral family, so badges, counts, chips and the page's grays follow it. The choice is kept in their browser, applied before the page paints, and a reset returns to the panel's own. Off by default.
+
 ## 0.7.1 - 2026-11-12
 
 ### Upgrading

@@ -36,7 +36,15 @@ const shell: PanelShell = {
     url: '/admin',
     brand: { name: 'Shop', logo: null, darkLogo: null, logoHeight: '1.75rem' },
     tenant: null,
-    theme: { colors: {}, font: 'Inter', default: 'system', forced: null, animations: true },
+    theme: {
+        colors: {},
+        font: 'Inter',
+        default: 'system',
+        forced: null,
+        animations: true,
+        preset: 'default',
+        switcher: null,
+    },
     breadcrumbs: true,
     userMenuItems: [],
     globalSearch: true,
@@ -475,7 +483,7 @@ describe('an infolist entry', () => {
     it('gives each value of a badge list its own pill', () => {
         const wrapper = entry('text-column', { state: ['Red', 'Blue'] }, { badge: true });
 
-        expect(wrapper.findAll('span.rounded-full')).toHaveLength(2);
+        expect(wrapper.findAll('span[class*="xq-pill-radius"]')).toHaveLength(2);
     });
 
     it('marks an empty value', () => {

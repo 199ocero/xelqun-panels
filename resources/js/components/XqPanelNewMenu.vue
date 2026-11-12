@@ -21,7 +21,7 @@ defineProps<{ items: PanelQuickCreateItem[]; collapsed?: boolean }>();
         <DropdownMenuTrigger
             :class="
                 cn(
-                    'gap-1.5 text-sm font-medium bg-xq-primary text-xq-primary-foreground focus-visible:ring-xq-ring h-8 inline-flex cursor-pointer items-center justify-center rounded-full transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none',
+                    'gap-1.5 text-sm font-medium border-black/10 bg-xq-primary text-xq-primary-foreground focus-visible:ring-xq-ring h-8 inline-flex cursor-pointer items-center justify-center rounded-(--xq-button-radius) border shadow-(--xq-button-highlight) transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none',
                     collapsed ? 'w-8' : 'px-3 flex-1',
                 )
             "

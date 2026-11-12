@@ -131,7 +131,12 @@ const clampStyle = computed(() =>
                 <span
                     v-for="(value, index) in values"
                     :key="index"
-                    :class="cn('px-2 py-0.5 text-xs font-medium rounded-full', toneClasses[tone])"
+                    :class="
+                        cn(
+                            'px-2 py-0.5 text-xs font-medium rounded-(--xq-pill-radius)',
+                            toneClasses[tone],
+                        )
+                    "
                 >
                     {{ value }}
                 </span>

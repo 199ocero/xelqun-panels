@@ -1,6 +1,7 @@
 import { onBeforeUnmount, watchEffect } from 'vue';
 import type { Ref } from 'vue';
 import type { PanelShell } from '../types';
+import { configureAppearance } from './useAppearance';
 import { setMessages } from './useMessages';
 import { clearMotion, configureMotion } from './useMotion';
 import { configureTheme, useThemeSync } from './useTheme';
@@ -9,7 +10,11 @@ function clearColors(): void {
     const { style } = document.documentElement;
 
     [...style]
-        .filter((name) => name.startsWith('--xq-panel-') && name !== '--xq-panel-font')
+        .filter(
+            (name) =>
+                name.startsWith('--xq-color-') ||
+                (name.startsWith('--xq-panel-') && name !== '--xq-panel-font'),
+        )
         .forEach((name) => style.removeProperty(name));
 }
 
@@ -37,6 +42,11 @@ export function usePanelDocument(panel: Ref<PanelShell>): void {
         Object.entries(panel.value.theme.colors).forEach(([variable, color]) =>
             root.style.setProperty(variable, color),
         );
+        configureAppearance(
+            panel.value.theme.preset,
+            panel.value.theme.switcher,
+            panel.value.theme.colors,
+        );
     });
 
     onBeforeUnmount(() => {
@@ -45,6 +55,7 @@ export function usePanelDocument(panel: Ref<PanelShell>): void {
         clearColors();
         clearMotion();
         root.removeAttribute('data-xq-panel');
+        root.removeAttribute('data-xq-preset');
         root.style.removeProperty('--xq-panel-font');
     });
 }

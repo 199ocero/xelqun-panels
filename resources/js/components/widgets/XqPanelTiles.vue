@@ -36,7 +36,7 @@ defineProps<{ tiles: PanelTile[]; heading: string | null; seeAllUrl: string | nu
                     v-if="tile.status"
                     :class="
                         cn(
-                            'gap-1.5 px-2 text-xs py-0.5 inline-flex w-fit items-center rounded-full',
+                            'gap-1.5 px-2 text-xs py-0.5 inline-flex w-fit items-center rounded-(--xq-pill-radius)',
                             toneClasses[tile.color] ?? toneClasses.gray,
                         )
                     "

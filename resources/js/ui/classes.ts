@@ -10,4 +10,4 @@ export const sidebarTooltipClass =
 
 /** Size and look of the round icon buttons in the top bar and sidebar. */
 export const iconButtonClass =
-    'inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-xq-muted-foreground transition-[color,background-color,scale] duration-(--xq-duration-fast) active:scale-90 [&_svg]:transition-transform [&_svg]:duration-(--xq-duration-base) [&_svg]:ease-(--xq-ease-spring) hover:[&_svg]:scale-110 hover:bg-xq-nav-hover hover:text-xq-foreground focus-visible:ring-2 focus-visible:ring-xq-ring focus-visible:outline-none';
+    'inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-(--xq-pill-radius) text-xq-muted-foreground transition-[color,background-color,scale] duration-(--xq-duration-fast) active:scale-90 [&_svg]:transition-transform [&_svg]:duration-(--xq-duration-base) [&_svg]:ease-(--xq-ease-spring) hover:[&_svg]:scale-110 hover:bg-xq-nav-hover hover:text-xq-foreground focus-visible:ring-2 focus-visible:ring-xq-ring focus-visible:outline-none';

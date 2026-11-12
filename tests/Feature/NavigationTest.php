@@ -12,6 +12,7 @@ use Xelqun\Panels\Pages\Page;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Support\Colors\Color;
+use Xelqun\Panels\Support\Preset;
 use Xelqun\Panels\Tests\Fixtures\Clusters\Billing;
 use Xelqun\Panels\Tests\Fixtures\Clusters\ClusteredTaskResource;
 use Xelqun\Panels\Tests\Fixtures\Note;
@@ -157,7 +158,7 @@ describe('theme', function () {
 
         $this->get('/admin')
             ->assertSee("--xq-panel-font: 'DM Sans'", false)
-            ->assertSee('--xq-panel-primary: #ff0088', false)
+            ->assertSee('--xq-color-primary: #ff0088', false)
             ->assertSee('family=dm-sans:', false);
     });
 
@@ -166,7 +167,7 @@ describe('theme', function () {
 
         $this->get('/admin')->assertInertia(fn (Assert $page) => $page
             ->where('xelqunPanel.theme.font', 'Inter')
-            ->where('xelqunPanel.theme.colors.--xq-panel-primary', '#ff0088'));
+            ->where('xelqunPanel.theme.colors.--xq-color-primary', '#ff0088'));
     });
 
     it('refuses a color that could break out of a style attribute', function (array $colors) {
@@ -179,8 +180,38 @@ describe('theme', function () {
     ]);
 
     it('takes every length of hex color', function (string $color) {
-        expect(Panel::make()->colors(['primary' => $color])->getThemeVariables()['--xq-panel-primary'])->toBe($color);
+        expect(Panel::make()->colors(['primary' => $color])->getThemeVariables()['--xq-color-primary'])->toBe($color);
     })->with(['#07e', '#07ef', '#0071e3', '#0071E3ff']);
+
+    it('starts on the default style and takes another, from a closure too', function () {
+        expect(Panel::make()->getPreset())->toBe(Preset::Default)
+            ->and(Panel::make()->preset(Preset::Sharp)->getPreset())->toBe(Preset::Sharp)
+            ->and(Panel::make()->preset(fn (): Preset => Preset::Mono)->getPreset())->toBe(Preset::Mono);
+    });
+
+    it('puts the style on the page and in the layout, with no switcher until it\'s turned on', function () {
+        app(Panels::class)->get('admin')->preset(Preset::Soft);
+
+        $this->get('/admin')
+            ->assertSee('data-xq-preset="soft"', false)
+            ->assertDontSee('xq-panel-appearance', false)
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('xelqunPanel.theme.preset', 'soft')
+                ->where('xelqunPanel.theme.switcher', null));
+    });
+
+    it('offers every style and color, each with its fill and text, once the switcher is on', function () {
+        app(Panels::class)->get('admin')->themeSwitcher();
+
+        $this->get('/admin')
+            ->assertSee('xq-panel-appearance', false)
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('xelqunPanel.theme.switcher.presets', ['default', 'soft', 'sharp', 'mono'])
+                ->has('xelqunPanel.theme.switcher.palette', count(Color::cases()))
+                ->where('xelqunPanel.theme.switcher.palette.0', ['name' => 'Slate', 'hex' => '#475569', ...Color::solidFor('#475569'), 'gray' => true])
+                ->where('xelqunPanel.theme.switcher.palette.9.name', 'Red')
+                ->where('xelqunPanel.theme.switcher.palette.9.gray', false));
+    });
 
     it('refuses a font that could break out of a style attribute', function () {
         Panel::make()->font("Inter'; color: red");
@@ -195,28 +226,33 @@ it('sends the page\'s heading parts', function () {
 });
 
 describe('colors', function () {
-    it('uses Filament\'s semantic colors until told otherwise', function () {
+    it('uses the semantic colors until told otherwise', function () {
         expect(Panel::make()->getThemeVariables())->toMatchArray([
-            '--xq-panel-danger' => Color::Red->value,
-            '--xq-panel-gray' => Color::Zinc->value,
-            '--xq-panel-info' => Color::Blue->value,
-            '--xq-panel-success' => Color::Green->value,
-            '--xq-panel-warning' => Color::Amber->value,
+            '--xq-color-danger' => Color::Red->value,
+            '--xq-color-gray' => Color::Zinc->value,
+            '--xq-color-info' => Color::Blue->value,
+            '--xq-color-success' => Color::Green->value,
+            '--xq-color-warning' => Color::Amber->value,
         ]);
+    });
+
+    it('takes a secondary color, and leaves it out so it stays gray', function () {
+        expect(Panel::make()->getThemeVariables())->not->toHaveKey('--xq-color-secondary')
+            ->and(Panel::make()->colors(['secondary' => Color::Teal])->getThemeVariables()['--xq-color-secondary'])->toBe(Color::Teal->value);
     });
 
     it('sends a solid fill and its text with the primary', function () {
         expect(Panel::make()->colors(['primary' => Color::Emerald])->getThemeVariables())->toMatchArray([
-            '--xq-panel-primary' => '#059669',
-            '--xq-panel-primary-foreground' => '#ffffff',
-        ])->toHaveKey('--xq-panel-primary-fill');
+            '--xq-color-primary' => '#059669',
+            '--xq-color-primary-foreground' => '#ffffff',
+        ])->toHaveKey('--xq-color-primary-fill');
     });
 
     it('changes only the colors it names, from a Color or a hex value', function () {
         expect(Panel::make()->colors(['primary' => Color::Amber, 'danger' => '#ff0000'])->getThemeVariables())->toMatchArray([
-            '--xq-panel-primary' => '#d97706',
-            '--xq-panel-danger' => '#ff0000',
-            '--xq-panel-gray' => '#52525b',
+            '--xq-color-primary' => '#d97706',
+            '--xq-color-danger' => '#ff0000',
+            '--xq-color-gray' => '#52525b',
         ]);
     });
 
@@ -267,7 +303,7 @@ describe('colors', function () {
             return ['primary' => $color];
         });
 
-        expect($panel->getThemeVariables()['--xq-panel-primary'])->toBe('#e11d48');
+        expect($panel->getThemeVariables()['--xq-color-primary'])->toBe('#e11d48');
 
         $color = 'red; background: url(evil)';
 

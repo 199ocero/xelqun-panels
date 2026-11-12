@@ -1,5 +1,6 @@
 import type { FormSchema } from '@xelqun/forms';
 import type { TableSchema } from '@xelqun/tables';
+import type { AppearanceSwitcher } from './composables/useAppearance';
 
 export interface PanelNavigationItem {
     label: string;
@@ -100,6 +101,9 @@ export interface PanelShell {
         default: 'light' | 'dark' | 'system';
         forced: 'light' | 'dark' | null;
         animations: boolean;
+        preset: string;
+        /** What the user menu offers from themeSwitcher(), or null when it's off. */
+        switcher: AppearanceSwitcher | null;
     };
     breadcrumbs: boolean;
     userMenuItems: PanelNavigationItem[];

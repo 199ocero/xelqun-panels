@@ -13,7 +13,7 @@ defineProps<{ heading: string | null; count?: number; seeAllUrl?: string | null 
             <h2 class="font-semibold">{{ heading }}</h2>
             <span
                 v-if="count !== undefined"
-                class="px-2 text-xs bg-xq-muted text-xq-muted-foreground py-0.5 rounded-full tabular-nums"
+                class="px-2 text-xs bg-xq-secondary text-xq-secondary-foreground py-0.5 rounded-(--xq-pill-radius) tabular-nums"
             >
                 {{ count }}
             </span>

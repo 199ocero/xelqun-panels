@@ -123,7 +123,7 @@ const badgeColors: Record<string, string> = {
     info: 'bg-xq-info/15 text-xq-info',
     success: 'bg-xq-success/15 text-xq-success',
     warning: 'bg-xq-warning/15 text-xq-warning',
-    gray: 'bg-xq-muted text-xq-muted-foreground',
+    gray: 'bg-xq-secondary text-xq-secondary-foreground',
 };
 </script>
 
@@ -213,7 +213,7 @@ const badgeColors: Record<string, string> = {
                         v-if="tab.badge"
                         :class="
                             cn(
-                                'px-1.5 text-xs rounded-full tabular-nums',
+                                'px-1.5 text-xs rounded-(--xq-pill-radius) tabular-nums',
                                 badgeColors[tab.badgeColor ?? 'gray'] ?? badgeColors.gray,
                             )
                         "

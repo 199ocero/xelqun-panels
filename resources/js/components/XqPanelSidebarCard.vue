@@ -22,7 +22,7 @@ const SEGMENTS = 24;
             <span class="font-medium">{{ card.title }}</span>
             <span
                 v-if="card.badge"
-                class="px-2 text-xs bg-xq-muted py-0.5 text-xq-muted-foreground ml-auto rounded-full"
+                class="px-2 text-xs bg-xq-secondary text-xq-secondary-foreground py-0.5 ml-auto rounded-(--xq-pill-radius)"
             >
                 {{ card.badge }}
             </span>

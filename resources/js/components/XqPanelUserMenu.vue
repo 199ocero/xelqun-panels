@@ -4,10 +4,14 @@ import { router } from '@inertiajs/vue3';
 import { XqIcon, XqMenuGlide } from '@xelqun/forms';
 import {
     Check,
+    ChevronRight,
     ChevronsUpDown,
     LogOut,
     Monitor,
     Moon,
+    Palette,
+    RotateCcw,
+    Shapes,
     Sparkles,
     Sun,
     UserRound,
@@ -19,11 +23,23 @@ import {
     DropdownMenuItemIndicator,
     DropdownMenuLabel,
     DropdownMenuPortal,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
     DropdownMenuRoot,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from 'reka-ui';
 import { computed } from 'vue';
+import {
+    currentPreset,
+    resetAppearance,
+    setAppearance,
+    useAppearance,
+    useAppearanceSwitcher,
+} from '../composables/useAppearance';
 import { setMotion, useMotion } from '../composables/useMotion';
 import { setTheme, useThemeChoice } from '../composables/useTheme';
 import { visitUrl } from '../lib/url';
@@ -42,6 +58,21 @@ const props = defineProps<{
 }>();
 const choice = useThemeChoice();
 const isMotionOn = useMotion();
+const switcher = useAppearanceSwitcher();
+const appearance = useAppearance();
+
+const presetLabels: Record<string, string> = {
+    default: 'Default',
+    soft: 'Soft',
+    sharp: 'Sharp',
+    mono: 'Mono',
+};
+
+/** Primary takes the colors, secondary the grays. */
+const colorRoles = [
+    { key: 'primary', label: 'Primary', isGray: false },
+    { key: 'secondary', label: 'Secondary', isGray: true },
+] as const;
 
 const themes: Array<{ value: ThemeChoice; label: string; icon: typeof Sun }> = [
     { value: 'light', label: 'Light', icon: Sun },
@@ -122,6 +153,87 @@ const initials = computed(() =>
                                 aria-hidden="true"
                             />
                         </DropdownMenuItem>
+                    </template>
+                    <template v-if="switcher">
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger :class="menuItemClass" data-xq-style-menu>
+                                <Shapes class="size-4" aria-hidden="true" />
+                                {{ t('Style') }}
+                                <ChevronRight class="size-4 ml-auto" aria-hidden="true" />
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                                <DropdownMenuSubContent :class="menuClass" :side-offset="6">
+                                    <DropdownMenuRadioGroup
+                                        :model-value="currentPreset"
+                                        @update:model-value="
+                                            setAppearance({ preset: String($event) })
+                                        "
+                                    >
+                                        <DropdownMenuRadioItem
+                                            v-for="preset in switcher.presets"
+                                            :key="preset"
+                                            :value="preset"
+                                            :class="menuItemClass"
+                                            @select.prevent
+                                        >
+                                            {{ t(presetLabels[preset] ?? preset) }}
+                                            <DropdownMenuItemIndicator class="ml-auto">
+                                                <Check class="size-4" aria-hidden="true" />
+                                            </DropdownMenuItemIndicator>
+                                        </DropdownMenuRadioItem>
+                                    </DropdownMenuRadioGroup>
+                                </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger :class="menuItemClass" data-xq-colors-menu>
+                                <Palette class="size-4" aria-hidden="true" />
+                                {{ t('Colors') }}
+                                <ChevronRight class="size-4 ml-auto" aria-hidden="true" />
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                                <DropdownMenuSubContent
+                                    :class="[menuClass, 'w-64']"
+                                    :side-offset="6"
+                                >
+                                    <template v-for="role in colorRoles" :key="role.key">
+                                        <DropdownMenuLabel
+                                            class="px-2 py-1.5 text-xs text-xq-muted-foreground"
+                                        >
+                                            {{ t(role.label) }}
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuRadioGroup
+                                            :model-value="appearance[role.key] ?? ''"
+                                            class="gap-1.5 px-2 pb-2 grid grid-cols-9"
+                                            @update:model-value="
+                                                setAppearance({ [role.key]: String($event) })
+                                            "
+                                        >
+                                            <DropdownMenuRadioItem
+                                                v-for="color in switcher.palette.filter(
+                                                    (color) => color.gray === role.isGray,
+                                                )"
+                                                :key="color.name"
+                                                :value="color.name"
+                                                :aria-label="color.name"
+                                                :title="color.name"
+                                                class="size-5 ring-offset-xq-popover data-[highlighted]:ring-xq-ring data-[state=checked]:ring-xq-foreground cursor-pointer rounded-full ring-offset-2 outline-none data-[highlighted]:ring-2 data-[state=checked]:ring-2"
+                                                :style="{ background: color.fill }"
+                                                @select.prevent
+                                            />
+                                        </DropdownMenuRadioGroup>
+                                    </template>
+                                    <DropdownMenuSeparator class="my-1 bg-xq-border h-px" />
+                                    <DropdownMenuItem
+                                        :class="menuItemClass"
+                                        @select.prevent="resetAppearance()"
+                                    >
+                                        <RotateCcw class="size-4" aria-hidden="true" />
+                                        {{ t('Reset style and colors') }}
+                                    </DropdownMenuItem>
+                                </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                        </DropdownMenuSub>
                     </template>
                     <DropdownMenuCheckboxItem
                         :class="menuItemClass"

@@ -9,12 +9,12 @@ import { sidebarTooltipClass } from '../ui/classes';
 defineProps<{ item: PanelNavigationItem; collapsed?: boolean; nested?: boolean }>();
 
 const badgeColors: Record<string, string> = {
-    primary: 'rounded-full px-1.5 bg-xq-primary/15 text-xq-primary',
-    danger: 'rounded-full px-1.5 bg-xq-destructive/15 text-xq-destructive',
-    info: 'rounded-full px-1.5 bg-xq-info/15 text-xq-info',
-    success: 'rounded-full px-1.5 bg-xq-success/15 text-xq-success',
-    warning: 'rounded-full px-1.5 bg-xq-warning/15 text-xq-warning',
-    gray: 'rounded-full px-1.5 bg-xq-muted',
+    primary: 'rounded-(--xq-pill-radius) px-1.5 bg-xq-primary/15 text-xq-primary',
+    danger: 'rounded-(--xq-pill-radius) px-1.5 bg-xq-destructive/15 text-xq-destructive',
+    info: 'rounded-(--xq-pill-radius) px-1.5 bg-xq-info/15 text-xq-info',
+    success: 'rounded-(--xq-pill-radius) px-1.5 bg-xq-success/15 text-xq-success',
+    warning: 'rounded-(--xq-pill-radius) px-1.5 bg-xq-warning/15 text-xq-warning',
+    gray: 'rounded-(--xq-pill-radius) px-1.5 bg-xq-secondary text-xq-secondary-foreground',
 };
 </script>
 

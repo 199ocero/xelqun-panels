@@ -20,33 +20,11 @@
     --color-xq-nav-active: var(--xq-nav-active);
 }
 
-/* Each neutral keeps its lightness, and takes only its tint from the gray color. */
+/* The frame around the content. Colors come from the seeds in forms' styles. */
 :root[data-xq-panel] {
-    --xq-radius: 0.875rem;
-    --xq-shell: oklch(from var(--xq-panel-gray, #52525b) 0.956 calc(c * 0.35) h);
-    --xq-nav-hover: oklch(from var(--xq-panel-gray, #52525b) 0.926 calc(c * 0.35) h);
-    --xq-nav-active: oklch(from var(--xq-panel-gray, #52525b) 0.917 calc(c * 0.35) h);
-    --xq-background: oklch(from var(--xq-panel-gray, #52525b) 0.973 calc(c * 0.35) h);
-    --xq-foreground: #1c1c1e;
-    --xq-card: #ffffff;
-    --xq-card-foreground: #1c1c1e;
-    --xq-popover: #ffffff;
-    --xq-popover-foreground: #1c1c1e;
-    --xq-primary: var(--xq-panel-primary-fill, #0071e3);
-    --xq-primary-foreground: var(--xq-panel-primary-foreground, #ffffff);
-    --xq-secondary: #f0f0f2;
-    --xq-secondary-foreground: #1c1c1e;
-    --xq-muted: oklch(from var(--xq-panel-gray, #52525b) 0.956 calc(c * 0.35) h);
-    --xq-muted-foreground: oklch(from var(--xq-panel-gray, #52525b) 0.513 calc(c * 0.35) h);
-    --xq-accent: oklch(from var(--xq-panel-gray, #52525b) 0.95 calc(c * 0.35) h);
-    --xq-accent-foreground: #1c1c1e;
-    --xq-border: oklch(from var(--xq-panel-gray, #52525b) 0.926 calc(c * 0.35) h);
-    --xq-input: oklch(from var(--xq-panel-gray, #52525b) 0.896 calc(c * 0.35) h);
-    --xq-ring: oklch(from var(--xq-panel-primary, #0071e3) min(l, 0.6) c h);
-    --xq-destructive: oklch(from var(--xq-panel-danger, #dc2626) min(l, 0.52) c h);
-    --xq-success: oklch(from var(--xq-panel-success, #16a34a) min(l, 0.5) c h);
-    --xq-warning: oklch(from var(--xq-panel-warning, #d97706) min(l, 0.52) c h);
-    --xq-info: oklch(from var(--xq-panel-info, #2563eb) min(l, 0.52) c h);
+    --xq-shell: oklch(from var(--xq-color-gray) 0.956 calc(c * 0.35) h);
+    --xq-nav-hover: oklch(from var(--xq-color-gray) 0.926 calc(c * 0.35) h);
+    --xq-nav-active: oklch(from var(--xq-color-gray) 0.917 calc(c * 0.35) h);
     font-family: var(--xq-panel-font, 'Inter'), ui-sans-serif, system-ui, sans-serif;
     /* Series colors, in this order. It passes the colorblind and contrast checks in both themes. */
     --xq-chart-1: #2a78d6;
@@ -59,31 +37,11 @@
     --xq-chart-8: #e34948;
 }
 
-/* The same steps as the light theme, from the shell up. A solid color stays as it is, so a button reads the same in both themes. */
+/* The shell sits a step below the page, and the nav steps up from it. */
 :root[data-xq-panel].dark {
-    color-scheme: dark;
-    --xq-shell: oklch(from var(--xq-panel-gray, #52525b) 0.165 calc(c * 0.35) h);
-    --xq-nav-hover: oklch(from var(--xq-panel-gray, #52525b) 0.228 calc(c * 0.35) h);
-    --xq-nav-active: oklch(from var(--xq-panel-gray, #52525b) 0.258 calc(c * 0.35) h);
-    --xq-background: oklch(from var(--xq-panel-gray, #52525b) 0.192 calc(c * 0.35) h);
-    --xq-foreground: #f4f4f5;
-    --xq-card: oklch(from var(--xq-panel-gray, #52525b) 0.223 calc(c * 0.35) h);
-    --xq-card-foreground: #f4f4f5;
-    --xq-popover: oklch(from var(--xq-panel-gray, #52525b) 0.249 calc(c * 0.35) h);
-    --xq-popover-foreground: #f4f4f5;
-    --xq-secondary: #26262a;
-    --xq-secondary-foreground: #f4f4f5;
-    --xq-muted: oklch(from var(--xq-panel-gray, #52525b) 0.258 calc(c * 0.35) h);
-    --xq-muted-foreground: oklch(from var(--xq-panel-gray, #52525b) 0.708 calc(c * 0.35) h);
-    --xq-accent: oklch(from var(--xq-panel-gray, #52525b) 0.287 calc(c * 0.35) h);
-    --xq-accent-foreground: #f4f4f5;
-    --xq-border: rgb(255 255 255 / 9%);
-    --xq-input: rgb(255 255 255 / 14%);
-    --xq-ring: oklch(from var(--xq-panel-primary, #0071e3) 0.74 c h);
-    --xq-destructive: oklch(from var(--xq-panel-danger, #dc2626) 0.7 c h);
-    --xq-success: oklch(from var(--xq-panel-success, #16a34a) 0.74 c h);
-    --xq-warning: oklch(from var(--xq-panel-warning, #d97706) 0.8 c h);
-    --xq-info: oklch(from var(--xq-panel-info, #2563eb) 0.74 c h);
+    --xq-shell: oklch(from var(--xq-color-gray) 0.235 calc(c * 0.35) h);
+    --xq-nav-hover: oklch(from var(--xq-color-gray) 0.3 calc(c * 0.35) h);
+    --xq-nav-active: oklch(from var(--xq-color-gray) 0.335 calc(c * 0.35) h);
     --xq-chart-1: #3987e5;
     --xq-chart-2: #d95926;
     --xq-chart-3: #199e70;
@@ -94,28 +52,21 @@
     --xq-chart-8: #e66767;
 }
 
+:root[data-xq-panel][data-xq-preset='mono'] {
+    --xq-shell: oklch(0.955 0 0);
+    --xq-nav-hover: oklch(0.925 0 0);
+    --xq-nav-active: oklch(0.91 0 0);
+}
+
+:root[data-xq-panel][data-xq-preset='mono'].dark {
+    --xq-shell: oklch(0.215 0 0);
+    --xq-nav-hover: oklch(0.28 0 0);
+    --xq-nav-active: oklch(0.32 0 0);
+}
+
 :root[data-xq-panel] body {
     background: var(--xq-shell);
     color: var(--xq-foreground);
-}
-
-/*
- * A fill and text are different jobs. Colored text has to read on the page, so
- * it's capped in lightness on the light theme and lifted on the dark one, keeping
- * its hue. Plain 600 shades miss AA as text on white: green-600 is 3.3:1.
- */
-:root[data-xq-panel]:not(.dark) .text-xq-primary {
-    color: oklch(from var(--xq-panel-primary, #0071e3) min(l, 0.52) c h);
-}
-
-:root[data-xq-panel].dark .text-xq-primary {
-    color: oklch(from var(--xq-panel-primary, #0071e3) 0.74 c h);
-}
-
-/* The danger token is lifted for text on the dark theme, so a solid button stays deep, with white text. */
-:root[data-xq-panel].dark .bg-xq-destructive {
-    background-color: oklch(from var(--xq-panel-danger, #dc2626) min(l, 0.52) c h);
-    color: #ffffff;
 }
 
 /* A logo or icon for each theme, with no flash when the theme changes. */
@@ -128,11 +79,6 @@
     display: block;
 }
 
-/* No card shadows or tall corners: hairlines do the work, as buttons do with pills. */
-:root[data-xq-panel] [data-slot='xq-button'] {
-    border-radius: 9999px;
-}
-
 :root[data-xq-panel] [data-xq-table-scroll] {
     background: var(--xq-card);
 }
@@ -143,7 +89,7 @@
     --xq-input: transparent;
 }
 
-[data-xq-panel-auth] [data-xq-path] .h-9 {
+[data-xq-panel-auth] [data-xq-path] .h-10 {
     --tw-shadow: 0 0 #0000;
     height: 3.25rem;
     font-size: 1rem;
@@ -158,7 +104,7 @@
 
 /* Soft shapes drifting in the panel's own color. Only transforms move, so it stays cheap to draw. */
 [data-xq-auth-gradient] {
-    background: oklch(from var(--xq-panel-primary, #0071e3) 0.32 min(c, 0.12) h);
+    background: oklch(from var(--xq-color-primary) 0.32 min(c, 0.12) h);
 }
 
 [data-xq-auth-gradient] > span {
@@ -175,7 +121,7 @@
     left: -30%;
     background: radial-gradient(
         closest-side,
-        oklch(from var(--xq-panel-primary, #0071e3) 0.65 c h),
+        oklch(from var(--xq-color-primary) 0.65 c h),
         transparent
     );
 }
@@ -185,7 +131,7 @@
     bottom: -30%;
     background: radial-gradient(
         closest-side,
-        oklch(from var(--xq-panel-primary, #0071e3) 0.75 c calc(h - 30)),
+        oklch(from var(--xq-color-primary) 0.75 c calc(h - 30)),
         transparent
     );
     animation-duration: 31s;
@@ -197,10 +143,15 @@
     left: 5%;
     background: radial-gradient(
         closest-side,
-        oklch(from var(--xq-panel-primary, #0071e3) 0.55 c calc(h + 25)),
+        oklch(from var(--xq-color-primary) 0.55 c calc(h + 25)),
         transparent
     );
     animation-duration: 38s;
+}
+
+/* Mono keeps the sign-in screen black and white too. */
+:root[data-xq-preset='mono'] [data-xq-auth-gradient] {
+    filter: grayscale(1);
 }
 
 /* A bright shape can drift behind the quote, so the corner it sits in stays dark. */

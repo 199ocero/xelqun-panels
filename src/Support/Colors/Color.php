@@ -53,6 +53,14 @@ enum Color: string
     private const float DARK_TEXT_CHROMA = 0.55;
 
     /**
+     * The neutrals, Slate through Olive, for gray and secondary.
+     */
+    public function isGray(): bool
+    {
+        return in_array($this, [self::Slate, self::Gray, self::Zinc, self::Neutral, self::Stone, self::Taupe, self::Mauve, self::Mist, self::Olive], true);
+    }
+
+    /**
      * Every case by name, for a Select that lets someone choose.
      *
      * @return array<string, string>
@@ -79,8 +87,7 @@ enum Color: string
      * White on a color reads best, even where WCAG's formula scores black higher,
      * as it does on a mid-tone green. So the fill deepens until white passes AA,
      * keeping its hue. Yellows, ambers and limes turn brown that way, so they go
-     * bright instead, with dark text in their own hue. Filament and Radix both
-     * treat them as a special case too.
+     * bright instead, with dark text in their own hue.
      *
      * @return array{fill: string, text: string}
      */

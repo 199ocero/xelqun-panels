@@ -5,7 +5,7 @@ export const toneClasses: Record<string, string> = {
     warning: 'bg-xq-warning/12 text-xq-warning',
     danger: 'bg-xq-destructive/12 text-xq-destructive',
     info: 'bg-xq-info/12 text-xq-info',
-    gray: 'bg-xq-muted text-xq-muted-foreground',
+    gray: 'bg-xq-secondary text-xq-secondary-foreground',
 };
 
 /** The same names, for text with no background. */

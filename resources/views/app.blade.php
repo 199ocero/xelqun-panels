@@ -1,8 +1,10 @@
 @php($panel = app(\Xelqun\Panels\Panels::class)->current())
+@php($switcher = $panel->getThemeSwitcher())
 <!DOCTYPE html>
 <html
     lang="{{ str_replace('_', '-', app()->getLocale()) }}"
     data-xq-panel
+    data-xq-preset="{{ $panel->getPreset()->value }}"
     style="--xq-panel-font: '{{ $panel->getFont() }}'; @foreach ($panel->getThemeVariables() as $variable => $color) {{ $variable }}: {{ $color }}; @endforeach"
 >
     <head>
@@ -22,6 +24,29 @@
 
                     var motion = localStorage.getItem('xq-panel-motion');
                     document.documentElement.toggleAttribute('data-xq-motion-off', motion ? motion === 'off' : ! @json($panel->hasAnimations()));
+                    @if ($switcher)
+                        {{-- The style and colors someone picked from the user menu. useAppearance keeps them up to date afterwards. --}}
+                        var root = document.documentElement;
+                        var saved = JSON.parse(localStorage.getItem('xq-panel-appearance') || '{}');
+                        var palette = @json(array_column($switcher['palette'], null, 'name'));
+                        var primary = palette[saved.primary] && ! palette[saved.primary].gray ? palette[saved.primary] : null;
+                        var secondary = palette[saved.secondary] && palette[saved.secondary].gray ? palette[saved.secondary] : null;
+
+                        if (@json($switcher['presets']).indexOf(saved.preset) !== -1) {
+                            root.setAttribute('data-xq-preset', saved.preset);
+                        }
+
+                        if (primary) {
+                            root.style.setProperty('--xq-color-primary', primary.hex);
+                            root.style.setProperty('--xq-color-primary-fill', primary.fill);
+                            root.style.setProperty('--xq-color-primary-foreground', primary.text);
+                        }
+
+                        if (secondary) {
+                            root.style.setProperty('--xq-color-secondary', secondary.hex);
+                            root.style.setProperty('--xq-color-gray', secondary.hex);
+                        }
+                    @endif
                 } catch (error) {}
             })();
         </script>
