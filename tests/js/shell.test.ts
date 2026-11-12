@@ -114,6 +114,32 @@ describe('the sidebar', () => {
         localStorage.clear();
     });
 
+    it("shows a group's icon only when its links have none of their own", () => {
+        const item = (label: string, icon: string | null) => ({
+            label,
+            icon,
+            url: `/${label}`,
+            active: false,
+            badge: null,
+        });
+        const panel = {
+            ...shell,
+            navigation: [
+                { label: 'Shop', icon: 'users', items: [item('Orders', 'users')] },
+                { label: 'Help', icon: 'settings', items: [item('Docs', null)] },
+            ],
+        };
+        const wrapper = mount(XqPanelSidebar, { props: { panel } });
+
+        expect(wrapper.findAll('[data-xq-nav-group-icon]')).toHaveLength(1);
+        expect(
+            wrapper
+                .find('[role="group"][aria-label="Help"]')
+                .find('[data-xq-nav-group-icon]')
+                .exists(),
+        ).toBe(true);
+    });
+
     it('marks the current page and names its groups', () => {
         const wrapper = mount(XqPanelSidebar, { props: { panel: shell } });
 
