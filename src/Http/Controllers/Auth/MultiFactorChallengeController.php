@@ -13,6 +13,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Response;
 use Xelqun\Notifications\Notification;
 use Xelqun\Panels\Auth\AppAuthentication;
+use Xelqun\Panels\Auth\FortifyTwoFactor;
 use Xelqun\Panels\Auth\MultiFactorChallengeForm;
 use Xelqun\Panels\Auth\Notifications\EmailCode;
 use Xelqun\Panels\Contracts\HasAppAuthentication;
@@ -193,7 +194,11 @@ final class MultiFactorChallengeController extends AuthController
             return true;
         }
 
-        return $user instanceof HasAppAuthentication && AppAuthentication::verify($user, $code);
+        if ($user instanceof HasAppAuthentication && AppAuthentication::verify($user, $code)) {
+            return true;
+        }
+
+        return $user !== null && FortifyTwoFactor::verify($user, $code);
     }
 
     private function sessionKey(): string

@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -8,6 +9,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Fortify\Features;
+use Laravel\Fortify\FortifyServiceProvider;
 use Xelqun\Panels\Auth\AppAuthentication;
 use Xelqun\Panels\Auth\Notifications\EmailCode;
 use Xelqun\Panels\Auth\ProfileActions;
@@ -16,6 +19,7 @@ use Xelqun\Panels\Exceptions\PanelDefinitionException;
 use Xelqun\Panels\Panel;
 use Xelqun\Panels\Panels;
 use Xelqun\Panels\Resources\ResourceTable;
+use Xelqun\Panels\Tests\Fixtures\FortifyUser;
 use Xelqun\Panels\Tests\Fixtures\Resources\TaskPolicy;
 use Xelqun\Panels\Tests\Fixtures\Resources\TaskResource;
 use Xelqun\Panels\Tests\Fixtures\Task;
@@ -224,6 +228,84 @@ describe('signing in', function () {
         expect($this->user->fresh()->toArray())->not->toHaveKeys(['app_authentication_secret', 'app_authentication_recovery_codes'])
             ->and(DB::table('users')->value('app_authentication_secret'))->not->toBe(RFC_SECRET)
             ->and(DB::table('users')->value('app_authentication_recovery_codes'))->not->toContain('abcde-12345');
+    });
+});
+
+describe("Fortify's own two-factor", function () {
+    beforeEach(function () {
+        $this->app->register(FortifyServiceProvider::class);
+        config([
+            'fortify.features' => [Features::twoFactorAuthentication(['confirm' => true])],
+            'auth.providers.users.model' => FortifyUser::class,
+        ]);
+
+        $this->user = FortifyUser::create(['name' => 'Ada', 'email' => 'ada@example.com', 'password' => Hash::make('secret')]);
+        $this->user->forceFill([
+            'two_factor_secret' => Crypt::encrypt(RFC_SECRET),
+            'two_factor_recovery_codes' => Crypt::encrypt(json_encode(['abcde-12345', 'fghij-67890'])),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+    });
+
+    it('does not sign in on the password alone, with none of the panel\'s own two-factor set up', function () {
+        expect($this->user->getAppAuthenticationSecret())->toBeNull()
+            ->and(app(Panels::class)->get('admin')->sendsEmailCodeTo($this->user))->toBeFalse();
+
+        passPassword()->assertRedirect('/admin/two-factor');
+
+        $this->assertGuest('admin');
+    });
+
+    it('asks on a panel with its own two-factor off', function () {
+        expect(app(Panels::class)->get('team')->hasMultiFactorAuthentication())->toBeFalse()
+            ->and(app(Panels::class)->get('team')->hasEmailAuthentication())->toBeFalse();
+
+        $this->post('/team/login', ['data' => ['email' => 'ada@example.com', 'password' => 'secret']])->assertRedirect('/team/two-factor');
+        $this->assertGuest('admin');
+
+        $this->post('/team/two-factor', ['data' => ['code' => currentCode()]])->assertRedirect('/team');
+        $this->assertAuthenticatedAs($this->user->fresh(), 'admin');
+    });
+
+    it('signs in with a code from the authenticator app', function () {
+        passPassword();
+
+        answerChallenge(currentCode())->assertRedirect('/admin');
+
+        $this->assertAuthenticatedAs($this->user->fresh(), 'admin');
+    });
+
+    it('refuses a wrong code', function () {
+        passPassword();
+
+        answerChallenge('000000')->assertSessionHasErrors('data.code');
+
+        $this->assertGuest('admin');
+    });
+
+    it('takes a recovery code once, and replaces it', function () {
+        passPassword();
+        answerChallenge('abcde-12345')->assertRedirect('/admin');
+        $this->post('/admin/logout');
+
+        passPassword();
+        answerChallenge('abcde-12345')->assertSessionHasErrors('data.code');
+
+        expect($this->user->fresh()->recoveryCodes())->not->toContain('abcde-12345')->toHaveCount(2);
+    });
+
+    it('still asks on the panel after signing in another way', function () {
+        $this->actingAs($this->user, 'admin');
+
+        $this->get('/admin')->assertRedirect('/admin/two-factor');
+    });
+
+    it('leaves the user alone once the app turns Fortify\'s two-factor off', function () {
+        config(['fortify.features' => []]);
+
+        passPassword()->assertRedirect('/admin');
+
+        $this->assertAuthenticated('admin');
     });
 });
 

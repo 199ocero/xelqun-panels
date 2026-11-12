@@ -2,6 +2,17 @@
 
 Xelqun Panels is alpha. Until 1.0, a minor version can break existing code, and each break is listed here.
 
+## Unreleased
+
+### Upgrading
+
+- **A user with Fortify's own two-factor turned on is asked for a code at the panel's login**, as a starter kit sets it up. Their authenticator app or a Fortify recovery code answers it. A session that passed Fortify's challenge is asked again on the panel. Turning Fortify's `twoFactorAuthentication` feature off stops it.
+
+### Fixed
+
+- **The panel's login skipped Fortify's two-factor.** It signs in on the app's guard, so a starter kit user with two-factor turned on got a session for the whole app, not just the panel, on the password alone.
+- `xelqun-panels:install` said "Xelqun Forms is installed." twice.
+
 ## 0.7.0 - 2026-11-11
 
 ### Upgrading

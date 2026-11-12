@@ -15,6 +15,7 @@ use Symfony\Component\Finder\SplFileInfo;
 use Xelqun\Forms\Form;
 use Xelqun\Forms\Support\SafeUrl;
 use Xelqun\Panels\Auth\EditProfileForm;
+use Xelqun\Panels\Auth\FortifyTwoFactor;
 use Xelqun\Panels\Auth\LoginForm;
 use Xelqun\Panels\Auth\RegisterForm;
 use Xelqun\Panels\Auth\RequestPasswordResetForm;
@@ -1017,12 +1018,15 @@ final class Panel
     }
 
     /**
-     * Whether a password alone isn't enough for this user here.
+     * Whether a password alone isn't enough for this user here. Fortify's own
+     * two-factor counts even with the panel's off, as the panel signs in on the
+     * same guard.
      */
     public function needsChallenge(?Authenticatable $user): bool
     {
         return ($this->hasMultiFactorAuthentication && $user instanceof HasAppAuthentication && $user->getAppAuthenticationSecret() !== null)
-            || $this->sendsEmailCodeTo($user);
+            || $this->sendsEmailCodeTo($user)
+            || FortifyTwoFactor::isEnabledFor($user);
     }
 
     /**

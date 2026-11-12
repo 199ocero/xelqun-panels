@@ -10,3 +10,8 @@ parameters:
     ignoreErrors:
         # Traits here are for an app's models, so nothing in this package uses them.
         - identifier: trait.unused
+        # Fortify's trait, which it checks the user has with class_uses_recursive() first.
+        - identifier: method.notFound
+          path: src/Auth/FortifyTwoFactor.php
+        - identifier: property.notFound
+          path: src/Auth/FortifyTwoFactor.php

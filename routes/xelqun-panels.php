@@ -38,11 +38,10 @@ foreach (app(Panels::class)->all() as $panel) {
                 Route::post('login', [LoginController::class, 'store'])->middleware("throttle:20,1,xelqun-panels.{$panel->getId()}.auth.login")->name('auth.login.store');
             }
 
-            if ($panel->hasMultiFactorAuthentication() || $panel->hasEmailAuthentication()) {
-                Route::get('two-factor', [MultiFactorChallengeController::class, 'show'])->name('auth.challenge');
-                Route::post('two-factor', [MultiFactorChallengeController::class, 'store'])->name('auth.challenge.store');
-                Route::post('two-factor/resend', [MultiFactorChallengeController::class, 'resend'])->middleware("throttle:3,1,xelqun-panels.{$panel->getId()}.auth.challenge.resend")->name('auth.challenge.resend');
-            }
+            // Even with the panel's own two-factor off, as Fortify's can still ask. Without a challenge under way, it sends people to the login.
+            Route::get('two-factor', [MultiFactorChallengeController::class, 'show'])->name('auth.challenge');
+            Route::post('two-factor', [MultiFactorChallengeController::class, 'store'])->name('auth.challenge.store');
+            Route::post('two-factor/resend', [MultiFactorChallengeController::class, 'resend'])->middleware("throttle:3,1,xelqun-panels.{$panel->getId()}.auth.challenge.resend")->name('auth.challenge.resend');
 
             if ($panel->getPasswordResetRequestForm() !== null) {
                 Route::get('forgot-password', [PasswordResetController::class, 'showRequest'])->name('auth.password.request');
