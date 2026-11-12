@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     configureAppearance,
     currentPreset,
@@ -6,12 +6,21 @@ import {
     setAppearance,
 } from '../../resources/js/composables/useAppearance';
 
+const { postJson } = vi.hoisted(() => ({ postJson: vi.fn(() => Promise.resolve(null)) }));
+
+vi.mock('@xelqun/forms/internal', async (original) => ({
+    ...(await original<object>()),
+    postJson,
+}));
+
 const switcher = {
     presets: ['default', 'soft', 'sharp', 'mono'],
     palette: [
         { name: 'Stone', hex: '#57534e', fill: '#57534e', text: '#ffffff', gray: true },
         { name: 'Violet', hex: '#7c3aed', fill: '#7c3aed', text: '#ffffff', gray: false },
     ],
+    saved: null,
+    saveUrl: null,
 };
 
 const panelColors = { '--xq-color-primary': '#0071e3', '--xq-color-gray': '#52525b' };
@@ -22,6 +31,7 @@ function css(name: string): string {
 
 describe('appearance', () => {
     beforeEach(() => {
+        postJson.mockClear();
         localStorage.clear();
         configureAppearance('soft', switcher, panelColors);
     });
@@ -57,5 +67,30 @@ describe('appearance', () => {
 
         expect(css('--xq-color-primary')).toBe('#0071e3');
         expect(document.documentElement.getAttribute('data-xq-preset')).toBe('default');
+    });
+
+    it('takes the account copy on a page load, and saves each pick back to it', () => {
+        localStorage.setItem('xq-panel-appearance', JSON.stringify({ preset: 'mono' }));
+        configureAppearance(
+            'soft',
+            { ...switcher, saved: { preset: 'sharp' }, saveUrl: '/admin/_appearance' },
+            panelColors,
+        );
+
+        expect(currentPreset.value).toBe('sharp');
+        expect(JSON.parse(localStorage.getItem('xq-panel-appearance')!)).toEqual({
+            preset: 'sharp',
+        });
+
+        setAppearance({ primary: 'Violet' });
+
+        expect(postJson).toHaveBeenCalledWith('/admin/_appearance', {
+            preset: 'sharp',
+            primary: 'Violet',
+        });
+
+        resetAppearance();
+
+        expect(postJson).toHaveBeenLastCalledWith('/admin/_appearance', {});
     });
 });

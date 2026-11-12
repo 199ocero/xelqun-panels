@@ -27,7 +27,7 @@
                     @if ($switcher)
                         {{-- The style and colors someone picked from the user menu. useAppearance keeps them up to date afterwards. --}}
                         var root = document.documentElement;
-                        var saved = JSON.parse(localStorage.getItem('xq-panel-appearance') || '{}');
+                        var saved = @json($switcher['saved'] ?: null) || JSON.parse(localStorage.getItem('xq-panel-appearance') || '{}');
                         var palette = @json(array_column($switcher['palette'], null, 'name'));
                         var primary = palette[saved.primary] && ! palette[saved.primary].gray ? palette[saved.primary] : null;
                         var secondary = palette[saved.secondary] && palette[saved.secondary].gray ? palette[saved.secondary] : null;

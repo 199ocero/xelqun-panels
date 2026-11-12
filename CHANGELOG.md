@@ -16,6 +16,8 @@ Xelqun Panels is beta. Until 1.0, a patch release never breaks existing code exc
 - **`colors(['secondary' => ...])`.** Secondary is a soft tint for secondary buttons, badges and chips, and is gray unless it's named. Primary stays the brand color.
 - **`->preset(Preset::Soft)`**, with `Default`, `Soft`, `Sharp` and `Mono`, free. A closure works too, so the style can come from a setting.
 - **`->themeSwitcher()`** lets anyone pick a style, a primary color and a secondary gray from the user menu. The secondary gray sets the neutral family, so badges, counts, chips and the page's grays follow it. The choice is kept in their browser, applied before the page paints, and a reset returns to the panel's own. Off by default.
+- **Keep the switcher's choice on the account**, so it follows someone to every browser: implement `HasPanelAppearance` on the user model with the `InteractsWithPanelAppearance` trait, and publish its column with `php artisan vendor:publish --tag=xelqun-panels-appearance`. Each pick is saved through `POST {panel}/_appearance`, which accepts only the switcher's own choices. A page load takes the account's copy; without the trait the choice stays in the browser.
+- **Keep the switcher's choice on the account**, so it follows someone to every browser: implement `HasPanelAppearance` on the user model with the `InteractsWithPanelAppearance` trait, and publish its column with `php artisan vendor:publish --tag=xelqun-panels-appearance`. Each pick is saved through `POST {panel}/_appearance`, which accepts only the switcher's own choices. A page load takes the account's copy; without the trait the choice stays in the browser.
 
 ## 0.7.1 - 2026-11-12
 

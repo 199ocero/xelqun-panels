@@ -201,9 +201,9 @@ describe('theme', function () {
     });
 
     it('offers every style and color, each with its fill and text, once the switcher is on', function () {
-        app(Panels::class)->get('admin')->themeSwitcher();
+        auth()->user()->forceFill(['email_verified_at' => now()])->save();
 
-        $this->get('/admin')
+        $this->get('/staff')
             ->assertSee('xq-panel-appearance', false)
             ->assertInertia(fn (Assert $page) => $page
                 ->where('xelqunPanel.theme.switcher.presets', ['default', 'soft', 'sharp', 'mono'])
@@ -216,6 +216,51 @@ describe('theme', function () {
     it('refuses a font that could break out of a style attribute', function () {
         Panel::make()->font("Inter'; color: red");
     })->throws(PanelDefinitionException::class);
+});
+
+describe('a theme switcher kept on the account', function () {
+    beforeEach(function () {
+        $this->user = auth()->user();
+        $this->user->forceFill(['email_verified_at' => now()])->save();
+    });
+
+    it('saves a pick on the account and sends it back with the URL that saves it', function () {
+        $pick = ['preset' => 'sharp', 'primary' => 'Violet', 'secondary' => 'Stone'];
+
+        $this->post('/staff/_appearance', $pick)->assertNoContent();
+
+        expect($this->user->fresh()->getPanelAppearance())->toBe($pick);
+
+        $this->get('/staff')
+            ->assertSee('"preset":"sharp"', false)
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('xelqunPanel.theme.switcher.saved', $pick)
+                ->where('xelqunPanel.theme.switcher.saveUrl', route('xelqun-panels.staff.appearance')));
+    });
+
+    it('refuses anything the switcher doesn\'t offer', function (array $pick) {
+        $this->postJson('/staff/_appearance', $pick)->assertUnprocessable();
+
+        expect($this->user->fresh()->getPanelAppearance())->toBe([]);
+    })->with([
+        'a gray as primary' => [['primary' => 'Stone']],
+        'a color as secondary' => [['secondary' => 'Violet']],
+        'an unknown style' => [['preset' => 'retro']],
+        'a hex value' => [['primary' => '#ff0000']],
+    ]);
+
+    it('clears the account on a reset', function () {
+        $this->user->savePanelAppearance(['preset' => 'mono']);
+
+        $this->post('/staff/_appearance', [])->assertNoContent();
+
+        expect($this->user->fresh()->getPanelAppearance())->toBe([]);
+    });
+
+    it('has no save route on a panel without the switcher', function () {
+        expect(Route::has('xelqun-panels.staff.appearance'))->toBeTrue()
+            ->and(Route::has('xelqun-panels.admin.appearance'))->toBeFalse();
+    });
 });
 
 it('sends the page\'s heading parts', function () {

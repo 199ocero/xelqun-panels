@@ -129,6 +129,10 @@ class PanelsServiceProvider extends ServiceProvider
                 __DIR__.'/../database/migrations/add_app_authentication_to_users_table.php.stub' => database_path('migrations/2026_01_01_000000_add_app_authentication_to_users_table.php'),
             ], 'xelqun-panels-mfa');
 
+            $this->publishesMigrations([
+                __DIR__.'/../database/migrations/add_panel_appearance_to_users_table.php.stub' => database_path('migrations/2026_01_01_000001_add_panel_appearance_to_users_table.php'),
+            ], 'xelqun-panels-appearance');
+
             $this->commands([InstallCommand::class, MakePageCommand::class, MakePanelCommand::class, MakeRelationManagerCommand::class, MakeResourceCommand::class, MakeWidgetCommand::class]);
         }
     }

@@ -22,6 +22,7 @@ use Xelqun\Panels\Auth\RequestPasswordResetForm;
 use Xelqun\Panels\Auth\ResetPasswordForm;
 use Xelqun\Panels\Contracts\HasAppAuthentication;
 use Xelqun\Panels\Contracts\HasEmailAuthentication;
+use Xelqun\Panels\Contracts\HasPanelAppearance;
 use Xelqun\Panels\Contracts\HasTenants;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Contracts\Plugin;
@@ -503,7 +504,8 @@ final class Panel
     /**
      * Lets anyone pick a style, a primary color and a secondary gray from the
      * user menu. The gray is the neutral family: badges, counts, chips and the
-     * page's grays follow it. The choice is kept in their browser.
+     * page's grays follow it. The choice is kept in their browser, and on their
+     * account too when the user model implements HasPanelAppearance.
      */
     public function themeSwitcher(bool $condition = true): self
     {
@@ -512,11 +514,18 @@ final class Panel
         return $this;
     }
 
+    public function hasThemeSwitcher(): bool
+    {
+        return $this->hasThemeSwitcher;
+    }
+
     /**
      * What the user menu offers, or null when it's off. Each color comes with its
-     * solid fill and text, so a pick reads as well as one set in colors().
+     * solid fill and text, so a pick reads as well as one set in colors(). A user
+     * who keeps their choice on their account gets it as saved, with the URL that
+     * saves a new one.
      *
-     * @return array{presets: list<string>, palette: list<array{name: string, hex: string, fill: string, text: string, gray: bool}>}|null
+     * @return array{presets: list<string>, palette: list<array{name: string, hex: string, fill: string, text: string, gray: bool}>, saved: array{preset?: string, primary?: string, secondary?: string}|null, saveUrl: string|null}|null
      */
     public function getThemeSwitcher(): ?array
     {
@@ -524,7 +533,13 @@ final class Panel
             return null;
         }
 
+        $user = auth()->user();
+        // A panel with tenants has no URL to save to until a tenant is picked.
+        $keepsIt = $user instanceof HasPanelAppearance && $this->allows($user) && (! $this->hasTenancy() || app(Panels::class)->tenant() !== null);
+
         return [
+            'saved' => $keepsIt ? $user->getPanelAppearance() : null,
+            'saveUrl' => $keepsIt ? route($this->routeName('appearance')) : null,
             'presets' => array_column(Preset::cases(), 'value'),
             'palette' => array_map(
                 fn (Color $color): array => ['name' => $color->name, 'hex' => $color->value, ...Color::solidFor($color->value), 'gray' => $color->isGray()],

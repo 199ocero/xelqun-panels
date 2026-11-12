@@ -1,11 +1,18 @@
+import { postJson } from '@xelqun/forms/internal';
 import { computed, ref } from 'vue';
 
 /** A color someone can pick. Grays are for secondary, the rest for primary. */
 export type PaletteColor = { name: string; hex: string; fill: string; text: string; gray: boolean };
 
-export type AppearanceSwitcher = { presets: string[]; palette: PaletteColor[] };
-
 export type Appearance = { preset?: string; primary?: string; secondary?: string };
+
+export type AppearanceSwitcher = {
+    presets: string[];
+    palette: PaletteColor[];
+    /** What the account keeps, when the user model does. An empty list means nothing yet. */
+    saved: Appearance | [] | null;
+    saveUrl: string | null;
+};
 
 const STORAGE_KEY = 'xq-panel-appearance';
 
@@ -23,6 +30,9 @@ const appearance = ref<Appearance>({});
 
 const panelPreset = ref('default');
 let panelColors: Record<string, string> = {};
+
+/** The account's copy is read once per page load. After that this tab's own picks lead, so a visit can't undo one that's still saving. */
+let hasReadAccount = false;
 
 function read(): Appearance {
     try {
@@ -79,31 +89,50 @@ export function configureAppearance(
     panelColors = colors;
     switcher.value = options;
     appearance.value = read();
+
+    const saved = options?.saved;
+
+    if (!hasReadAccount && saved && !Array.isArray(saved) && Object.keys(saved).length > 0) {
+        hasReadAccount = true;
+        remember(saved);
+    }
+
     apply();
 }
 
-export function setAppearance(change: Appearance): void {
-    appearance.value = { ...appearance.value, ...change };
+function remember(next: Appearance): void {
+    appearance.value = next;
 
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appearance.value));
+        if (Object.keys(next).length > 0) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        } else {
+            localStorage.removeItem(STORAGE_KEY);
+        }
     } catch {
         // Storage can be blocked. The choice still holds for this visit.
     }
+}
 
+/** Keeps it on the account too. A failed save leaves the choice in this browser. */
+function save(): void {
+    const url = switcher.value?.saveUrl;
+
+    if (url) {
+        postJson(url, appearance.value).catch(() => {});
+    }
+}
+
+export function setAppearance(change: Appearance): void {
+    remember({ ...appearance.value, ...change });
     apply();
+    save();
 }
 
 export function resetAppearance(): void {
-    appearance.value = {};
-
-    try {
-        localStorage.removeItem(STORAGE_KEY);
-    } catch {
-        // Nothing was saved.
-    }
-
+    remember({});
     apply();
+    save();
 }
 
 /** Null when the panel doesn't offer a switcher. */

@@ -10,15 +10,18 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Xelqun\Panels\Auth\Concerns\InteractsWithAppAuthentication;
+use Xelqun\Panels\Auth\Concerns\InteractsWithPanelAppearance;
 use Xelqun\Panels\Contracts\HasAppAuthentication;
 use Xelqun\Panels\Contracts\HasEmailAuthentication;
+use Xelqun\Panels\Contracts\HasPanelAppearance;
 use Xelqun\Panels\Contracts\HasTenants;
 use Xelqun\Panels\Contracts\PanelUser;
 use Xelqun\Panels\Panel;
 
-class User extends Authenticatable implements HasAppAuthentication, HasEmailAuthentication, HasTenants, MustVerifyEmail, PanelUser
+class User extends Authenticatable implements HasAppAuthentication, HasEmailAuthentication, HasPanelAppearance, HasTenants, MustVerifyEmail, PanelUser
 {
     use InteractsWithAppAuthentication;
+    use InteractsWithPanelAppearance;
     use Notifiable;
 
     public static bool $allowed = true;

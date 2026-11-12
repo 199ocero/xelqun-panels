@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Xelqun\Panels\Http\Controllers\AppearanceController;
 use Xelqun\Panels\Http\Controllers\Auth\EmailChangeController;
 use Xelqun\Panels\Http\Controllers\Auth\EmailVerificationController;
 use Xelqun\Panels\Http\Controllers\Auth\LoginController;
@@ -89,6 +90,10 @@ foreach (app(Panels::class)->all() as $panel) {
                     if ($panel->hasGlobalSearch()) {
                         // The underscore keeps it clear of a page or resource called search.
                         Route::post('_search', GlobalSearchController::class)->middleware("throttle:60,1,xelqun-panels.{$panel->getId()}.search")->name('search');
+                    }
+
+                    if ($panel->hasThemeSwitcher()) {
+                        Route::post('_appearance', AppearanceController::class)->middleware("throttle:60,1,xelqun-panels.{$panel->getId()}.appearance")->name('appearance');
                     }
 
                     if ($panel->hasTenancy()) {
