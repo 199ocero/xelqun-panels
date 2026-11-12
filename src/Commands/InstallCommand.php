@@ -32,7 +32,7 @@ class InstallCommand extends Command
             return self::FAILURE;
         }
 
-        $this->call('xelqun-forms:install', ['--without-node' => true]);
+        // Tables runs the forms installer itself.
         $this->call('xelqun-tables:install', ['--without-node' => true]);
         $this->writePageStub('Panel', 'XqPanelPage');
         $this->writePageStub('PanelAuth', 'XqPanelAuthPage');
