@@ -1,6 +1,6 @@
 {
     "name": "@xelqun/panels",
-    "version": "0.7.1",
+    "version": "0.8.0",
     "description": "Vue renderer for Xelqun Panels: PHP-defined admin panels for Laravel + Inertia.",
     "license": "MIT",
     "repository": {
@@ -45,8 +45,8 @@
     },
     "peerDependencies": {
         "@inertiajs/vue3": "^3.0.0",
-        "@xelqun/forms": "^0.10.0",
-        "@xelqun/tables": "^0.8.0",
+        "@xelqun/forms": "^0.10.0 || ^0.11.0",
+        "@xelqun/tables": "^0.8.0 || ^0.9.0",
         "reka-ui": "^2.11.0",
         "vue": "^3.5.0"
     },

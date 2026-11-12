@@ -2,7 +2,9 @@
 
 Xelqun Panels is beta. Until 1.0, a patch release never breaks existing code except to fix a security issue, and a minor release can, with each break listed here under "Upgrading". See [version support](https://xelqun.com/introduction/version-support).
 
-## Unreleased
+## 0.8.0 - 2026-11-12
+
+Requires forms ^0.11 and tables ^0.9, whose tokens the panel's colors now come from. Update all three together: `composer update xelqun/forms xelqun/tables xelqun/panels` and `npm install @xelqun/forms@0.11.0 @xelqun/tables@0.9.0 @xelqun/panels@0.8.0`.
 
 ### Upgrading
 
